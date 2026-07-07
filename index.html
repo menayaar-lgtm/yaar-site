@@ -18,6 +18,14 @@
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth;scroll-padding-top:90px}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  .skip-link{position:fixed;top:-60px;right:12px;z-index:999;background:var(--green-deep);color:#fff!important;padding:12px 20px;border-radius:0 0 10px 10px;font-weight:700;transition:top .15s}
+  .skip-link:focus{top:0;outline:3px solid var(--gold);outline-offset:2px}
+  a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--gold-deep);outline-offset:2px}
+  @media(prefers-reduced-motion:reduce){
+    html{scroll-behavior:auto}
+    *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;scroll-behavior:auto!important}
+  }
   body{font-family:'Assistant',system-ui,sans-serif;color:var(--ink);background:var(--paper);line-height:1.65;-webkit-font-smoothing:antialiased}
   a{color:inherit;text-decoration:none}
   .wrap{max-width:1160px;margin:0 auto;padding:0 22px}
@@ -70,12 +78,17 @@
   .btn-ghost:hover{background:rgba(255,255,255,.16)}
   .btn-gold{background:var(--gold);color:#fff}
   .btn-gold:hover{background:var(--gold-deep)}
+  .hero .contour{position:absolute;inset:0;z-index:1;opacity:.5;pointer-events:none}
   .hero-stats{display:flex;gap:38px;flex-wrap:wrap;margin-top:48px;padding-top:30px;border-top:1px solid rgba(255,255,255,.14)}
-  .hstat b{font-family:'Frank Ruhl Libre',serif;font-size:30px;color:#fff;display:block;line-height:1}
+  .hstat{position:relative}
+  .hstat::before{content:"";position:absolute;right:-14px;top:-16px;width:64px;height:64px;border-radius:50%;background:
+    repeating-radial-gradient(circle,rgba(255,255,255,.16) 0,rgba(255,255,255,.16) 1.5px,transparent 1.5px,transparent 8px);
+    z-index:-1}
+  .hstat b{font-family:'Frank Ruhl Libre',serif;font-size:30px;color:#fff;display:block;line-height:1;position:relative}
   .hstat span{font-size:14px;color:#A9C2B3}
 
   /* free strip */
-  .strip{background:var(--gold);color:#fff}
+  .strip{background:var(--gold-deep);color:#fff}
   .strip .wrap{display:flex;align-items:center;justify-content:center;gap:14px;padding:16px 22px;text-align:center;flex-wrap:wrap;font-weight:600;font-size:17px}
   .strip a{text-decoration:underline;font-weight:800}
 
@@ -174,8 +187,9 @@
   .foot-bottom .soc a{display:inline-flex;width:38px;height:38px;border-radius:10px;background:rgba(255,255,255,.08);align-items:center;justify-content:center;color:#D9E5DD}
   .foot-bottom .soc a:hover{background:var(--green)}
 
-  .reveal{opacity:0;transform:translateY(24px);transition:opacity .6s ease,transform .6s ease}
-  .reveal.in{opacity:1;transform:none}
+  .reveal{transition:opacity .6s ease,transform .6s ease}
+  .has-js .reveal{opacity:0;transform:translateY(24px)}
+  .reveal.in{opacity:1!important;transform:none!important}
 
   .float-call{position:fixed;bottom:20px;left:20px;z-index:60;background:var(--green);color:#fff;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 10px 26px -8px rgba(0,0,0,.4);transition:.2s}
   .float-call:hover{background:var(--green-deep);transform:scale(1.06)}
@@ -183,12 +197,14 @@
 </style>
 </head>
 <body>
+<script>document.documentElement.classList.add('has-js');</script>
+<a href="#main-content" class="skip-link">דלג לתוכן הראשי</a>
 
 <div class="topbar">
   <div class="wrap">
     <div class="tb-left">
-      <a href="tel:046762466"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>04-6762466</a>
-      <a href="mailto:office@yaar.biz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>office@yaar.biz</a>
+      <a href="tel:046762466"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>04-6762466</a>
+      <a href="mailto:office@yaar.biz"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg>office@yaar.biz</a>
     </div>
     <div class="tb-right"><span style="opacity:.85">א'–ה' 8:00–17:00 · א.ת. בני יהודה, דרום הגולן</span></div>
   </div>
@@ -204,20 +220,28 @@
       <a href="calculators.html">מחשבונים</a>
       <a href="#why">למה אנחנו</a>
       <a href="#faq">שאלות נפוצות</a>
-      <a href="https://www.facebook.com/profile.php?id=61574373903364" target="_blank" rel="noopener" aria-label="עמוד הפייסבוק שלנו" style="display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border-radius:9px;font-weight:700;font-size:15px;color:#1877F2;background:rgba(24,119,242,.08)"><svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>פייסבוק</a>
+      <a href="https://www.facebook.com/profile.php?id=61574373903364" target="_blank" rel="noopener" aria-label="עמוד הפייסבוק שלנו (נפתח בחלון חדש)" style="display:inline-flex;align-items:center;gap:7px;padding:9px 14px;border-radius:9px;font-weight:700;font-size:15px;color:#1877F2;background:rgba(24,119,242,.08)"><svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>פייסבוק</a>
       <a href="#contact" class="nav-cta">צרו קשר</a>
     </nav>
-    <button class="burger" id="burger" aria-label="תפריט"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+    <button class="burger" id="burger" aria-label="תפריט" aria-expanded="false" aria-controls="navLinks"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
   </div>
 </header>
 
+<main id="main-content">
 <section class="hero" id="home">
+  <svg class="contour" aria-hidden="true" viewBox="0 0 1200 600" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M-50 480 C 150 430, 300 500, 480 460 S 780 400, 1000 440 S 1250 420, 1300 460" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="1.5"/>
+    <path d="M-50 510 C 160 460, 320 530, 500 495 S 800 435, 1010 470 S 1250 455, 1300 490" fill="none" stroke="rgba(255,255,255,.11)" stroke-width="1.5"/>
+    <path d="M-50 540 C 170 495, 340 555, 520 525 S 820 470, 1020 500 S 1250 490, 1300 520" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="1.5"/>
+    <path d="M-50 90 C 140 40, 260 110, 420 70 S 700 15, 900 60 S 1150 45, 1300 85" fill="none" stroke="rgba(111,157,129,.28)" stroke-width="1.5"/>
+    <path d="M-50 120 C 150 72, 280 140, 440 100 S 720 48, 920 92 S 1150 78, 1300 115" fill="none" stroke="rgba(111,157,129,.18)" stroke-width="1.5"/>
+  </svg>
   <div class="wrap">
     <span class="eyebrow">יער צפון · הנהלת חשבונות וראיית חשבון</span>
     <h1>כל השירותים הפיננסיים תחת קורת גג אחת</h1>
     <p class="lead">משרד פיננסי הוליסטי בדרום הגולן. אנחנו מלווים חברות, עצמאים ושכירים — מהנהלת חשבונות וראיית חשבון, דרך מס, פנסיה ומשכנתאות, ועד גיוס כספים ואיחוד הלוואות. כל מה שצריך כדי להיות רגועים.</p>
     <div class="cta-row">
-      <a href="#contact" class="btn btn-primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>ייעוץ ראשוני — חינם</a>
+      <a href="#contact" class="btn btn-primary"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg>ייעוץ ראשוני — חינם</a>
       <a href="#services" class="btn btn-ghost">לכל השירותים</a>
     </div>
     <div class="hero-stats">
@@ -247,12 +271,12 @@
     <div class="about-card reveal">
       <h3>סל השירותים שלנו כולל</h3>
       <ul>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>הנהלת חשבונות וראיית חשבון</li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>ייעוץ מס לחברות ועצמאים</li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>פנסיה, ביטוחי חיים ובריאות</li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>משכנתאות, השקעות וייעוץ עסקי</li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>גיוס כספים, מימון ואיחוד הלוואות</li>
-        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>אבחונים כלכליים ומענקי מדינה</li>
+        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>הנהלת חשבונות וראיית חשבון</li>
+        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>ייעוץ מס לחברות ועצמאים</li>
+        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>פנסיה, ביטוחי חיים ובריאות</li>
+        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>משכנתאות, השקעות וייעוץ עסקי</li>
+        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>גיוס כספים, מימון ואיחוד הלוואות</li>
+        <li><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M20 6 9 17l-5-5"/></svg>אבחונים כלכליים ומענקי מדינה</li>
       </ul>
     </div>
   </div>
@@ -276,10 +300,10 @@
       <h2>הערכים שמלווים כל החלטה</h2>
     </div>
     <div class="why-grid">
-      <div class="why reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>אמינות</h3><p>שקיפות מלאה ויחס אישי לכל לקוח לאורך הדרך.</p></div>
-      <div class="why reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div><h3>מקצועיות</h3><p>ידע מעמיק בכל התחומים הפיננסיים תחת קורת גג אחת.</p></div>
-      <div class="why reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 2 2.4 7.4H22l-6 4.6 2.3 7.4L12 17l-6.3 4.4L8 14 2 9.4h7.6L12 2z"/></svg></div><h3>איכות</h3><p>פתרונות שמותאמים בדיוק לצרכים ולמטרות שלכם.</p></div>
-      <div class="why reveal"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><h3>זמינות</h3><p>קשר זמין ומענה מהיר בכל שאלה ובכל שלב.</p></div>
+      <div class="why reveal"><div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div><h3>אמינות</h3><p>שקיפות מלאה ויחס אישי לכל לקוח לאורך הדרך.</p></div>
+      <div class="why reveal"><div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2 2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg></div><h3>מקצועיות</h3><p>ידע מעמיק בכל התחומים הפיננסיים תחת קורת גג אחת.</p></div>
+      <div class="why reveal"><div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 2 2.4 7.4H22l-6 4.6 2.3 7.4L12 17l-6.3 4.4L8 14 2 9.4h7.6L12 2z"/></svg></div><h3>איכות</h3><p>פתרונות שמותאמים בדיוק לצרכים ולמטרות שלכם.</p></div>
+      <div class="why reveal"><div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><h3>זמינות</h3><p>קשר זמין ומענה מהיר בכל שאלה ובכל שלב.</p></div>
     </div>
   </div>
 </section>
@@ -317,10 +341,10 @@
     <div class="contact-info reveal">
       <h2>בואו נדבר</h2>
       <p>ייעוץ ראשוני בנושאים פיננסיים — חינם. השאירו פרטים ונחזור אליכם בהקדם, או התקשרו ישירות.</p>
-      <div class="ci-item"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div><div class="t"><b>טלפון</b><a href="tel:046762466">04-6762466</a></div></div>
-      <div class="ci-item"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></div><div class="t"><b>אימייל</b><a href="mailto:office@yaar.biz">office@yaar.biz</a></div></div>
-      <div class="ci-item"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div class="t"><b>כתובת</b><span>א.ת. בני יהודה, מתחם האבזלת, דרום הגולן</span></div></div>
-      <div class="ci-item"><div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><div class="t"><b>שעות פעילות</b><span>ימים א'–ה', 8:00–17:00</span></div></div>
+      <div class="ci-item"><div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></div><div class="t"><b>טלפון</b><a href="tel:046762466">04-6762466</a></div></div>
+      <div class="ci-item"><div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 6L2 7"/></svg></div><div class="t"><b>אימייל</b><a href="mailto:office@yaar.biz">office@yaar.biz</a></div></div>
+      <div class="ci-item"><div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div><div class="t"><b>כתובת</b><span>א.ת. בני יהודה, מתחם האבזלת, דרום הגולן</span></div></div>
+      <div class="ci-item"><div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div><div class="t"><b>שעות פעילות</b><span>ימים א'–ה', 8:00–17:00</span></div></div>
     </div>
     <form class="cform reveal" id="cform" name="contact" method="POST" data-netlify="true" data-netlify-honeypot="bot-field">
       <input type="hidden" name="form-name" value="contact">
@@ -361,6 +385,7 @@
     </form>
   </div>
 </section>
+</main>
 
 <footer>
   <div class="wrap">
@@ -388,12 +413,12 @@
     </div>
     <div class="foot-bottom">
       <span>© <span id="yr"></span> יער צפון · כל הזכויות שמורות</span>
-      <div class="soc"><a href="https://www.facebook.com/profile.php?id=61574373903364" target="_blank" rel="noopener" aria-label="פייסבוק"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a></div>
+      <div class="soc"><a href="https://www.facebook.com/profile.php?id=61574373903364" target="_blank" rel="noopener" aria-label="פייסבוק (נפתח בחלון חדש)"><svg aria-hidden="true" viewBox="0 0 24 24" fill="currentColor"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg></a></div>
     </div>
   </div>
 </footer>
 
-<a href="tel:046762466" class="float-call" aria-label="התקשרו"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></a>
+<a href="tel:046762466" class="float-call" aria-label="התקשרו"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.8 19.8 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/></svg></a>
 
 <script>
 // services
@@ -427,7 +452,7 @@ const services=[
 ];
 document.getElementById('svcGrid').innerHTML=services.map(s=>`
   <div class="svc${s.new?' new reveal':' reveal'}">${s.new?'<span class="badge">חדש</span>':''}
-    <div class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${I[s.ic]}</svg></div>
+    <div class="ic"><svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${I[s.ic]}</svg></div>
     <h3>${s.t}</h3><p>${s.d}</p></div>`).join('');
 
 // faq
@@ -438,22 +463,39 @@ const faqs=[
   {q:'היכן אתם ממוקמים?',a:'באזור התעשייה בני יהודה, מתחם האבזלת, בדרום רמת הגולן. אנחנו משרתים לקוחות באזור ובכל הארץ.'},
   {q:'אתם עוזרים גם בגיוס כספים ואיחוד הלוואות?',a:'כן. אנחנו מסייעים בגיוס הון ומימון לפרויקטים ועסקים, ובאיחוד ומיחזור הלוואות להחזר נוח יותר ולחיסכון בריבית.'},
 ];
-document.getElementById('faqList').innerHTML=faqs.map(f=>`
-  <div class="faq"><button>${f.q}<span class="pl">+</span></button><div class="ans"><p>${f.a}</p></div></div>`).join('');
+document.getElementById('faqList').innerHTML=faqs.map((f,i)=>`
+  <div class="faq"><button aria-expanded="false" aria-controls="faq-ans-${i}" id="faq-btn-${i}">${f.q}<span class="pl" aria-hidden="true">+</span></button><div class="ans" id="faq-ans-${i}" role="region" aria-labelledby="faq-btn-${i}"><p>${f.a}</p></div></div>`).join('');
 document.querySelectorAll('.faq button').forEach(b=>b.addEventListener('click',()=>{
   const f=b.parentElement;const open=f.classList.contains('open');
-  document.querySelectorAll('.faq').forEach(x=>x.classList.remove('open'));
-  if(!open)f.classList.add('open');
+  document.querySelectorAll('.faq').forEach(x=>{x.classList.remove('open');x.querySelector('button').setAttribute('aria-expanded','false');});
+  if(!open){f.classList.add('open');b.setAttribute('aria-expanded','true');}
 }));
 
 // mobile nav
 const nav=document.getElementById('navLinks'),burger=document.getElementById('burger');
-burger.addEventListener('click',()=>nav.classList.toggle('open'));
-nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>nav.classList.remove('open')));
+burger.addEventListener('click',()=>{
+  const open=nav.classList.toggle('open');
+  burger.setAttribute('aria-expanded', open?'true':'false');
+});
+nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{nav.classList.remove('open');burger.setAttribute('aria-expanded','false');}));
+</script>
 
-// reveal on scroll
-const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.12});
-document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+<script>
+// reveal on scroll - separate script tag so it always runs even if a script
+// above throws; respects prefers-reduced-motion; has a timeout safety-net.
+try{
+  const prefersReduced=window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const revealAll=()=>document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in'));
+  if(prefersReduced || !('IntersectionObserver' in window)){
+    revealAll();
+  }else{
+    const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target);}}),{threshold:.12});
+    document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+    setTimeout(revealAll,2500);
+  }
+}catch(err){
+  document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in'));
+}
 
 // contact form -> Netlify Forms (AJAX)
 document.getElementById('cform').addEventListener('submit',async e=>{
