@@ -644,12 +644,7 @@ function render(){
   body.innerHTML = '';
   const T = {h100:0,h125:0,h150:0,s150:0,s175:0,s200:0,total:0,diff:0,absStd:0, workdays:0, chagDays:0, vac:0, sick:0, milu:0, stdSum:0, stdDays:0};
 
-  if(!curEmpId){
-    body.innerHTML = `<tr><td colspan="14" style="padding:40px; color:#9AA3B5;">${curOrgId?'הוסיפו עובד למעסיק זה כדי להתחיל ⤴':'הוסיפו מעסיק ראשון כדי להתחיל ⤴'}</td></tr>`;
-    $('gridFoot').innerHTML = '';
-    $('summary').innerHTML = '';
-    return;
-  }
+  const demo = !curEmpId;
 
   for(let dn=1; dn<=daysInMonth; dn++){
     const c = calcRow(dn);
@@ -678,7 +673,7 @@ function render(){
         </div>
       </td>
       <td>
-        <select class="dtype" data-d="${dn}">
+        <select class="dtype" data-d="${dn}" ${demo?'disabled':''}>
           <option value="auto" ${dtype==='auto'?'selected':''}>${info.chag||info.isShabbat?'שבת/חג':'רגיל'}</option>
           <option value="chag" ${dtype==='chag'?'selected':''}>חג (ידני)</option>
           <option value="vac"  ${dtype==='vac'?'selected':''}>חופשה</option>
@@ -686,9 +681,9 @@ function render(){
           <option value="milu" ${dtype==='milu'?'selected':''}>מילואים</option>
         </select>
       </td>
-      <td><input class="tm" data-d="${dn}" data-f="in"  value="${r.in||''}"  placeholder="--:--" ${isAbs?'disabled':''}></td>
-      <td><input class="tm" data-d="${dn}" data-f="out" value="${r.out||''}" placeholder="--:--" ${isAbs?'disabled':''}></td>
-      <td><input class="tm" data-d="${dn}" data-f="brk" value="${r.brk||''}" placeholder="${emp().brk?fmtHM(emp().brk):'00:00'}" ${isAbs?'disabled':''}></td>
+      <td><input class="tm" data-d="${dn}" data-f="in"  value="${r.in||''}"  placeholder="--:--" ${isAbs||demo?'disabled':''}></td>
+      <td><input class="tm" data-d="${dn}" data-f="out" value="${r.out||''}" placeholder="--:--" ${isAbs||demo?'disabled':''}></td>
+      <td><input class="tm" data-d="${dn}" data-f="brk" value="${r.brk||''}" placeholder="${emp()?.brk?fmtHM(emp().brk):'00:00'}" ${isAbs||demo?'disabled':''}></td>
       <td class="num muted">${info.isWorkday||info.isShabbat||info.chag? fmtDur(info.std):''}</td>
       <td class="num total">${isAbs? '<span style="color:var(--blue)">'+({vac:'חופשה',sick:'מחלה',milu:'מילואים'})[r.type]+'</span>' : durOrDash(c.total)}</td>
       <td class="num">${durOrDash(c.h100)}</td>
@@ -712,6 +707,12 @@ function render(){
     if(r.type==='sick') T.sick++;
     if(r.type==='milu') T.milu++;
     if(info.chag) T.chagDays++;
+  }
+
+  if(demo){
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="14" style="background:var(--teal-soft); color:var(--teal); font-weight:600; padding:10px; text-align:right; padding-inline-start:12px;">${curOrgId?'כמעט שם — הוסיפו עובד למעסיק זה (＋ ליד "עובד") והטבלה תיפתח להזנה':'להתחלת עבודה: הוסיפו מעסיק (＋ ליד "מעסיק"), אחריו עובד — והטבלה תיפתח להזנה'}</td>`;
+    body.prepend(tr);
   }
 
   $('gridFoot').innerHTML = `
@@ -857,8 +858,6 @@ $('btnExport').addEventListener('click', ()=>{
   renderOrgSelect();
   renderEmpSelect();
   await loadMonth();
-  if(!employers.length) openOrgDialog(null);
-  else if(!empsOfOrg().length) openEmpDialog(null);
 })();
 </script>
 </body>
