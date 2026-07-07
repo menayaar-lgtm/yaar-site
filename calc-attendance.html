@@ -66,6 +66,7 @@ button.ghost:hover{color:var(--red);}
 }
 .month-nav .msub{display:block; font-family:'Heebo'; font-weight:400; font-size:11.5px; color:var(--ink-soft);}
 .month-nav button{padding:6px 12px; font-size:16px; line-height:1;}
+.month-nav .today-btn{font-size:12px; padding:7px 10px; color:var(--teal); border-color:var(--teal); visibility:hidden;}
 
 /* ---- table ---- */
 .grid-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); overflow:auto;}
@@ -188,6 +189,7 @@ dialog .actions{display:flex; gap:10px; justify-content:flex-start; margin-top:1
       <button id="prevM" title="חודש קודם">‹</button>
       <div class="mtitle" id="monthTitle">—<span class="msub" id="monthSub"></span></div>
       <button id="nextM" title="חודש הבא">›</button>
+      <button id="btnToday" class="today-btn" title="חזרה לחודש הנוכחי">לחודש הנוכחי ⟲</button>
     </div>
 
     <div class="field">
@@ -545,6 +547,11 @@ $('wage').addEventListener('change', async e=>{
 /* ================= month nav ================= */
 $('prevM').addEventListener('click', ()=>shiftMonth(-1));
 $('nextM').addEventListener('click', ()=>shiftMonth(1));
+$('btnToday').addEventListener('click', async ()=>{
+  const now = new Date();
+  curYear = now.getFullYear(); curMonth = now.getMonth();
+  await loadMonth();
+});
 async function shiftMonth(dir){
   curMonth += dir;
   if(curMonth<0){ curMonth=11; curYear--; }
@@ -639,6 +646,8 @@ function render(){
   const first = hebFmtHe.format(new Date(curYear,curMonth,1));
   const last  = hebFmtHe.format(new Date(curYear,curMonth,daysInMonth));
   $('monthSub').textContent = `${first} – ${last}`;
+  const nowD = new Date();
+  $('btnToday').style.visibility = (curYear===nowD.getFullYear() && curMonth===nowD.getMonth()) ? 'hidden' : 'visible';
 
   const body = $('gridBody');
   body.innerHTML = '';
