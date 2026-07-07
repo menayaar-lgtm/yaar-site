@@ -149,17 +149,88 @@ const REST_CHECK = [
   "ראנווי של 12–18 חודשים מתוקצב להרצה",
 ];
 
+/* ---------------- משוב מול ממוצע ענפי ---------------- */
+function costFeedback(value,hi){
+  if(value>hi) return {tone:"neg", text:`⚠ מעל הממוצע הענפי (יעד ≤${hi}%) — כדאי לבדוק`};
+  if(value<=hi*0.75) return {tone:"pos", text:`✓ מצוין! משמעותית מתחת לממוצע הענף (≤${hi}%) — חיסכון יפה`};
+  return {tone:"pos", text:`✓ בטווח הבריא (≤${hi}%)`};
+}
+function marginFeedback(value,lo){
+  if(value<lo) return {tone:"neg", text:`⚠ מתחת ליעד המינימלי לרווחיות בריאה (${lo}%+)`};
+  if(value>=lo*1.3) return {tone:"pos", text:`✓ מצוין! משמעותית מעל היעד (${lo}%+)`};
+  return {tone:"pos", text:`✓ בטווח הבריא (${lo}%+)`};
+}
+
 /* ---------------- רכיבי UI ---------------- */
-function Slider({label,value,set,min,max,step,fmt,hint}){
+function LockIcon({locked}){
   return (
-    <div style={{marginBottom:16}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2">
+      <rect x="4" y="10" width="16" height="10" rx="2"/>
+      {locked ? <path d="M8 10V7a4 4 0 0 1 8 0v3"/> : <path d="M8 10V7a4 4 0 0 1 7.6-1.8"/>}
+    </svg>
+  );
+}
+function LockBar({onLockAll,onUnlockAll}){
+  const btnStyle={fontSize:12,fontWeight:700,padding:"6px 12px",borderRadius:8,border:"1px solid "+T.line,
+    background:T.paper,color:T.basalt,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:6};
+  return (
+    <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginBottom:10}}>
+      <button onClick={onLockAll} style={btnStyle}><LockIcon locked={true}/>נעל הכל</button>
+      <button onClick={onUnlockAll} style={btnStyle}><LockIcon locked={false}/>שחרר הכל</button>
+    </div>
+  );
+}
+function Slider({label,value,set,min,max,step,fmt,hint,locked,onToggleLock,feedback}){
+  const sample = fmt ? String(fmt(0)) : "0";
+  const isCurrency = sample.trim().startsWith("₪");
+  const isPercent = /%$/.test(sample.trim());
+  const [editing,setEditing] = useState(false);
+  const [draft,setDraft] = useState(value);
+  useEffect(()=>{ if(!editing) setDraft(value); },[value,editing]);
+  const commit = ()=>{
+    const n = parseFloat(String(draft).replace(/[^\d.-]/g,""));
+    if(!isNaN(n)) set(Math.max(0,n));
+    setEditing(false);
+  };
+  const clampedForTrack = Math.min(Math.max(value,min),max);
+  return (
+    <div style={{marginBottom:16,opacity:locked?0.55:1}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6,gap:8}}>
         <span style={{fontSize:13,fontWeight:600,color:T.ink}}>{label}</span>
-        <span style={{fontSize:14,fontWeight:800,color:T.green,fontVariantNumeric:"tabular-nums"}}>{fmt?fmt(value):value}</span>
+        <div style={{display:"flex",alignItems:"center",gap:6}}>
+          {editing ? (
+            <span style={{display:"inline-flex",alignItems:"center",gap:3}}>
+              {isCurrency && <span style={{fontSize:13,fontWeight:800,color:T.green}}>₪</span>}
+              <input type="number" autoFocus value={draft}
+                onChange={(e)=>setDraft(e.target.value)}
+                onBlur={commit}
+                onKeyDown={(e)=>{ if(e.key==="Enter") commit(); if(e.key==="Escape") setEditing(false); }}
+                style={{width:88,fontSize:14,fontWeight:800,color:T.green,border:"1px solid "+T.line,
+                  borderRadius:6,padding:"2px 6px",textAlign:"center",fontVariantNumeric:"tabular-nums"}} />
+              {isPercent && <span style={{fontSize:13,fontWeight:800,color:T.green}}>%</span>}
+            </span>
+          ) : (
+            <button disabled={locked} onClick={()=>!locked && setEditing(true)}
+              title={locked?"":"לחצו לעריכה ידנית"}
+              style={{background:"none",border:"none",padding:0,cursor:locked?"default":"text",
+                fontSize:14,fontWeight:800,color:T.green,fontVariantNumeric:"tabular-nums"}}>
+              {fmt?fmt(value):value}
+            </button>
+          )}
+          {onToggleLock && (
+            <button onClick={onToggleLock} title={locked?"בטל נעילת שדה":"נעל שדה"}
+              style={{background:"none",border:"none",cursor:"pointer",padding:2,color:locked?T.wheat:T.muted,display:"flex"}}>
+              <LockIcon locked={locked}/>
+            </button>
+          )}
+        </div>
       </div>
-      <input type="range" min={min} max={max} step={step} value={value}
-        onChange={(e)=>set(parseFloat(e.target.value))} style={{width:"100%"}} />
+      <input type="range" min={min} max={max} step={step} value={clampedForTrack}
+        disabled={locked}
+        onChange={(e)=>!locked && set(parseFloat(e.target.value))}
+        style={{width:"100%",opacity:locked?0.6:1,cursor:locked?"not-allowed":"pointer"}} />
       {hint && <div style={{fontSize:11,color:T.muted,marginTop:3}}>{hint}</div>}
+      {feedback && <div style={{fontSize:11,fontWeight:700,color:feedback.tone==="neg"?T.neg:T.pos,marginTop:3}}>{feedback.text}</div>}
     </div>
   );
 }
@@ -354,13 +425,19 @@ function FinanceDist(){
   const [c2b,setC2b]=useState(35);
   const gifts=Math.max(0,100-b2b-c2b);
 
+  const [locked,setLocked]=useState({});
+  const lockKeys=["revenue","baseMargin","waste","rent","salary","logistics","insurance","marketing","overhead","invest","b2b","c2b"];
+  const toggleLock=(k)=>setLocked(l=>({...l,[k]:!l[k]}));
+  const lockAll=()=>setLocked(Object.fromEntries(lockKeys.map(k=>[k,true])));
+  const unlockAll=()=>setLocked({});
+
   const calc=useMemo(()=>{
     const effMargin=Math.max(0,baseMargin-waste);
     const grossProfit=revenue*(effMargin/100);
     const opex=rent+salary+logistics+insurance+marketing+overhead;
     const ebitda=grossProfit-opex;
     const breakeven=effMargin>0?opex/(effMargin/100):Infinity;
-    const logPct=(logistics/revenue)*100;
+    const logPct=revenue>0?(logistics/revenue)*100:0;
     const safety=revenue>0?((revenue-breakeven)/revenue)*100:0;
     const payback=ebitda>0?invest/ebitda:Infinity;
     const blended=(b2b*26+c2b*36+gifts*45)/100;
@@ -382,27 +459,43 @@ function FinanceDist(){
   return (
     <div style={{display:"grid",gridTemplateColumns:"minmax(280px,360px) 1fr",gap:22}}>
       <div>
+        <LockBar onLockAll={lockAll} onUnlockAll={unlockAll} />
         <Panel title="הכנסות ומרווח">
-          <Slider label="מחזור חודשי ממוצע (שנה 1)" value={revenue} set={setRevenue} min={80000} max={900000} step={5000} fmt={nis} hint="התאימו לתחזית המכירות שלכם" />
-          <Slider label="מרווח גולמי בסיס (לפני פחת)" value={baseMargin} set={setBaseMargin} min={20} max={50} step={1} fmt={(v)=>v+"%"} hint="בוטיק/מעובד גבוה; טרי נמוך" />
-          <Slider label="פחת (אובדן סחורה)" value={waste} set={setWaste} min={3} max={20} step={1} fmt={(v)=>v+"%"} hint="אומדן ענפי 10–20% לתוצרת טרייה" />
+          <Slider label="מחזור חודשי ממוצע (שנה 1)" value={revenue} set={setRevenue} min={0} max={1500000} step={5000} fmt={nis}
+            hint="התאימו לתחזית המכירות שלכם · אפשר להקליד כל סכום" locked={!!locked.revenue} onToggleLock={()=>toggleLock("revenue")} />
+          <Slider label="מרווח גולמי בסיס (לפני פחת)" value={baseMargin} set={setBaseMargin} min={0} max={70} step={1} fmt={(v)=>v+"%"}
+            hint="בוטיק/מעובד גבוה; טרי נמוך" locked={!!locked.baseMargin} onToggleLock={()=>toggleLock("baseMargin")} />
+          <Slider label="פחת (אובדן סחורה)" value={waste} set={setWaste} min={0} max={30} step={1} fmt={(v)=>v+"%"}
+            hint="אומדן ענפי 8–12% עם שרשרת קור טובה" feedback={costFeedback(waste,12)}
+            locked={!!locked.waste} onToggleLock={()=>toggleLock("waste")} />
           <div style={{background:T.greenLt,borderRadius:8,padding:"8px 12px",fontSize:13,fontWeight:700,color:T.basalt}}>
             מרווח גולמי אפקטיבי: <span style={{color:T.green}}>{pct(calc.effMargin)}</span>
+            <div style={{fontWeight:700,fontSize:11,marginTop:4,color:marginFeedback(calc.effMargin,20).tone==="neg"?T.neg:T.pos}}>
+              {marginFeedback(calc.effMargin,20).text}
+            </div>
           </div>
         </Panel>
         <Panel title="הוצאות תפעול חודשיות">
-          <Slider label="שכירות מחסן" value={rent} set={setRent} min={6000} max={25000} step={500} fmt={nis} />
-          <Slider label="שכר (צוות + יזם)" value={salary} set={setSalary} min={25000} max={60000} step={1000} fmt={nis} />
-          <Slider label="לוגיסטיקה (משאית+דלק+אגרות)" value={logistics} set={setLogistics} min={8000} max={30000} step={500} fmt={nis} hint="קו הולכה ארוך מייקר משמעותית" />
-          <Slider label="ביטוחים" value={insurance} set={setInsurance} min={2000} max={6000} step={250} fmt={nis} />
-          <Slider label="שיווק ומיתוג" value={marketing} set={setMarketing} min={3000} max={15000} step={500} fmt={nis} />
-          <Slider label="שונות (חשמל/ארנונה/תקשורת)" value={overhead} set={setOverhead} min={2000} max={10000} step={500} fmt={nis} />
+          <Slider label="שכירות מחסן" value={rent} set={setRent} min={0} max={40000} step={500} fmt={nis}
+            locked={!!locked.rent} onToggleLock={()=>toggleLock("rent")} />
+          <Slider label="שכר (צוות + יזם)" value={salary} set={setSalary} min={0} max={90000} step={1000} fmt={nis}
+            locked={!!locked.salary} onToggleLock={()=>toggleLock("salary")} />
+          <Slider label="לוגיסטיקה (משאית+דלק+אגרות)" value={logistics} set={setLogistics} min={0} max={45000} step={500} fmt={nis}
+            hint="קו הולכה ארוך מייקר משמעותית" feedback={costFeedback(calc.logPct,12)}
+            locked={!!locked.logistics} onToggleLock={()=>toggleLock("logistics")} />
+          <Slider label="ביטוחים" value={insurance} set={setInsurance} min={0} max={12000} step={250} fmt={nis}
+            locked={!!locked.insurance} onToggleLock={()=>toggleLock("insurance")} />
+          <Slider label="שיווק ומיתוג" value={marketing} set={setMarketing} min={0} max={25000} step={500} fmt={nis}
+            locked={!!locked.marketing} onToggleLock={()=>toggleLock("marketing")} />
+          <Slider label="שונות (חשמל/ארנונה/תקשורת)" value={overhead} set={setOverhead} min={0} max={18000} step={500} fmt={nis}
+            locked={!!locked.overhead} onToggleLock={()=>toggleLock("overhead")} />
           <div style={{borderTop:"1px dashed "+T.line,paddingTop:8,fontSize:14,fontWeight:800,display:"flex",justifyContent:"space-between"}}>
             <span>סך הוצאות תפעול</span><span style={{color:T.wheat}}>{nis(calc.opex)}</span>
           </div>
         </Panel>
         <Panel title="השקעה ראשונית">
-          <Slider label="השקעה (CAPEX)" value={invest} set={setInvest} min={180000} max={900000} step={10000} fmt={nis} hint="רזה (ליסינג) 180–350K · מלא (רכב) 450–900K" />
+          <Slider label="השקעה (CAPEX)" value={invest} set={setInvest} min={0} max={1500000} step={10000} fmt={nis}
+            hint="רזה (ליסינג) 180–350K · מלא (רכב) 450–900K" locked={!!locked.invest} onToggleLock={()=>toggleLock("invest")} />
         </Panel>
       </div>
 
@@ -423,8 +516,10 @@ function FinanceDist(){
         <Panel title="תמהיל מכירות → מרווח מוצע">
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,alignItems:"center"}}>
             <div>
-              <Slider label="B2B (מסעדות/מעדניות)" value={b2b} set={(v)=>setB2b(Math.min(v,100-c2b))} min={0} max={100} step={5} fmt={(v)=>v+"%"} />
-              <Slider label="C2B (מנויים/מארזים)" value={c2b} set={(v)=>setC2b(Math.min(v,100-b2b))} min={0} max={100} step={5} fmt={(v)=>v+"%"} />
+              <Slider label="B2B (מסעדות/מעדניות)" value={b2b} set={(v)=>setB2b(Math.min(v,100-c2b))} min={0} max={100} step={5} fmt={(v)=>v+"%"}
+                locked={!!locked.b2b} onToggleLock={()=>toggleLock("b2b")} />
+              <Slider label="C2B (מנויים/מארזים)" value={c2b} set={(v)=>setC2b(Math.min(v,100-b2b))} min={0} max={100} step={5} fmt={(v)=>v+"%"}
+                locked={!!locked.c2b} onToggleLock={()=>toggleLock("c2b")} />
               <div style={{fontSize:13,color:T.muted}}>מתנות/מעובד (יין/חלב/שמן): <b style={{color:T.ink}}>{gifts}%</b></div>
             </div>
             <div style={{textAlign:"center",background:T.cream,borderRadius:12,padding:16}}>
@@ -456,6 +551,12 @@ function FinanceRest(){
   const [bev,setBev]=useState(25);
   const delivery=Math.max(0,100-food-bev);
 
+  const [locked,setLocked]=useState({});
+  const lockKeys=["invest","revenue","foodCost","waste","labor","rent","otherOpex","food","bev"];
+  const toggleLock=(k)=>setLocked(l=>({...l,[k]:!l[k]}));
+  const lockAll=()=>setLocked(Object.fromEntries(lockKeys.map(k=>[k,true])));
+  const unlockAll=()=>setLocked({});
+
   const calc=useMemo(()=>{
     const effFood=foodCost+waste;
     const grossMargin=Math.max(0,100-effFood);
@@ -467,7 +568,7 @@ function FinanceRest(){
     const ebitda=grossProfit-laborCost-fixed;
     const contrib=Math.max(0,100-effFood-labor);
     const breakeven=contrib>0?fixed/(contrib/100):Infinity;
-    const rentPct=(rent/revenue)*100;
+    const rentPct=revenue>0?(rent/revenue)*100:0;
     const safety=revenue>0?((revenue-breakeven)/revenue)*100:0;
     const payback=ebitda>0?invest/ebitda:Infinity;
     // מרווח גולמי משוקלל: אוכל ~68% · משקאות ~78% · משלוחים ~55% (אחרי עמלת פלטפורמה)
@@ -493,24 +594,38 @@ function FinanceRest(){
   return (
     <div style={{display:"grid",gridTemplateColumns:"minmax(280px,360px) 1fr",gap:22}}>
       <div>
+        <LockBar onLockAll={lockAll} onUnlockAll={unlockAll} />
         <Panel title="הכנסות ועלות מזון">
-          <Slider label="מחזור חודשי ממוצע" value={revenue} set={setRevenue} min={60000} max={700000} step={5000} fmt={nis} hint="כיסויים ביום × צ׳ק ממוצע × ימי פעילות" />
-          <Slider label="עלות מזון / חומר גלם" value={foodCost} set={setFoodCost} min={20} max={45} step={1} fmt={(v)=>v+"%"} hint="בריא: 28–35% מהמחזור" />
-          <Slider label="פחת / בלאי" value={waste} set={setWaste} min={1} max={12} step={1} fmt={(v)=>v+"%"} hint="עם ניהול מלאי טוב: 2–5%" />
+          <Slider label="מחזור חודשי ממוצע" value={revenue} set={setRevenue} min={0} max={1200000} step={5000} fmt={nis}
+            hint="כיסויים ביום × צ׳ק ממוצע × ימי פעילות · אפשר להקליד כל סכום"
+            locked={!!locked.revenue} onToggleLock={()=>toggleLock("revenue")} />
+          <Slider label="עלות מזון / חומר גלם" value={foodCost} set={setFoodCost} min={0} max={60} step={1} fmt={(v)=>v+"%"}
+            hint="בריא: 28–35% מהמחזור" feedback={costFeedback(foodCost,35)}
+            locked={!!locked.foodCost} onToggleLock={()=>toggleLock("foodCost")} />
+          <Slider label="פחת / בלאי" value={waste} set={setWaste} min={0} max={20} step={1} fmt={(v)=>v+"%"}
+            hint="עם ניהול מלאי טוב: 2–5%" feedback={costFeedback(waste,5)}
+            locked={!!locked.waste} onToggleLock={()=>toggleLock("waste")} />
           <div style={{background:T.greenLt,borderRadius:8,padding:"8px 12px",fontSize:13,fontWeight:700,color:T.basalt}}>
             מרווח גולמי אפקטיבי: <span style={{color:T.green}}>{pct(calc.grossMargin)}</span>
           </div>
         </Panel>
         <Panel title="עבודה, שכירות ותפעול">
-          <Slider label="עלות עבודה (שכר כולל)" value={labor} set={setLabor} min={20} max={48} step={1} fmt={(v)=>v+"%"} hint="בריא: 28–35% מהמחזור" />
-          <Slider label="שכירות (מקום)" value={rent} set={setRent} min={5000} max={60000} step={1000} fmt={nis} hint={"כ-"+calc.rentPct.toFixed(1)+"% מהמחזור · בריא ≤ 10%"} />
-          <Slider label="הוצאות תפעול נוספות" value={otherOpex} set={setOtherOpex} min={8000} max={90000} step={1000} fmt={nis} hint={"חשמל/שיווק/ביטוח/חומרים/תמלוגים · כ-"+((otherOpex/revenue)*100).toFixed(0)+"% מהמחזור"} />
+          <Slider label="עלות עבודה (שכר כולל)" value={labor} set={setLabor} min={0} max={60} step={1} fmt={(v)=>v+"%"}
+            hint="בריא: 28–35% מהמחזור" feedback={costFeedback(labor,35)}
+            locked={!!locked.labor} onToggleLock={()=>toggleLock("labor")} />
+          <Slider label="שכירות (מקום)" value={rent} set={setRent} min={0} max={100000} step={1000} fmt={nis}
+            hint={"כ-"+calc.rentPct.toFixed(1)+"% מהמחזור · בריא ≤ 10%"} feedback={costFeedback(calc.rentPct,10)}
+            locked={!!locked.rent} onToggleLock={()=>toggleLock("rent")} />
+          <Slider label="הוצאות תפעול נוספות" value={otherOpex} set={setOtherOpex} min={0} max={150000} step={1000} fmt={nis}
+            hint={"חשמל/שיווק/ביטוח/חומרים/תמלוגים · כ-"+((revenue>0?(otherOpex/revenue)*100:0)).toFixed(0)+"% מהמחזור"}
+            locked={!!locked.otherOpex} onToggleLock={()=>toggleLock("otherOpex")} />
           <div style={{borderTop:"1px dashed "+T.line,paddingTop:8,fontSize:14,fontWeight:800,display:"flex",justifyContent:"space-between"}}>
             <span>סך הוצאות קבועות</span><span style={{color:T.wheat}}>{nis(calc.fixed)}</span>
           </div>
         </Panel>
         <Panel title="השקעה ראשונית">
-          <Slider label="השקעה (הקמה/שיפוץ + ציוד)" value={invest} set={setInvest} min={200000} max={2000000} step={20000} fmt={nis} hint="בית קפה רזה ~250–500K · מסעדה מלאה 700K–2M" />
+          <Slider label="השקעה (הקמה/שיפוץ + ציוד)" value={invest} set={setInvest} min={0} max={3000000} step={20000} fmt={nis}
+            hint="בית קפה רזה ~250–500K · מסעדה מלאה 700K–2M" locked={!!locked.invest} onToggleLock={()=>toggleLock("invest")} />
         </Panel>
       </div>
 
@@ -533,8 +648,10 @@ function FinanceRest(){
         <Panel title="תמהיל מכירות → מרווח גולמי מוצע">
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:16,alignItems:"center"}}>
             <div>
-              <Slider label="אוכל" value={food} set={(v)=>setFood(Math.min(v,100-bev))} min={0} max={100} step={5} fmt={(v)=>v+"%"} />
-              <Slider label="משקאות / בר" value={bev} set={(v)=>setBev(Math.min(v,100-food))} min={0} max={100} step={5} fmt={(v)=>v+"%"} />
+              <Slider label="אוכל" value={food} set={(v)=>setFood(Math.min(v,100-bev))} min={0} max={100} step={5} fmt={(v)=>v+"%"}
+                locked={!!locked.food} onToggleLock={()=>toggleLock("food")} />
+              <Slider label="משקאות / בר" value={bev} set={(v)=>setBev(Math.min(v,100-food))} min={0} max={100} step={5} fmt={(v)=>v+"%"}
+                locked={!!locked.bev} onToggleLock={()=>toggleLock("bev")} />
               <div style={{fontSize:13,color:T.muted}}>משלוחים / טייקאווי: <b style={{color:T.ink}}>{delivery}%</b></div>
             </div>
             <div style={{textAlign:"center",background:T.cream,borderRadius:12,padding:16}}>
