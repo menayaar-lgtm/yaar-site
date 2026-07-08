@@ -835,6 +835,7 @@ function render(){
     if(info.chag) tr.className = 'holiday';
     else if(info.isShabbat) tr.className = 'shabbat';
     else if(!info.isWorkday) tr.className = 'offday';
+    tr.dataset.dn = dn;
 
     let badge = '';
     if(info.chag) badge = `<span class="badge chag">🕯 ${info.chag}</span>`;
@@ -867,14 +868,14 @@ function render(){
       <td>${segStack(dn, r, 'out', isAbs||demo)}</td>
       <td><input class="tm" data-d="${dn}" data-f="brk" value="${r.brk||''}" placeholder="${emp()?.brk?fmtHM(emp().brk):'00:00'}" ${isAbs||demo?'disabled':''}></td>
       <td class="num muted">${info.isWorkday||info.isShabbat||info.chag? fmtDur(info.std):''}</td>
-      <td class="num total">${isAbs? '<span style="color:var(--blue)">'+({vac:'חופשה',sick:'מחלה',milu:'מילואים'})[r.type]+'</span>' : decOrDash(c.total)}</td>
-      <td class="num">${decOrDash(c.h100)}</td>
-      <td class="num">${decOrDash(c.h125)}</td>
-      <td class="num">${decOrDash(c.h150)}</td>
-      <td class="num">${decOrDash(c.s150)}</td>
-      <td class="num">${decOrDash(c.s175)}</td>
-      <td class="num">${decOrDash(c.s200)}</td>
-      <td class="num ${c.diff>0?'pos':c.diff<0?'neg':''}">${c.diff!=null&&c.diff!==0&&!c.empty? (c.diff>0?'+':'')+fmtDec(c.diff) : (c.diff!=null&&c.empty&&c.diff<0?'':'')}</td>
+      <td class="num total" data-f2="total">${isAbs? '<span style="color:var(--blue)">'+({vac:'חופשה',sick:'מחלה',milu:'מילואים'})[r.type]+'</span>' : decOrDash(c.total)}</td>
+      <td class="num" data-f2="h100">${decOrDash(c.h100)}</td>
+      <td class="num" data-f2="h125">${decOrDash(c.h125)}</td>
+      <td class="num" data-f2="h150">${decOrDash(c.h150)}</td>
+      <td class="num" data-f2="s150">${decOrDash(c.s150)}</td>
+      <td class="num" data-f2="s175">${decOrDash(c.s175)}</td>
+      <td class="num" data-f2="s200">${decOrDash(c.s200)}</td>
+      <td class="num ${c.diff>0?'pos':c.diff<0?'neg':''}" data-f2="diff">${c.diff!=null&&c.diff!==0&&!c.empty? (c.diff>0?'+':'')+fmtDec(c.diff) : (c.diff!=null&&c.empty&&c.diff<0?'':'')}</td>
     `;
     body.appendChild(tr);
   }
@@ -885,6 +886,12 @@ function render(){
     body.prepend(tr);
   }
 
+  renderFoot(T);
+  renderSummary(T);
+  bindGrid();
+}
+
+function renderFoot(T){
   $('gridFoot').innerHTML = `
     <tr>
       <td colspan="6" style="text-align:right; padding-inline-start:12px;">סה"כ חודשי (עשרוני)</td>
@@ -897,9 +904,33 @@ function render(){
       <td>${fmtDec(T.s200)}</td>
       <td class="${T.diff>0?'pos':T.diff<0?'neg':''}">${T.diff!==0?(T.diff>0?'+':'')+fmtDec(T.diff):''}</td>
     </tr>`;
+}
 
+/* recompute the calculated cells IN PLACE — inputs and buttons stay in the DOM,
+   so a single click always lands (no rebuild on blur) */
+function updateCalc(){
+  const {calcs, T} = computeAll();
+  document.querySelectorAll('#gridBody tr[data-dn]').forEach(tr=>{
+    const dn = +tr.dataset.dn;
+    const c = calcs[dn]; if(!c) return;
+    const r = rows[dn]||{};
+    const isAbs = ['vac','sick','milu'].includes(r.type);
+    const set = (f, html)=>{ const td = tr.querySelector(`[data-f2="${f}"]`); if(td) td.innerHTML = html; };
+    set('total', isAbs ? '<span style="color:var(--blue)">'+({vac:'חופשה',sick:'מחלה',milu:'מילואים'})[r.type]+'</span>' : decOrDash(c.total));
+    set('h100', decOrDash(c.h100));
+    set('h125', decOrDash(c.h125));
+    set('h150', decOrDash(c.h150));
+    set('s150', decOrDash(c.s150));
+    set('s175', decOrDash(c.s175));
+    set('s200', decOrDash(c.s200));
+    const dtd = tr.querySelector('[data-f2="diff"]');
+    if(dtd){
+      dtd.className = 'num ' + (c.diff>0 ? 'pos' : c.diff<0 ? 'neg' : '');
+      dtd.textContent = (c.diff!=null && c.diff!==0 && !c.empty) ? (c.diff>0?'+':'')+fmtDec(c.diff) : '';
+    }
+  });
+  renderFoot(T);
   renderSummary(T);
-  bindGrid();
 }
 
 function renderSummary(T){
@@ -975,13 +1006,7 @@ function setCell(inp){
   rows[d] = rows[d]||{};
   rows[d][f] = inp.value;
   scheduleSave();
-  // recompute without losing focus flow
-  const active = document.activeElement;
-  render();
-  if(active && active.dataset){ // restore focus
-    const again = document.querySelector(`input.tm[data-d="${active.dataset.d}"][data-f="${active.dataset.f}"]`);
-    if(again) again.focus();
-  }
+  updateCalc(); // values refresh in place; the grid is never rebuilt on blur
 }
 function eligibleDay(dn, dir){
   // next/previous day that is a workday for this employee (skips Fri+Sat for a
