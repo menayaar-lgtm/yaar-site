@@ -136,6 +136,12 @@ td .hdate{font-size:11px; color:var(--ink-soft);}
 .badge.chag{background:var(--gold); color:#fff;}
 .badge.erev{background:#fff; color:var(--gold); border:1px solid var(--gold);}
 .badge.shb{background:#E9D9A8; color:#6B5410;}
+td .stk{display:flex; flex-direction:column; gap:3px; align-items:center;}
+button.segadd{
+  font-size:10px; padding:1px 7px; margin-top:3px; border-radius:10px; font-weight:500;
+  color:var(--blue); border:1px dashed var(--blue); background:transparent;
+}
+button.segadd:hover{background:var(--blue); color:#fff; border-style:solid;}
 td input.tm{
   width:64px; text-align:center; font-family:inherit; font-size:13.5px;
   border:1px solid var(--line); background:#fff; border-radius:6px; padding:5px 2px;
@@ -300,8 +306,10 @@ dialog .actions{display:flex; gap:10px; justify-content:flex-start; margin-top:1
     <b>דאבל-קליק</b> על שדה שעה ממלא את השעה הנוכחית · <span class="kbd">Tab</span> או <span class="kbd">Enter</span> עוברים כניסה ← יציאה ← יום העבודה הבא (מדלגים אוטומטית על סופ"ש, חגים וימי היעדרות) · <span class="kbd">Shift+Tab</span> חוזרים אחורה.
     <br>
     <b>שיטת החישוב:</b> שעתיים נוספות ראשונות ביום — 125%, מהשלישית — 150% (ס' 16 לחוק שעות עבודה ומנוחה) ·
+    <b>מכסה שבועית:</b> שעות מעבר ל-42 שעות רגילות בשבוע (א׳–ש׳) נחשבות נוספות גם אם לא חרגו מהתקן היומי, כולל רצף מסוף החודש הקודם ·
     עבודה בשבת/חג — 150% עד התקן, ואחריו 175% לשעתיים ו-200% הלאה (ע"ע 300175/97 כהן – עיריית נהריה) ·
-    חגים וערבי חג מזוהים אוטומטית לפי הלוח העברי; ניתן לשנות ידנית בעמודת "סוג יום".
+    חגים וערבי חג מזוהים אוטומטית לפי הלוח העברי; ניתן לשנות ידנית בעמודת "סוג יום" ·
+    <b>＋ כניסה/יציאה</b> בתא התאריך מוסיף עד 3 זוגות החתמה ביום.
   </p>
     </div><!-- /mainCol -->
   </div><!-- /layout -->
@@ -424,7 +432,8 @@ let curOrgId = null;
 let employees = [];             // {id,orgId,name,wage,week,std,fri,brk}
 let curEmpId = null;
 let curYear, curMonth;          // month 0-11
-let rows = {};                  // dayNum -> {type,in,out,brk}
+let rows = {};                  // dayNum -> {type,in,out,in2,out2,in3,out3,brk,seg}
+let prevRows = {};              // previous month rows (cross-month weekly 42h quota)
 let saveTimer = null;
 const memStore = {};            // fallback if window.storage unavailable
 
@@ -658,10 +667,13 @@ async function shiftMonth(dir){
 }
 
 async function loadMonth(){
-  rows = {};
+  rows = {}; prevRows = {};
   if(curEmpId){
     const saved = await stGet(monthKey());
     if(saved) rows = saved;
+    const pm = curMonth===0 ? {y:curYear-1, m:11} : {y:curYear, m:curMonth-1};
+    const savedPrev = await stGet(`data:${curEmpId}:${pm.y}-${pad(pm.m+1)}`);
+    if(savedPrev) prevRows = savedPrev;
     $('wage').value = emp().wage || '';
   } else {
     $('wage').value = '';
@@ -677,31 +689,47 @@ $('btnClear').addEventListener('click', async ()=>{
 });
 
 /* ================= day model & calculation ================= */
-function dayInfo(dnum){
-  const d = new Date(curYear, curMonth, dnum);
+function dayInfoDate(d){
   const wd = d.getDay();
   const chag = holidayName(d);
   const erev = erevName(d);
   const moed = cholHamoed(d);
   const e = emp() || {week:'5', std:516, fri:420};
-  const isWorkday = e.week==='6' ? wd<=5 : wd<=4;
+  const isWorkdayWk = e.week==='6' ? wd<=5 : wd<=4;
   return {
     d, wd,
     hebStr: hebFmtHe.format(d),
     chag, erev, moed,
     isShabbat: wd===6,
-    isWorkday: !chag && wd!==6 && isWorkday,
+    isWorkday: !chag && wd!==6 && isWorkdayWk,
     std: (wd===5 || erev) ? e.fri : e.std
   };
 }
+function dayInfo(dnum){ return dayInfoDate(new Date(curYear, curMonth, dnum)); }
 
-function calcRow(dnum){
-  const info = dayInfo(dnum);
-  const r = rows[dnum] || {};
+const SEG_IN  = ['in','in2','in3'];
+const SEG_OUT = ['out','out2','out3'];
+function segCount(r){
+  let n = 1;
+  if(r.in2||r.out2) n = 2;
+  if(r.in3||r.out3) n = 3;
+  return Math.max(n, r.seg||1);
+}
+function workedMinutes(r){
+  // sums up to 3 in/out pairs; null when no complete pair exists
+  let sum = 0, any = false;
+  for(let i=0;i<3;i++){
+    const a = parseTime(r[SEG_IN[i]]), b = parseTime(r[SEG_OUT[i]]);
+    if(a!=null && b!=null){ let t = b-a; if(t<0) t += 1440; sum += t; any = true; }
+  }
+  return any ? sum : null;
+}
+
+const WEEK_CAP = 2520; // 42 weekly hours (2018 extension order), in minutes
+
+function calcCore(info, r, weekReg){
   const type = r.type || 'auto';
   const out = {h100:0,h125:0,h150:0,s150:0,s175:0,s200:0,total:0,diff:null,absStd:0,info};
-
-  // manual overrides
   const isRest = type==='auto' ? (info.isShabbat || !!info.chag) : (type==='chag');
   const isAbs  = ['vac','sick','milu'].includes(type);
 
@@ -709,15 +737,14 @@ function calcRow(dnum){
     out.absStd = info.std;         // paid absence at 100%, tallied separately
     return out;
   }
-  const tin = parseTime(r.in), tout = parseTime(r.out);
-  if(tin==null || tout==null){
+  let total = workedMinutes(r);
+  if(total==null){
     if(info.isWorkday && type==='auto') out.diff = -info.std; // full missing day (informational)
     out.empty = true;
     return out;
   }
   let brk = parseTime(r.brk);
   if(brk==null) brk = (emp()?.brk||0);
-  let total = tout - tin; if(total<0) total += 1440;
   total = Math.max(0, total - brk);
   out.total = total;
 
@@ -728,13 +755,61 @@ function calcRow(dnum){
     out.s175 = Math.min(ot, 120);
     out.s200 = Math.max(0, ot-120);
   }else{
-    out.h100 = Math.min(total, std);
-    const ot = Math.max(0, total-std);
+    // 100% hours are capped BOTH by the daily standard AND by the 42h weekly quota:
+    // once 42 regular hours were accumulated this week, every further hour is overtime
+    const weeklyRoom = Math.max(0, WEEK_CAP - weekReg);
+    const regAllowed = Math.min(std, weeklyRoom);
+    out.h100 = Math.min(total, regAllowed);
+    const ot = Math.max(0, total - out.h100);
     out.h125 = Math.min(ot, 120);
     out.h150 = Math.max(0, ot-120);
     out.diff = total - std;
   }
   return out;
+}
+
+function computeAll(){
+  // walks from the Sunday at/before the 1st, pulling tail days from the previous
+  // month, so the weekly 42h quota carries in correctly across month boundaries
+  const daysInMonth = new Date(curYear, curMonth+1, 0).getDate();
+  const firstWd = new Date(curYear, curMonth, 1).getDay();
+  const calcs = {};
+  const T = {h100:0,h125:0,h150:0,s150:0,s175:0,s200:0,total:0,diff:0,absStd:0,stdSum:0,stdDays:0,workdays:0,chagDays:0,vac:0,sick:0,milu:0};
+  let weekReg = 0;
+  for(let dn = 1-firstWd; dn<=daysInMonth; dn++){
+    const date = new Date(curYear, curMonth, dn);
+    if(date.getDay()===0) weekReg = 0;               // Sunday starts a new week
+    const inMonth = dn>=1;
+    const r = inMonth ? (rows[dn]||{}) : (prevRows[date.getDate()]||{});
+    const info = dayInfoDate(date);
+    const c = calcCore(info, r, weekReg);
+    weekReg += c.h100;                               // only 100% hours fill the quota
+    if(!inMonth) continue;
+    calcs[dn] = c;
+    T.h100+=c.h100; T.h125+=c.h125; T.h150+=c.h150;
+    T.s150+=c.s150; T.s175+=c.s175; T.s200+=c.s200;
+    T.total+=c.total; T.absStd+=c.absStd;
+    if(info.isWorkday){ T.stdSum+=info.std; T.stdDays++; }
+    if(c.total>0) T.workdays++;
+    if(c.diff!=null && !c.empty) T.diff += c.diff;
+    if(r.type==='vac') T.vac++;
+    if(r.type==='sick') T.sick++;
+    if(r.type==='milu') T.milu++;
+    if(info.chag) T.chagDays++;
+  }
+  return {calcs, T};
+}
+
+function segStack(dn, r, side, dis){
+  const fields = side==='in' ? SEG_IN : SEG_OUT;
+  const n = segCount(r);
+  return '<div class="stk">' + fields.slice(0,n).map(f=>
+    `<input class="tm" data-d="${dn}" data-f="${f}" value="${r[f]||''}" placeholder="--:--" ${dis?'disabled':''}>`
+  ).join('') + '</div>';
+}
+function segStr(r, side){
+  const fields = side==='in' ? SEG_IN : SEG_OUT;
+  return fields.map(f=>r[f]).filter(Boolean).join(' | ');
 }
 
 /* ================= render ================= */
@@ -749,12 +824,11 @@ function render(){
 
   const body = $('gridBody');
   body.innerHTML = '';
-  const T = {h100:0,h125:0,h150:0,s150:0,s175:0,s200:0,total:0,diff:0,absStd:0, workdays:0, chagDays:0, vac:0, sick:0, milu:0, stdSum:0, stdDays:0};
-
   const demo = !curEmpId;
+  const {calcs, T} = computeAll();
 
   for(let dn=1; dn<=daysInMonth; dn++){
-    const c = calcRow(dn);
+    const c = calcs[dn];
     const info = c.info;
     const r = rows[dn] || {};
     const tr = document.createElement('tr');
@@ -777,6 +851,7 @@ function render(){
           <span class="gdate">${info.wd===6?'ש':dayLetters[info.wd]}׳ · ${pad(dn)}/${pad(curMonth+1)}</span>
           <span class="hdate">${info.hebStr}</span>
           ${badge}
+          ${!demo && !isAbs && segCount(r)<3 ? `<button class="segadd" data-d="${dn}" title="הוספת זוג כניסה/יציאה נוסף ליום זה">＋ כניסה/יציאה</button>` : ''}
         </div>
       </td>
       <td>
@@ -788,8 +863,8 @@ function render(){
           <option value="milu" ${dtype==='milu'?'selected':''}>מילואים</option>
         </select>
       </td>
-      <td><input class="tm" data-d="${dn}" data-f="in"  value="${r.in||''}"  placeholder="--:--" ${isAbs||demo?'disabled':''}></td>
-      <td><input class="tm" data-d="${dn}" data-f="out" value="${r.out||''}" placeholder="--:--" ${isAbs||demo?'disabled':''}></td>
+      <td>${segStack(dn, r, 'in',  isAbs||demo)}</td>
+      <td>${segStack(dn, r, 'out', isAbs||demo)}</td>
       <td><input class="tm" data-d="${dn}" data-f="brk" value="${r.brk||''}" placeholder="${emp()?.brk?fmtHM(emp().brk):'00:00'}" ${isAbs||demo?'disabled':''}></td>
       <td class="num muted">${info.isWorkday||info.isShabbat||info.chag? fmtDur(info.std):''}</td>
       <td class="num total">${isAbs? '<span style="color:var(--blue)">'+({vac:'חופשה',sick:'מחלה',milu:'מילואים'})[r.type]+'</span>' : decOrDash(c.total)}</td>
@@ -802,18 +877,6 @@ function render(){
       <td class="num ${c.diff>0?'pos':c.diff<0?'neg':''}">${c.diff!=null&&c.diff!==0&&!c.empty? (c.diff>0?'+':'')+fmtDec(c.diff) : (c.diff!=null&&c.empty&&c.diff<0?'':'')}</td>
     `;
     body.appendChild(tr);
-
-    // totals
-    T.h100+=c.h100; T.h125+=c.h125; T.h150+=c.h150;
-    T.s150+=c.s150; T.s175+=c.s175; T.s200+=c.s200;
-    T.total+=c.total; T.absStd+=c.absStd;
-    if(info.isWorkday){ T.stdSum += info.std; T.stdDays++; }
-    if(c.total>0) T.workdays++;
-    if(c.diff!=null && !c.empty) T.diff += c.diff;
-    if(r.type==='vac') T.vac++;
-    if(r.type==='sick') T.sick++;
-    if(r.type==='milu') T.milu++;
-    if(info.chag) T.chagDays++;
   }
 
   if(demo){
@@ -895,6 +958,17 @@ function bindGrid(){
       render();
     });
   });
+  document.querySelectorAll('#gridBody button.segadd').forEach(b=>{
+    b.addEventListener('click', e=>{
+      const d = e.currentTarget.dataset.d;
+      rows[d] = rows[d]||{};
+      rows[d].seg = Math.min(3, segCount(rows[d]) + 1);
+      scheduleSave();
+      render();
+      const el = document.querySelector(`input.tm[data-d="${d}"][data-f="${rows[d].seg===2?'in2':'in3'}"]`);
+      if(el) el.focus();
+    });
+  });
 }
 function setCell(inp){
   const d = inp.dataset.d, f = inp.dataset.f;
@@ -922,20 +996,28 @@ function eligibleDay(dn, dir){
   }
   return null;
 }
+const NAV_ORDER = ['in','out','in2','out2','in3','out3'];
 function navMove(cur, dir){
   const d = +cur.dataset.d, f = cur.dataset.f;
-  let td = d, tf = null;
-  if(dir>0){
-    if(f==='in') tf = 'out';
-    else { const nd = eligibleDay(d, 1); if(nd==null){ cur.blur(); return; } td = nd; tf = 'in'; }
+  const q = (dd,ff)=>document.querySelector(`input.tm[data-d="${dd}"][data-f="${ff}"]:not([disabled])`);
+  let target = null;
+  const i = NAV_ORDER.indexOf(f);
+  if(f==='brk'){
+    if(dir<0) target = {d, f:'out'};
+  }else if(dir>0){
+    for(let j=i+1; j<NAV_ORDER.length && !target; j++) if(q(d,NAV_ORDER[j])) target = {d, f:NAV_ORDER[j]};
+    if(!target){ const nd = eligibleDay(d, 1); if(nd!=null) target = {d:nd, f:'in'}; }
   }else{
-    if(f==='brk') tf = 'out';
-    else if(f==='out') tf = 'in';
-    else { const pd = eligibleDay(d, -1); if(pd==null){ cur.blur(); return; } td = pd; tf = 'out'; }
+    for(let j=i-1; j>=0 && !target; j--) if(q(d,NAV_ORDER[j])) target = {d, f:NAV_ORDER[j]};
+    if(!target){
+      const pd = eligibleDay(d, -1);
+      if(pd!=null) for(let j=NAV_ORDER.length-1; j>=0 && !target; j--) if(q(pd,NAV_ORDER[j])) target = {d:pd, f:NAV_ORDER[j]};
+    }
   }
   cur.blur(); // commits the value and re-renders the grid
+  if(!target) return;
   setTimeout(()=>{
-    const el = document.querySelector(`input.tm[data-d="${td}"][data-f="${tf}"]:not([disabled])`);
+    const el = q(target.d, target.f);
     if(el){ el.focus(); if(el.select) el.select(); el.scrollIntoView({block:'nearest'}); }
   }, 0);
 }
@@ -943,17 +1025,10 @@ function navMove(cur, dir){
 /* ================= export ================= */
 function collectMonth(){
   const daysInMonth = new Date(curYear, curMonth+1, 0).getDate();
-  const T = {h100:0,h125:0,h150:0,s150:0,s175:0,s200:0,total:0,diff:0,absStd:0,stdSum:0,stdDays:0,workdays:0};
+  const {calcs, T} = computeAll();
   const days = [];
   for(let dn=1; dn<=daysInMonth; dn++){
-    const c = calcRow(dn), info = c.info, r = rows[dn]||{};
-    days.push({dn, c, info, r});
-    T.h100+=c.h100; T.h125+=c.h125; T.h150+=c.h150;
-    T.s150+=c.s150; T.s175+=c.s175; T.s200+=c.s200;
-    T.total+=c.total; T.absStd+=c.absStd;
-    if(info.isWorkday){ T.stdSum+=info.std; T.stdDays++; }
-    if(c.total>0) T.workdays++;
-    if(c.diff!=null && !c.empty) T.diff += c.diff;
+    days.push({dn, c:calcs[dn], info:calcs[dn].info, r:rows[dn]||{}});
   }
   return {days, T};
 }
@@ -972,7 +1047,7 @@ $('btnExport').addEventListener('click', ()=>{
       dayLetters[info.wd],
       info.hebStr,
       dayMark(info,r),
-      r.in||'', r.out||'', r.brk||'',
+      segStr(r,'in'), segStr(r,'out'), r.brk||'',
       fmtDec(info.std),
       fmtDec(c.total), fmtDec(c.h100), fmtDec(c.h125), fmtDec(c.h150),
       fmtDec(c.s150), fmtDec(c.s175), fmtDec(c.s200),
@@ -1009,7 +1084,7 @@ $('btnPdf').addEventListener('click', ()=>{
     return `<tr${rest?' class="rest"':''}>
       <td>${dayLetters[info.wd]}׳ ${pad(dn)}/${pad(curMonth+1)}</td>
       <td class="mark">${dayMark(info,r)}</td>
-      <td>${abs?'':(r.in||'')}</td><td>${abs?'':(r.out||'')}</td><td>${abs?'':(r.brk||'')}</td>
+      <td>${abs?'':segStr(r,'in')}</td><td>${abs?'':segStr(r,'out')}</td><td>${abs?'':(r.brk||'')}</td>
       <td>${info.isWorkday||rest?fmtDur(info.std):''}</td>
       <td><b>${abs||dd(c.total)}</b></td>
       <td>${dd(c.h100)}</td><td>${dd(c.h125)}</td><td>${dd(c.h150)}</td>
