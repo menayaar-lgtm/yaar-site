@@ -199,6 +199,7 @@ dialog .actions{display:flex; gap:10px; justify-content:flex-start; margin-top:1
 
     <div style="margin-inline-start:auto; display:flex; gap:8px; align-items:flex-end;">
       <button id="btnClear">ניקוי החודש</button>
+      <button id="btnPdf">דוח PDF 🖨</button>
       <button id="btnExport" class="primary">ייצוא לאקסל (CSV)</button>
     </div>
   </div>
@@ -843,29 +844,139 @@ function navMove(cur, dir){
 }
 
 /* ================= export ================= */
-$('btnExport').addEventListener('click', ()=>{
-  if(!emp()) return;
+function collectMonth(){
   const daysInMonth = new Date(curYear, curMonth+1, 0).getDate();
-  const lines = [['תאריך','יום','תאריך עברי','סימון','כניסה','יציאה','הפסקה','תקן','סה"כ','100%','125%','150%','שבת/חג 150%','175%','200%','חוסר/עודף']];
+  const T = {h100:0,h125:0,h150:0,s150:0,s175:0,s200:0,total:0,diff:0,absStd:0,stdSum:0,stdDays:0,workdays:0};
+  const days = [];
   for(let dn=1; dn<=daysInMonth; dn++){
     const c = calcRow(dn), info = c.info, r = rows[dn]||{};
+    days.push({dn, c, info, r});
+    T.h100+=c.h100; T.h125+=c.h125; T.h150+=c.h150;
+    T.s150+=c.s150; T.s175+=c.s175; T.s200+=c.s200;
+    T.total+=c.total; T.absStd+=c.absStd;
+    if(info.isWorkday){ T.stdSum+=info.std; T.stdDays++; }
+    if(c.total>0) T.workdays++;
+    if(c.diff!=null && !c.empty) T.diff += c.diff;
+  }
+  return {days, T};
+}
+function dayMark(info, r){
+  return info.chag || (info.isShabbat?'שבת':'') || info.erev || info.moed
+    || ({vac:'חופשה',sick:'מחלה',milu:'מילואים'})[r.type] || '';
+}
+
+$('btnExport').addEventListener('click', ()=>{
+  if(!emp()) return;
+  const {days, T} = collectMonth();
+  const lines = [['תאריך','יום','תאריך עברי','סימון','כניסה','יציאה','הפסקה','תקן','סה"כ','100%','125%','150%','שבת/חג 150%','175%','200%','חוסר/עודף']];
+  days.forEach(({dn,c,info,r})=>{
     lines.push([
       `${pad(dn)}/${pad(curMonth+1)}/${curYear}`,
       dayLetters[info.wd],
       info.hebStr,
-      info.chag || (info.isShabbat?'שבת':'') || info.erev || info.moed || ({vac:'חופשה',sick:'מחלה',milu:'מילואים'})[r.type] || '',
+      dayMark(info,r),
       r.in||'', r.out||'', r.brk||'',
       fmtDur(info.std),
       fmtDur(c.total), fmtDur(c.h100), fmtDur(c.h125), fmtDur(c.h150),
       fmtDur(c.s150), fmtDur(c.s175), fmtDur(c.s200),
       c.diff!=null?fmtDur(c.diff):''
     ]);
+  });
+  lines.push(['סה"כ חודשי','','','','','','', fmtDur(T.stdSum),
+    fmtDur(T.total), fmtDur(T.h100), fmtDur(T.h125), fmtDur(T.h150),
+    fmtDur(T.s150), fmtDur(T.s175), fmtDur(T.s200), fmtDur(T.diff)]);
+  lines.push(['היעדרות בתשלום (100%)','','','','','','','', fmtDur(T.absStd)]);
+  const wage = emp().wage||0;
+  if(wage>0){
+    const pay = (T.h100/60)*wage + (T.h125/60)*wage*1.25 + (T.h150/60)*wage*1.5
+      + (T.s150/60)*wage*1.5 + (T.s175/60)*wage*1.75 + (T.s200/60)*wage*2 + (T.absStd/60)*wage;
+    lines.push([`שכר ברוטו משוער (לפי ${wage} ₪ לשעה)`,'','','','','','','', pay.toFixed(2)+' ₪']);
   }
   const csv = '\uFEFF' + lines.map(l=>l.map(x=>`"${String(x).replace(/"/g,'""')}"`).join(',')).join('\r\n');
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));
   a.download = `נוכחות_${org()?org().name+'_':''}${emp().name}_${pad(curMonth+1)}-${curYear}.csv`;
   a.click();
+});
+
+$('btnPdf').addEventListener('click', ()=>{
+  if(!emp()) return;
+  const {days, T} = collectMonth();
+  const wage = emp().wage||0;
+  const pay = wage>0 ? (T.h100/60)*wage + (T.h125/60)*wage*1.25 + (T.h150/60)*wage*1.5
+    + (T.s150/60)*wage*1.5 + (T.s175/60)*wage*1.75 + (T.s200/60)*wage*2 + (T.absStd/60)*wage : null;
+  const dd = m => m>0 ? fmtDur(m) : '';
+  const rowsHtml = days.map(({dn,c,info,r})=>{
+    const rest = info.chag || info.isShabbat;
+    const abs = ({vac:'חופשה',sick:'מחלה',milu:'מילואים'})[r.type];
+    return `<tr${rest?' class="rest"':''}>
+      <td>${dayLetters[info.wd]}׳ ${pad(dn)}/${pad(curMonth+1)}</td>
+      <td class="mark">${dayMark(info,r)}</td>
+      <td>${abs?'':(r.in||'')}</td><td>${abs?'':(r.out||'')}</td><td>${abs?'':(r.brk||'')}</td>
+      <td>${info.isWorkday||rest?fmtDur(info.std):''}</td>
+      <td><b>${abs||dd(c.total)}</b></td>
+      <td>${dd(c.h100)}</td><td>${dd(c.h125)}</td><td>${dd(c.h150)}</td>
+      <td>${dd(c.s150)}</td><td>${dd(c.s175)}</td><td>${dd(c.s200)}</td>
+      <td>${c.diff!=null&&c.diff!==0&&!c.empty?(c.diff>0?'+':'')+fmtDur(c.diff):''}</td>
+    </tr>`;
+  }).join('');
+  const now = new Date();
+  const html = `<!DOCTYPE html><html lang="he" dir="rtl"><head><meta charset="utf-8">
+<title>דוח נוכחות — ${emp().name} — ${monthNames[curMonth]} ${curYear}</title>
+<style>
+  *{box-sizing:border-box;} body{font-family:Arial,'Segoe UI',sans-serif; color:#111; margin:20px; font-size:11px;}
+  .head{display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #17233B; padding-bottom:8px;}
+  h1{font-size:18px; margin:0;} .meta{font-size:11px; color:#444; line-height:1.7;}
+  table{border-collapse:collapse; width:100%; margin-top:10px;}
+  th,td{border:1px solid #aaa; padding:2.5px 4px; text-align:center; font-variant-numeric:tabular-nums;}
+  th{background:#e9edf5; font-size:10px;}
+  td.mark{font-size:9.5px;}
+  tr.rest td{background:#f6efd9;}
+  tfoot td{font-weight:bold; background:#e5e5e5;}
+  .sum{display:flex; gap:14px; margin-top:12px; flex-wrap:wrap;}
+  .box{border:1px solid #999; border-radius:4px; padding:6px 12px; font-size:11px;}
+  .box b{font-size:13px; display:block;}
+  .sig{margin-top:26px; display:flex; gap:70px; font-size:11px;}
+  .sig div{border-top:1px solid #333; padding-top:4px; min-width:150px; text-align:center;}
+  @page{size:A4 landscape; margin:10mm;}
+  @media print{ body{margin:0;} tr.rest td{-webkit-print-color-adjust:exact; print-color-adjust:exact;} }
+</style></head><body>
+<div class="head">
+  <div>
+    <h1>דוח נוכחות — ${monthNames[curMonth]} ${curYear}</h1>
+    <div class="meta">מעסיק: ${org()?org().name:''}${org()&&org().hp?' · ח.פ '+org().hp:''}<br>
+    עובד: ${emp().name} · שבוע עבודה: ${emp().week} ימים · תקן יומי: ${fmtDur(emp().std)}${wage?' · תעריף: '+wage+' ₪ לשעה':''}</div>
+  </div>
+  <div class="meta">הופק: ${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}</div>
+</div>
+<table>
+  <thead><tr>
+    <th>תאריך</th><th>סימון</th><th>כניסה</th><th>יציאה</th><th>הפסקה</th><th>תקן</th><th>סה"כ</th>
+    <th>100%</th><th>125%</th><th>150%</th><th>שבת/חג 150%</th><th>175%</th><th>200%</th><th>חוסר/עודף</th>
+  </tr></thead>
+  <tbody>${rowsHtml}</tbody>
+  <tfoot><tr>
+    <td colspan="5">סה"כ חודשי</td>
+    <td>${fmtDur(T.stdSum)}</td><td>${fmtDur(T.total)}</td>
+    <td>${fmtDur(T.h100)}</td><td>${fmtDur(T.h125)}</td><td>${fmtDur(T.h150)}</td>
+    <td>${fmtDur(T.s150)}</td><td>${fmtDur(T.s175)}</td><td>${fmtDur(T.s200)}</td>
+    <td>${T.diff!==0?(T.diff>0?'+':'')+fmtDur(T.diff):''}</td>
+  </tr></tfoot>
+</table>
+<div class="sum">
+  <div class="box">תקן חודשי<b>${fmtDur(T.stdSum)} (${T.stdDays} ימים)</b></div>
+  <div class="box">שעות בפועל<b>${fmtDur(T.total)}</b></div>
+  <div class="box">ימי עבודה<b>${T.workdays}</b></div>
+  <div class="box">היעדרות בתשלום<b>${fmtDur(T.absStd)}</b></div>
+  ${pay!=null?`<div class="box">שכר ברוטו משוער<b>${pay.toLocaleString('he-IL',{maximumFractionDigits:0})} ₪</b></div>`:''}
+</div>
+<div class="sig"><div>תאריך</div><div>שם המאשר/ת</div><div>חתימה</div></div>
+<script>window.onload=function(){ setTimeout(function(){ window.print(); }, 300); }<\/script>
+</body></html>`;
+  const w = window.open('', '_blank');
+  if(!w){ alert('הדפדפן חסם את חלון הדוח — אפשרו חלונות קופצים לאתר זה ונסו שוב.'); return; }
+  w.document.write(html);
+  w.document.close();
 });
 
 /* ================= init ================= */
