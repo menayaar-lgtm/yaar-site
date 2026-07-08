@@ -68,6 +68,37 @@ button.ghost:hover{color:var(--red);}
 .month-nav button{padding:6px 12px; font-size:16px; line-height:1;}
 .month-nav .today-btn{font-size:12px; padding:7px 10px; color:var(--teal); border-color:var(--teal); visibility:hidden;}
 
+/* ---- layout with employee side panel ---- */
+.layout{display:flex; gap:14px; align-items:flex-start;}
+.empPanel{
+  width:212px; flex-shrink:0; background:var(--card); border:1px solid var(--line);
+  border-radius:var(--radius); padding:12px; position:sticky; top:12px;
+  max-height:calc(100vh - 40px); overflow:auto;
+}
+.empPanel .ph{
+  font-family:'Frank Ruhl Libre', serif; font-weight:700; font-size:15px; margin-bottom:8px;
+  border-bottom:2px solid var(--ink); padding-bottom:6px;
+}
+.empPanel .esearch{
+  width:100%; font-family:inherit; font-size:13px; padding:7px 10px;
+  border:1px solid var(--line); border-radius:7px; margin-bottom:8px;
+}
+.emp-item{
+  display:block; width:100%; text-align:right; padding:8px 11px; margin-bottom:2px;
+  border:none; background:transparent; border-radius:7px; cursor:pointer;
+  font-family:inherit; font-size:13.5px; color:var(--ink);
+}
+.emp-item:hover{background:var(--teal-soft); color:var(--teal); border:none;}
+.emp-item.active{background:var(--ink); color:#fff; font-weight:600;}
+.emp-item.active:hover{background:var(--ink); color:#fff;}
+.emp-empty{font-size:12px; color:#9AA3B5; padding:10px 4px;}
+.empPanel .addbtn{width:100%; margin-top:8px; color:var(--teal); border-color:var(--teal); font-size:12.5px;}
+.mainCol{flex:1; min-width:0;}
+@media (max-width:900px){
+  .layout{flex-direction:column;}
+  .empPanel{width:100%; position:static; max-height:none;}
+}
+
 /* ---- table ---- */
 .grid-card{background:var(--card); border:1px solid var(--line); border-radius:var(--radius); overflow:auto;}
 table{border-collapse:collapse; width:100%; min-width:1080px;}
@@ -204,8 +235,17 @@ dialog .actions{display:flex; gap:10px; justify-content:flex-start; margin-top:1
     </div>
   </div>
 
-  <!-- ===== Grid ===== -->
-  <div class="grid-card">
+  <div class="layout">
+    <aside class="empPanel">
+      <div class="ph" id="empPanelTitle">רשימת עובדים</div>
+      <input class="esearch" id="empSearch" placeholder="🔍 חיפוש עובד...">
+      <div id="empList"></div>
+      <button class="addbtn" id="btnAddEmp2">＋ עובד חדש</button>
+    </aside>
+
+    <div class="mainCol">
+      <!-- ===== Grid ===== -->
+      <div class="grid-card">
     <table id="grid">
       <thead>
         <tr>
@@ -241,6 +281,8 @@ dialog .actions{display:flex; gap:10px; justify-content:flex-start; margin-top:1
     עבודה בשבת/חג — 150% עד התקן, ואחריו 175% לשעתיים ו-200% הלאה (ע"ע 300175/97 כהן – עיריית נהריה) ·
     חגים וערבי חג מזוהים אוטומטית לפי הלוח העברי; ניתן לשנות ידנית בעמודת "סוג יום".
   </p>
+    </div><!-- /mainCol -->
+  </div><!-- /layout -->
 
 </div>
 
@@ -477,7 +519,37 @@ function renderEmpSelect(){
     sel.appendChild(o);
   });
   sel.value = curEmpId;
+  renderEmpPanel();
 }
+
+function renderEmpPanel(){
+  $('empPanelTitle').textContent = org() ? `עובדי ${org().name}` : 'רשימת עובדים';
+  const q = ($('empSearch').value||'').trim();
+  const box = $('empList');
+  box.innerHTML = '';
+  const all = empsOfOrg();
+  if(!all.length){
+    box.innerHTML = `<div class="emp-empty">${curOrgId?'אין עובדים למעסיק זה עדיין':'בחרו מעסיק כדי לראות עובדים'}</div>`;
+    return;
+  }
+  all.filter(e=>!q || e.name.includes(q)).forEach(e=>{
+    const b = document.createElement('button');
+    b.className = 'emp-item' + (e.id===curEmpId ? ' active' : '');
+    b.textContent = e.name;
+    b.addEventListener('click', async ()=>{
+      if(curEmpId === e.id) return;
+      curEmpId = e.id;
+      renderEmpSelect();
+      await loadMonth();
+    });
+    box.appendChild(b);
+  });
+}
+$('empSearch').addEventListener('input', renderEmpPanel);
+$('btnAddEmp2').addEventListener('click', ()=>{
+  if(!curOrgId){ openOrgDialog(null); return; }
+  openEmpDialog(null);
+});
 
 let editingEmpId = null;
 function openEmpDialog(e){
@@ -536,6 +608,7 @@ $('btnDelEmp').addEventListener('click', async ()=>{
 });
 $('empSelect').addEventListener('change', async e=>{
   curEmpId = e.target.value || null;
+  renderEmpPanel();
   await loadMonth();
 });
 $('wage').addEventListener('change', async e=>{
