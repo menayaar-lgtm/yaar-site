@@ -142,10 +142,11 @@ button.segadd{
   color:var(--blue); border:1px dashed var(--blue); background:transparent;
 }
 button.segadd:hover{background:var(--blue); color:#fff; border-style:solid;}
-td .srow{display:flex; align-items:center; gap:2px;}
+td .srow{display:flex; align-items:center; justify-content:center; position:relative;}
 button.segdel{
   border:none; background:transparent; color:var(--red); font-size:12px;
-  padding:0 3px; cursor:pointer; line-height:1;
+  padding:1px 3px; cursor:pointer; line-height:1;
+  position:absolute; inset-inline-start:100%; top:50%; transform:translateY(-50%);
 }
 button.segdel:hover{color:#fff; background:var(--red); border-radius:50%;}
 td input.tm{
@@ -337,7 +338,7 @@ dialog .actions{display:flex; gap:10px; justify-content:flex-start; margin-top:1
     <div class="field"><label>תקן יומי (יום רגיל)</label><input class="tm" id="empStd" value="08:36"></div>
     <div class="field"><label>תקן שישי / ערב חג</label><input class="tm" id="empFri" value="07:00"></div>
   </div>
-  <div class="field"><label>ניכוי הפסקה אוטומטי (דקות, 0 = ללא)</label><input type="number" id="empBreak" min="0" step="5" value="0"></div>
+  <div class="field"><label>ניכוי הפסקה אוטומטי לכל יום (דקות או שעה:דקות — למשל 30 או 0:30, 0 = ללא)</label><input id="empBreak" placeholder="30 או 0:30" value="0"></div>
   <div class="actions">
     <button class="primary" id="empSave">שמירה</button>
     <button id="empCancel">ביטול</button>
@@ -616,7 +617,7 @@ $('empSave').addEventListener('click', async ()=>{
     week: $('empWeek').value,
     std:  parseTime($('empStd').value) ?? 516,
     fri:  parseTime($('empFri').value) ?? 420,
-    brk:  parseInt($('empBreak').value)||0
+    brk:  (function(v){ v=String(v||'').trim(); if(!v) return 0; if(v.includes(':')||v.includes('.')) return (parseTime(v)||0); return (parseInt(v)||0); })($('empBreak').value)
   };
   if(editingEmpId){
     Object.assign(employees.find(e=>e.id===editingEmpId), data);
@@ -675,6 +676,7 @@ async function shiftMonth(dir){
 
 async function loadMonth(){
   rows = {}; prevRows = {};
+  stSet('uistate', {orgId:curOrgId, empId:curEmpId, y:curYear, m:curMonth});
   if(curEmpId){
     const saved = await stGet(monthKey());
     if(saved) rows = saved;
@@ -906,7 +908,7 @@ function render(){
       </td>
       <td>${segStack(dn, r, 'in',  dis)}</td>
       <td>${segStack(dn, r, 'out', dis)}</td>
-      <td><input class="tm" data-d="${dn}" data-f="brk" value="${r.brk||''}" placeholder="${emp()?.brk?fmtHM(emp().brk):'00:00'}" ${dis?'disabled':''}></td>
+      <td><input class="tm" data-d="${dn}" data-f="brk" value="${r.brk||''}" placeholder="${emp()?.brk?fmtHM(emp().brk)+' אוט׳':'00:00'}" ${dis?'disabled':''}></td>
       <td class="num muted">${info.isWorkday||info.isShabbat||info.chag? fmtDur(info.std):''}</td>
       <td class="num total" data-f2="total">${isAbs? '<span style="color:var(--blue)">'+({vac:'חופשה',sick:'מחלה',milu:'מילואים'})[r.type]+'</span>' : decOrDash(c.total)}</td>
       <td class="num" data-f2="h100">${decOrDash(c.h100)}</td>
@@ -1247,6 +1249,18 @@ $('btnPdf').addEventListener('click', ()=>{
 
   curOrgId = employers[0]?.id || null;
   curEmpId = empsOfOrg()[0]?.id || null;
+
+  // restore last position (employer, employee, month) from the previous session
+  const ui = await stGet('uistate');
+  if(ui){
+    if(employers.find(o=>o.id===ui.orgId)) curOrgId = ui.orgId;
+    const cand = employees.find(e=>e.id===ui.empId && e.orgId===curOrgId);
+    curEmpId = cand ? cand.id : (empsOfOrg()[0]?.id || null);
+    if(Number.isInteger(ui.y) && Number.isInteger(ui.m) && ui.m>=0 && ui.m<=11){
+      curYear = ui.y; curMonth = ui.m;
+    }
+  }
+
   renderOrgSelect();
   renderEmpSelect();
   await loadMonth();
