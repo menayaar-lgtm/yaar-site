@@ -697,7 +697,9 @@ $('btnLock').addEventListener('click', async ()=>{
     delete rows._locked;
   }else{
     if(!confirm('לנעול את החודש?\nכל שדות ההזנה יהפכו לקריאה בלבד עד ביטול הנעילה.')) return;
-    rows._locked = { at: new Date().toISOString() };
+    const e = emp();
+    rows._locked = { at: new Date().toISOString(),
+      emp: {week:e.week, std:e.std, fri:e.fri, brk:e.brk||0, wage:e.wage||0} };
   }
   await stSet(monthKey(), rows);
   render();
@@ -712,12 +714,20 @@ $('btnClear').addEventListener('click', async ()=>{
 });
 
 /* ================= day model & calculation ================= */
-function dayInfoDate(d){
+function effSettings(mrows){
+  // a locked month keeps the employee terms that were in force when it was locked
+  if(mrows && mrows._locked && mrows._locked.emp) return mrows._locked.emp;
+  const e = emp();
+  return e ? {week:e.week, std:e.std, fri:e.fri, brk:e.brk||0, wage:e.wage||0}
+           : {week:'5', std:516, fri:420, brk:0, wage:0};
+}
+
+function dayInfoDate(d, S){
   const wd = d.getDay();
   const chag = holidayName(d);
   const erev = erevName(d);
   const moed = cholHamoed(d);
-  const e = emp() || {week:'5', std:516, fri:420};
+  const e = S || effSettings(rows);
   const isWorkdayWk = e.week==='6' ? wd<=5 : wd<=4;
   return {
     d, wd,
@@ -728,7 +738,7 @@ function dayInfoDate(d){
     std: (wd===5 || erev) ? e.fri : e.std
   };
 }
-function dayInfo(dnum){ return dayInfoDate(new Date(curYear, curMonth, dnum)); }
+function dayInfo(dnum){ return dayInfoDate(new Date(curYear, curMonth, dnum), effSettings(rows)); }
 
 const SEG_IN  = ['in','in2','in3'];
 const SEG_OUT = ['out','out2','out3'];
@@ -750,7 +760,7 @@ function workedMinutes(r){
 
 const WEEK_CAP = 2520; // 42 weekly hours (2018 extension order), in minutes
 
-function calcCore(info, r, weekReg){
+function calcCore(info, r, weekReg, S){
   const type = r.type || 'auto';
   const out = {h100:0,h125:0,h150:0,s150:0,s175:0,s200:0,total:0,diff:null,absStd:0,info};
   const isRest = type==='auto' ? (info.isShabbat || !!info.chag) : (type==='chag');
@@ -767,7 +777,7 @@ function calcCore(info, r, weekReg){
     return out;
   }
   let brk = parseTime(r.brk);
-  if(brk==null) brk = (emp()?.brk||0);
+  if(brk==null) brk = ((S || effSettings(rows)).brk || 0);
   total = Math.max(0, total - brk);
   out.total = total;
 
@@ -799,13 +809,15 @@ function computeAll(){
   const calcs = {};
   const T = {h100:0,h125:0,h150:0,s150:0,s175:0,s200:0,total:0,diff:0,absStd:0,stdSum:0,stdDays:0,workdays:0,chagDays:0,vac:0,sick:0,milu:0};
   let weekReg = 0;
+  const Scur = effSettings(rows), Sprev = effSettings(prevRows);
   for(let dn = 1-firstWd; dn<=daysInMonth; dn++){
     const date = new Date(curYear, curMonth, dn);
     if(date.getDay()===0) weekReg = 0;               // Sunday starts a new week
     const inMonth = dn>=1;
     const r = inMonth ? (rows[dn]||{}) : (prevRows[date.getDate()]||{});
-    const info = dayInfoDate(date);
-    const c = calcCore(info, r, weekReg);
+    const S = inMonth ? Scur : Sprev;
+    const info = dayInfoDate(date, S);
+    const c = calcCore(info, r, weekReg, S);
     weekReg += c.h100;                               // only 100% hours fill the quota
     if(!inMonth) continue;
     calcs[dn] = c;
@@ -864,8 +876,13 @@ function render(){
   body.innerHTML = '';
   const demo = !curEmpId;
   const locked = !!rows._locked;
+  const S = effSettings(rows);
   $('btnLock').textContent = locked ? '🔓 ביטול נעילה' : '🔒 נעילת חודש';
   $('btnLock').style.visibility = demo ? 'hidden' : 'visible';
+  if(!demo){
+    $('wage').disabled = locked;
+    $('wage').value = locked ? (S.wage||'') : (emp().wage||'');
+  } else { $('wage').disabled = false; }
   const {calcs, T} = computeAll();
 
   for(let dn=1; dn<=daysInMonth; dn++){
@@ -908,7 +925,7 @@ function render(){
       </td>
       <td>${segStack(dn, r, 'in',  dis)}</td>
       <td>${segStack(dn, r, 'out', dis)}</td>
-      <td><input class="tm" data-d="${dn}" data-f="brk" value="${r.brk||''}" placeholder="${emp()?.brk?fmtHM(emp().brk)+' אוט׳':'00:00'}" ${dis?'disabled':''}></td>
+      <td><input class="tm" data-d="${dn}" data-f="brk" value="${r.brk||''}" placeholder="${S.brk?fmtHM(S.brk)+' אוט׳':'00:00'}" ${dis?'disabled':''}></td>
       <td class="num muted">${info.isWorkday||info.isShabbat||info.chag? fmtDur(info.std):''}</td>
       <td class="num total" data-f2="total">${isAbs? '<span style="color:var(--blue)">'+({vac:'חופשה',sick:'מחלה',milu:'מילואים'})[r.type]+'</span>' : decOrDash(c.total)}</td>
       <td class="num" data-f2="h100">${decOrDash(c.h100)}</td>
@@ -982,7 +999,7 @@ function updateCalc(){
 }
 
 function renderSummary(T){
-  const wage = emp()?.wage || 0;
+  const wage = curEmpId ? (effSettings(rows).wage || 0) : 0;
   const hrs = m => m/60;
   const pay = wage>0
     ? hrs(T.h100)*wage + hrs(T.h125)*wage*1.25 + hrs(T.h150)*wage*1.5
@@ -1136,7 +1153,7 @@ $('btnExport').addEventListener('click', ()=>{
     fmtDec(T.total), fmtDec(T.h100), fmtDec(T.h125), fmtDec(T.h150),
     fmtDec(T.s150), fmtDec(T.s175), fmtDec(T.s200), fmtDec(T.diff)]);
   lines.push(['היעדרות בתשלום (100%)','','','','','','','', fmtDec(T.absStd)]);
-  const wage = emp().wage||0;
+  const wage = effSettings(rows).wage||0;
   if(wage>0){
     const pay = (T.h100/60)*wage + (T.h125/60)*wage*1.25 + (T.h150/60)*wage*1.5
       + (T.s150/60)*wage*1.5 + (T.s175/60)*wage*1.75 + (T.s200/60)*wage*2 + (T.absStd/60)*wage;
@@ -1152,7 +1169,8 @@ $('btnExport').addEventListener('click', ()=>{
 $('btnPdf').addEventListener('click', ()=>{
   if(!emp()) return;
   const {days, T} = collectMonth();
-  const wage = emp().wage||0;
+  const S = effSettings(rows);
+  const wage = S.wage||0;
   const pay = wage>0 ? (T.h100/60)*wage + (T.h125/60)*wage*1.25 + (T.h150/60)*wage*1.5
     + (T.s150/60)*wage*1.5 + (T.s175/60)*wage*1.75 + (T.s200/60)*wage*2 + (T.absStd/60)*wage : null;
   const dd = m => m>0 ? fmtDec(m) : '';
@@ -1195,7 +1213,7 @@ $('btnPdf').addEventListener('click', ()=>{
   <div>
     <h1>דוח נוכחות — ${monthNames[curMonth]} ${curYear}</h1>
     <div class="meta">מעסיק: ${org()?org().name:''}${org()&&org().hp?' · ח.פ '+org().hp:''}<br>
-    עובד: ${emp().name} · שבוע עבודה: ${emp().week} ימים · תקן יומי: ${fmtDur(emp().std)}${wage?' · תעריף: '+wage+' ₪ לשעה':''}</div>
+    עובד: ${emp().name} · שבוע עבודה: ${S.week} ימים · תקן יומי: ${fmtDur(S.std)}${wage?' · תעריף: '+wage+' ₪ לשעה':''}</div>
   </div>
   <div class="meta">הופק: ${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}${rows._locked?'<br><b>🔒 חודש נעול — הדיווחים קובעו</b>':''}</div>
 </div>
