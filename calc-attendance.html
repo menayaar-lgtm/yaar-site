@@ -234,7 +234,7 @@ dialog .actions{display:flex; gap:10px; justify-content:flex-start; margin-top:1
 
   <p class="hint">
     <b>קיצורי הזנה:</b> הקלידו <span class="kbd">8</span> ← 08:00 · <span class="kbd">830</span> ← 08:30 · <span class="kbd">8.15</span> ← 08:15 ·
-    <b>דאבל-קליק</b> על שדה שעה ממלא את השעה הנוכחית · <span class="kbd">Enter</span> עובר לשדה הבא.
+    <b>דאבל-קליק</b> על שדה שעה ממלא את השעה הנוכחית · <span class="kbd">Tab</span> או <span class="kbd">Enter</span> עוברים כניסה ← יציאה ← יום העבודה הבא (מדלגים אוטומטית על סופ"ש, חגים וימי היעדרות) · <span class="kbd">Shift+Tab</span> חוזרים אחורה.
     <br>
     <b>שיטת החישוב:</b> שעתיים נוספות ראשונות ביום — 125%, מהשלישית — 150% (ס' 16 לחוק שעות עבודה ומנוחה) ·
     עבודה בשבת/חג — 150% עד התקן, ואחריו 175% לשעתיים ו-200% הלאה (ע"ע 300175/97 כהן – עיריית נהריה) ·
@@ -777,7 +777,10 @@ function bindGrid(){
       setCell(e.target);
     });
     inp.addEventListener('keydown', e=>{
-      if(e.key==='Enter'){ e.preventDefault(); focusNext(e.target); }
+      if(e.key==='Enter' || e.key==='Tab'){
+        e.preventDefault();
+        navMove(e.target, e.shiftKey ? -1 : 1);
+      }
     });
     inp.addEventListener('dblclick', e=>{
       const now = new Date();
@@ -808,13 +811,34 @@ function setCell(inp){
     if(again) again.focus();
   }
 }
-function focusNext(cur){
-  const all = [...document.querySelectorAll('#gridBody input.tm:not([disabled])')];
-  const i = all.indexOf(cur);
-  cur.blur();
+function eligibleDay(dn, dir){
+  // next/previous day that is a workday for this employee (skips Fri+Sat for a
+  // 5-day week, Sat for a 6-day week, holidays, and vacation/sick/reserve days)
+  const daysInMonth = new Date(curYear, curMonth+1, 0).getDate();
+  let d = dn + dir;
+  while(d>=1 && d<=daysInMonth){
+    const info = dayInfo(d);
+    const abs = ['vac','sick','milu'].includes((rows[d]||{}).type);
+    if(info.isWorkday && !abs) return d;
+    d += dir;
+  }
+  return null;
+}
+function navMove(cur, dir){
+  const d = +cur.dataset.d, f = cur.dataset.f;
+  let td = d, tf = null;
+  if(dir>0){
+    if(f==='in') tf = 'out';
+    else { const nd = eligibleDay(d, 1); if(nd==null){ cur.blur(); return; } td = nd; tf = 'in'; }
+  }else{
+    if(f==='brk') tf = 'out';
+    else if(f==='out') tf = 'in';
+    else { const pd = eligibleDay(d, -1); if(pd==null){ cur.blur(); return; } td = pd; tf = 'out'; }
+  }
+  cur.blur(); // commits the value and re-renders the grid
   setTimeout(()=>{
-    const all2 = [...document.querySelectorAll('#gridBody input.tm:not([disabled])')];
-    if(all2[i+1]) all2[i+1].focus();
+    const el = document.querySelector(`input.tm[data-d="${td}"][data-f="${tf}"]:not([disabled])`);
+    if(el){ el.focus(); if(el.select) el.select(); el.scrollIntoView({block:'nearest'}); }
   }, 0);
 }
 
