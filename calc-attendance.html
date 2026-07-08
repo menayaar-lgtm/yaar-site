@@ -142,6 +142,12 @@ button.segadd{
   color:var(--blue); border:1px dashed var(--blue); background:transparent;
 }
 button.segadd:hover{background:var(--blue); color:#fff; border-style:solid;}
+td .srow{display:flex; align-items:center; gap:2px;}
+button.segdel{
+  border:none; background:transparent; color:var(--red); font-size:12px;
+  padding:0 3px; cursor:pointer; line-height:1;
+}
+button.segdel:hover{color:#fff; background:var(--red); border-radius:50%;}
 td input.tm{
   width:64px; text-align:center; font-family:inherit; font-size:13.5px;
   border:1px solid var(--line); background:#fff; border-radius:6px; padding:5px 2px;
@@ -257,6 +263,7 @@ dialog .actions{display:flex; gap:10px; justify-content:flex-start; margin-top:1
     </div>
 
     <div style="margin-inline-start:auto; display:flex; gap:8px; align-items:flex-end;">
+      <button id="btnLock">🔒 נעילת חודש</button>
       <button id="btnClear">ניקוי החודש</button>
       <button id="btnPdf">דוח PDF 🖨</button>
       <button id="btnExport" class="primary">ייצוא לאקסל (CSV)</button>
@@ -681,7 +688,21 @@ async function loadMonth(){
   render();
 }
 
+$('btnLock').addEventListener('click', async ()=>{
+  if(!emp()) return;
+  if(rows._locked){
+    if(!confirm('לבטל את נעילת החודש ולאפשר עריכה מחדש?\n(בגרסת האתר הנוכחית הנעילה היא אמצעי עבודה; הרשאות אמיתיות למניעת פתיחה יגיעו עם מערכת המשתמשים)')) return;
+    delete rows._locked;
+  }else{
+    if(!confirm('לנעול את החודש?\nכל שדות ההזנה יהפכו לקריאה בלבד עד ביטול הנעילה.')) return;
+    rows._locked = { at: new Date().toISOString() };
+  }
+  await stSet(monthKey(), rows);
+  render();
+});
+
 $('btnClear').addEventListener('click', async ()=>{
+  if(rows._locked){ alert('החודש נעול — יש לבטל את הנעילה לפני ניקוי.'); return; }
   if(!confirm('לנקות את כל השעות שהוזנו בחודש זה?')) return;
   rows = {};
   await stSet(monthKey(), rows);
@@ -803,9 +824,24 @@ function computeAll(){
 function segStack(dn, r, side, dis){
   const fields = side==='in' ? SEG_IN : SEG_OUT;
   const n = segCount(r);
-  return '<div class="stk">' + fields.slice(0,n).map(f=>
-    `<input class="tm" data-d="${dn}" data-f="${f}" value="${r[f]||''}" placeholder="--:--" ${dis?'disabled':''}>`
-  ).join('') + '</div>';
+  return '<div class="stk">' + fields.slice(0,n).map((f,i)=>{
+    const inp = `<input class="tm" data-d="${dn}" data-f="${f}" value="${r[f]||''}" placeholder="--:--" ${dis?'disabled':''}>`;
+    if(side==='out' && i>0 && !dis)
+      return `<span class="srow">${inp}<button class="segdel" data-d="${dn}" data-s="${i}" title="הסרת כניסה/יציאה זו">✕</button></span>`;
+    return inp;
+  }).join('') + '</div>';
+}
+function removeSeg(d, i){
+  const r = rows[d] || {};
+  for(let j=i; j<2; j++){                     // shift following segments up
+    r[SEG_IN[j]]  = r[SEG_IN[j+1]]  || '';
+    r[SEG_OUT[j]] = r[SEG_OUT[j+1]] || '';
+  }
+  r[SEG_IN[2]] = ''; r[SEG_OUT[2]] = '';
+  r.seg = 1;                                   // remaining values re-raise the count
+  rows[d] = r;
+  scheduleSave();
+  render();
 }
 function segStr(r, side){
   const fields = side==='in' ? SEG_IN : SEG_OUT;
@@ -825,6 +861,9 @@ function render(){
   const body = $('gridBody');
   body.innerHTML = '';
   const demo = !curEmpId;
+  const locked = !!rows._locked;
+  $('btnLock').textContent = locked ? '🔓 ביטול נעילה' : '🔒 נעילת חודש';
+  $('btnLock').style.visibility = demo ? 'hidden' : 'visible';
   const {calcs, T} = computeAll();
 
   for(let dn=1; dn<=daysInMonth; dn++){
@@ -844,6 +883,7 @@ function render(){
     else if(info.moed) badge = `<span class="badge erev">${info.moed}</span>`;
 
     const isAbs = ['vac','sick','milu'].includes(r.type);
+    const dis = isAbs || demo || locked;
     const dtype = r.type || 'auto';
 
     tr.innerHTML = `
@@ -852,11 +892,11 @@ function render(){
           <span class="gdate">${info.wd===6?'ש':dayLetters[info.wd]}׳ · ${pad(dn)}/${pad(curMonth+1)}</span>
           <span class="hdate">${info.hebStr}</span>
           ${badge}
-          ${!demo && !isAbs && segCount(r)<3 ? `<button class="segadd" data-d="${dn}" title="הוספת זוג כניסה/יציאה נוסף ליום זה">＋ כניסה/יציאה</button>` : ''}
+          ${!dis && segCount(r)<3 ? `<button class="segadd" data-d="${dn}" title="הוספת זוג כניסה/יציאה נוסף ליום זה">＋ כניסה/יציאה</button>` : ''}
         </div>
       </td>
       <td>
-        <select class="dtype" data-d="${dn}" ${demo?'disabled':''}>
+        <select class="dtype" data-d="${dn}" ${(demo||locked)?'disabled':''}>
           <option value="auto" ${dtype==='auto'?'selected':''}>${info.chag||info.isShabbat?'שבת/חג':'רגיל'}</option>
           <option value="chag" ${dtype==='chag'?'selected':''}>חג (ידני)</option>
           <option value="vac"  ${dtype==='vac'?'selected':''}>חופשה</option>
@@ -864,9 +904,9 @@ function render(){
           <option value="milu" ${dtype==='milu'?'selected':''}>מילואים</option>
         </select>
       </td>
-      <td>${segStack(dn, r, 'in',  isAbs||demo)}</td>
-      <td>${segStack(dn, r, 'out', isAbs||demo)}</td>
-      <td><input class="tm" data-d="${dn}" data-f="brk" value="${r.brk||''}" placeholder="${emp()?.brk?fmtHM(emp().brk):'00:00'}" ${isAbs||demo?'disabled':''}></td>
+      <td>${segStack(dn, r, 'in',  dis)}</td>
+      <td>${segStack(dn, r, 'out', dis)}</td>
+      <td><input class="tm" data-d="${dn}" data-f="brk" value="${r.brk||''}" placeholder="${emp()?.brk?fmtHM(emp().brk):'00:00'}" ${dis?'disabled':''}></td>
       <td class="num muted">${info.isWorkday||info.isShabbat||info.chag? fmtDur(info.std):''}</td>
       <td class="num total" data-f2="total">${isAbs? '<span style="color:var(--blue)">'+({vac:'חופשה',sick:'מחלה',milu:'מילואים'})[r.type]+'</span>' : decOrDash(c.total)}</td>
       <td class="num" data-f2="h100">${decOrDash(c.h100)}</td>
@@ -880,6 +920,12 @@ function render(){
     body.appendChild(tr);
   }
 
+  if(locked && !demo){
+    const lockDate = rows._locked && rows._locked.at ? new Date(rows._locked.at).toLocaleDateString('he-IL') : '';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td colspan="14" style="background:var(--gold-bg); color:var(--gold); font-weight:600; padding:10px; text-align:right; padding-inline-start:12px; border-bottom:1px solid var(--gold-line);">🔒 החודש נעול לעריכה — הדיווחים קובעו${lockDate?' בתאריך '+lockDate:''}. לפתיחה מחדש: "ביטול נעילה" בסרגל למעלה.</td>`;
+    body.prepend(tr);
+  }
   if(demo){
     const tr = document.createElement('tr');
     tr.innerHTML = `<td colspan="14" style="background:var(--teal-soft); color:var(--teal); font-weight:600; padding:10px; text-align:right; padding-inline-start:12px;">${curOrgId?'כמעט שם — הוסיפו עובד למעסיק זה (＋ ליד "עובד") והטבלה תיפתח להזנה':'להתחלת עבודה: הוסיפו מעסיק (＋ ליד "מעסיק"), אחריו עובד — והטבלה תיפתח להזנה'}</td>`;
@@ -987,6 +1033,11 @@ function bindGrid(){
       rows[d].type = e.target.value;
       scheduleSave();
       render();
+    });
+  });
+  document.querySelectorAll('#gridBody button.segdel').forEach(b=>{
+    b.addEventListener('click', e=>{
+      removeSeg(e.currentTarget.dataset.d, +e.currentTarget.dataset.s);
     });
   });
   document.querySelectorAll('#gridBody button.segadd').forEach(b=>{
@@ -1144,7 +1195,7 @@ $('btnPdf').addEventListener('click', ()=>{
     <div class="meta">מעסיק: ${org()?org().name:''}${org()&&org().hp?' · ח.פ '+org().hp:''}<br>
     עובד: ${emp().name} · שבוע עבודה: ${emp().week} ימים · תקן יומי: ${fmtDur(emp().std)}${wage?' · תעריף: '+wage+' ₪ לשעה':''}</div>
   </div>
-  <div class="meta">הופק: ${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}</div>
+  <div class="meta">הופק: ${pad(now.getDate())}/${pad(now.getMonth()+1)}/${now.getFullYear()} ${pad(now.getHours())}:${pad(now.getMinutes())}${rows._locked?'<br><b>🔒 חודש נעול — הדיווחים קובעו</b>':''}</div>
 </div>
 <table>
   <thead><tr>
