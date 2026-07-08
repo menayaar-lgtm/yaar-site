@@ -28,7 +28,15 @@ header h1{
   font-family:'Frank Ruhl Libre', serif; font-weight:700; font-size:22px; letter-spacing:.5px;
 }
 header .sub{font-size:12.5px; color:#B9C2D6; font-weight:300;}
-header .save-state{margin-inline-start:auto; font-size:12px; color:#8FD4C4; transition:opacity .4s;}
+header .toplinks{margin-inline-start:auto; display:flex; gap:8px; flex-wrap:wrap;}
+header .toplinks a{
+  display:inline-flex; align-items:center; gap:6px;
+  color:#DDE4F0; text-decoration:none; font-size:12.5px; font-weight:500;
+  border:1px solid rgba(255,255,255,.25); border-radius:20px; padding:5px 12px;
+  transition:background .15s, color .15s;
+}
+header .toplinks a:hover{background:#fff; color:var(--ink); border-color:#fff;}
+header .save-state{font-size:12px; color:#8FD4C4; transition:opacity .4s;}
 .wrap{max-width:1240px; margin:0 auto; padding:18px 20px;}
 
 /* ---- toolbar ---- */
@@ -189,6 +197,20 @@ dialog .actions{display:flex; gap:10px; justify-content:flex-start; margin-top:1
 <header>
   <h1>פנקס נוכחות</h1>
   <span class="sub">חישוב שעות לפי חוק שעות עבודה ומנוחה · לוח שנה עברי מובנה · הנתונים נשמרים בדפדפן זה בלבד</span>
+  <nav class="toplinks">
+    <a href="https://www.yaar.biz/index.html" title="לאתר יער צפון">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+      לאתר
+    </a>
+    <a href="https://www.facebook.com/profile.php?id=61574373903364" target="_blank" rel="noopener" title="יער צפון בפייסבוק">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M13.5 21v-7h2.4l.4-3h-2.8V9.1c0-.9.3-1.5 1.6-1.5h1.3V4.9c-.3 0-1.1-.1-2-.1-2 0-3.4 1.2-3.4 3.5V11H8.5v3H11v7h2.5z"/></svg>
+      פייסבוק
+    </a>
+    <a href="https://wa.me/97246762466" target="_blank" rel="noopener" title="שלחו לנו וואטסאפ">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 3a9 9 0 0 0-7.8 13.5L3 21l4.7-1.2A9 9 0 1 0 12 3zm4.9 12.6c-.2.6-1.2 1.1-1.7 1.2-.4 0-1 .1-1.6-.1-.4-.1-.9-.3-1.5-.6-2.6-1.1-4.3-3.8-4.4-4-.1-.2-1.1-1.4-1.1-2.7s.7-1.9.9-2.2c.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.4.2.5.7 1.8.8 1.9.1.1.1.3 0 .4-.1.2-.1.3-.3.5l-.4.5c-.1.1-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.2 1 2.1 1.4 2.4 1.5.3.1.5.1.6-.1.2-.2.7-.8.8-1 .2-.3.4-.2.6-.1.2.1 1.5.7 1.7.8.2.1.4.2.4.3.1.1.1.5-.1 1z"/></svg>
+      וואטסאפ
+    </a>
+  </nav>
   <span class="save-state" id="saveState"></span>
 </header>
 
@@ -393,6 +415,8 @@ function parseTime(v){          // -> minutes or null
 const fmtHM  = mins => mins==null ? '' : pad(Math.floor(mins/60))+':'+pad(mins%60);
 const fmtDur = mins => (mins<0?'-':'') + Math.floor(Math.abs(mins)/60) + ':' + pad(Math.abs(mins)%60);
 const durOrDash = mins => mins>0 ? fmtDur(mins) : '';
+const fmtDec = mins => (mins/60).toFixed(2);           // 8:36 -> 8.60
+const decOrDash = mins => mins>0 ? fmtDec(mins) : '';
 
 /* ================= state & storage ================= */
 let employers = [];             // {id,name,hp,contact}
@@ -768,14 +792,14 @@ function render(){
       <td><input class="tm" data-d="${dn}" data-f="out" value="${r.out||''}" placeholder="--:--" ${isAbs||demo?'disabled':''}></td>
       <td><input class="tm" data-d="${dn}" data-f="brk" value="${r.brk||''}" placeholder="${emp()?.brk?fmtHM(emp().brk):'00:00'}" ${isAbs||demo?'disabled':''}></td>
       <td class="num muted">${info.isWorkday||info.isShabbat||info.chag? fmtDur(info.std):''}</td>
-      <td class="num total">${isAbs? '<span style="color:var(--blue)">'+({vac:'חופשה',sick:'מחלה',milu:'מילואים'})[r.type]+'</span>' : durOrDash(c.total)}</td>
-      <td class="num">${durOrDash(c.h100)}</td>
-      <td class="num">${durOrDash(c.h125)}</td>
-      <td class="num">${durOrDash(c.h150)}</td>
-      <td class="num">${durOrDash(c.s150)}</td>
-      <td class="num">${durOrDash(c.s175)}</td>
-      <td class="num">${durOrDash(c.s200)}</td>
-      <td class="num ${c.diff>0?'pos':c.diff<0?'neg':''}">${c.diff!=null&&c.diff!==0&&!c.empty? (c.diff>0?'+':'')+fmtDur(c.diff) : (c.diff!=null&&c.empty&&c.diff<0?'':'')}</td>
+      <td class="num total">${isAbs? '<span style="color:var(--blue)">'+({vac:'חופשה',sick:'מחלה',milu:'מילואים'})[r.type]+'</span>' : decOrDash(c.total)}</td>
+      <td class="num">${decOrDash(c.h100)}</td>
+      <td class="num">${decOrDash(c.h125)}</td>
+      <td class="num">${decOrDash(c.h150)}</td>
+      <td class="num">${decOrDash(c.s150)}</td>
+      <td class="num">${decOrDash(c.s175)}</td>
+      <td class="num">${decOrDash(c.s200)}</td>
+      <td class="num ${c.diff>0?'pos':c.diff<0?'neg':''}">${c.diff!=null&&c.diff!==0&&!c.empty? (c.diff>0?'+':'')+fmtDec(c.diff) : (c.diff!=null&&c.empty&&c.diff<0?'':'')}</td>
     `;
     body.appendChild(tr);
 
@@ -800,15 +824,15 @@ function render(){
 
   $('gridFoot').innerHTML = `
     <tr>
-      <td colspan="6" style="text-align:right; padding-inline-start:12px;">סה"כ חודשי</td>
-      <td>${fmtDur(T.total)}</td>
-      <td>${fmtDur(T.h100)}</td>
-      <td>${fmtDur(T.h125)}</td>
-      <td>${fmtDur(T.h150)}</td>
-      <td>${fmtDur(T.s150)}</td>
-      <td>${fmtDur(T.s175)}</td>
-      <td>${fmtDur(T.s200)}</td>
-      <td class="${T.diff>0?'pos':T.diff<0?'neg':''}">${T.diff!==0?(T.diff>0?'+':'')+fmtDur(T.diff):''}</td>
+      <td colspan="6" style="text-align:right; padding-inline-start:12px;">סה"כ חודשי (עשרוני)</td>
+      <td>${fmtDec(T.total)}</td>
+      <td>${fmtDec(T.h100)}</td>
+      <td>${fmtDec(T.h125)}</td>
+      <td>${fmtDec(T.h150)}</td>
+      <td>${fmtDec(T.s150)}</td>
+      <td>${fmtDec(T.s175)}</td>
+      <td>${fmtDec(T.s200)}</td>
+      <td class="${T.diff>0?'pos':T.diff<0?'neg':''}">${T.diff!==0?(T.diff>0?'+':'')+fmtDec(T.diff):''}</td>
     </tr>`;
 
   renderSummary(T);
@@ -825,14 +849,14 @@ function renderSummary(T){
     : null;
   const fmtShekel = n => n.toLocaleString('he-IL',{style:'currency',currency:'ILS',maximumFractionDigits:0});
   const cards = [
-    {k:'תקן חודשי (לפי הלוח)', v:fmtDur(T.stdSum), m:`${T.stdDays} ימי תקן · משרה מלאה מקובלת: 182 ש׳`},
+    {k:'תקן חודשי (לפי הלוח)', v:fmtDec(T.stdSum), m:`${fmtDur(T.stdSum)} · ${T.stdDays} ימי תקן · משרה מלאה: 182`},
     {k:'ימי עבודה בפועל', v:T.workdays},
-    {k:'סה"כ שעות בפועל', v:fmtDur(T.total)},
-    {k:'שעות 100%', v:fmtDur(T.h100)},
-    {k:'נוספות 125%', v:fmtDur(T.h125)},
-    {k:'נוספות 150%', v:fmtDur(T.h150)},
-    {k:'שבת/חג (150/175/200)', v:fmtDur(T.s150+T.s175+T.s200), gold:true},
-    {k:'היעדרות בתשלום (100%)', v:fmtDur(T.absStd), m:`חופשה ${T.vac} · מחלה ${T.sick} · מילואים ${T.milu}`},
+    {k:'סה"כ שעות בפועל', v:fmtDec(T.total), m:`${fmtDur(T.total)} שע׳:דק׳`},
+    {k:'שעות 100%', v:fmtDec(T.h100), m:`${fmtDur(T.h100)} שע׳:דק׳`},
+    {k:'נוספות 125%', v:fmtDec(T.h125), m:`${fmtDur(T.h125)} שע׳:דק׳`},
+    {k:'נוספות 150%', v:fmtDec(T.h150), m:`${fmtDur(T.h150)} שע׳:דק׳`},
+    {k:'שבת/חג (150/175/200)', v:fmtDec(T.s150+T.s175+T.s200), m:`${fmtDur(T.s150+T.s175+T.s200)} שע׳:דק׳`, gold:true},
+    {k:'היעדרות בתשלום (100%)', v:fmtDec(T.absStd), m:`חופשה ${T.vac} · מחלה ${T.sick} · מילואים ${T.milu}`},
   ];
   if(pay!=null) cards.push({k:'שכר ברוטו משוער', v:fmtShekel(pay), m:`לפי ${wage} ₪ לשעה, לפני נסיעות וזכויות נלוות`, pay:true});
   $('summary').innerHTML = cards.map(c=>`
@@ -949,16 +973,16 @@ $('btnExport').addEventListener('click', ()=>{
       info.hebStr,
       dayMark(info,r),
       r.in||'', r.out||'', r.brk||'',
-      fmtDur(info.std),
-      fmtDur(c.total), fmtDur(c.h100), fmtDur(c.h125), fmtDur(c.h150),
-      fmtDur(c.s150), fmtDur(c.s175), fmtDur(c.s200),
-      c.diff!=null?fmtDur(c.diff):''
+      fmtDec(info.std),
+      fmtDec(c.total), fmtDec(c.h100), fmtDec(c.h125), fmtDec(c.h150),
+      fmtDec(c.s150), fmtDec(c.s175), fmtDec(c.s200),
+      c.diff!=null?fmtDec(c.diff):''
     ]);
   });
-  lines.push(['סה"כ חודשי','','','','','','', fmtDur(T.stdSum),
-    fmtDur(T.total), fmtDur(T.h100), fmtDur(T.h125), fmtDur(T.h150),
-    fmtDur(T.s150), fmtDur(T.s175), fmtDur(T.s200), fmtDur(T.diff)]);
-  lines.push(['היעדרות בתשלום (100%)','','','','','','','', fmtDur(T.absStd)]);
+  lines.push(['סה"כ חודשי','','','','','','', fmtDec(T.stdSum),
+    fmtDec(T.total), fmtDec(T.h100), fmtDec(T.h125), fmtDec(T.h150),
+    fmtDec(T.s150), fmtDec(T.s175), fmtDec(T.s200), fmtDec(T.diff)]);
+  lines.push(['היעדרות בתשלום (100%)','','','','','','','', fmtDec(T.absStd)]);
   const wage = emp().wage||0;
   if(wage>0){
     const pay = (T.h100/60)*wage + (T.h125/60)*wage*1.25 + (T.h150/60)*wage*1.5
@@ -978,7 +1002,7 @@ $('btnPdf').addEventListener('click', ()=>{
   const wage = emp().wage||0;
   const pay = wage>0 ? (T.h100/60)*wage + (T.h125/60)*wage*1.25 + (T.h150/60)*wage*1.5
     + (T.s150/60)*wage*1.5 + (T.s175/60)*wage*1.75 + (T.s200/60)*wage*2 + (T.absStd/60)*wage : null;
-  const dd = m => m>0 ? fmtDur(m) : '';
+  const dd = m => m>0 ? fmtDec(m) : '';
   const rowsHtml = days.map(({dn,c,info,r})=>{
     const rest = info.chag || info.isShabbat;
     const abs = ({vac:'חופשה',sick:'מחלה',milu:'מילואים'})[r.type];
@@ -990,7 +1014,7 @@ $('btnPdf').addEventListener('click', ()=>{
       <td><b>${abs||dd(c.total)}</b></td>
       <td>${dd(c.h100)}</td><td>${dd(c.h125)}</td><td>${dd(c.h150)}</td>
       <td>${dd(c.s150)}</td><td>${dd(c.s175)}</td><td>${dd(c.s200)}</td>
-      <td>${c.diff!=null&&c.diff!==0&&!c.empty?(c.diff>0?'+':'')+fmtDur(c.diff):''}</td>
+      <td>${c.diff!=null&&c.diff!==0&&!c.empty?(c.diff>0?'+':'')+fmtDec(c.diff):''}</td>
     </tr>`;
   }).join('');
   const now = new Date();
@@ -1029,18 +1053,18 @@ $('btnPdf').addEventListener('click', ()=>{
   </tr></thead>
   <tbody>${rowsHtml}</tbody>
   <tfoot><tr>
-    <td colspan="5">סה"כ חודשי</td>
-    <td>${fmtDur(T.stdSum)}</td><td>${fmtDur(T.total)}</td>
-    <td>${fmtDur(T.h100)}</td><td>${fmtDur(T.h125)}</td><td>${fmtDur(T.h150)}</td>
-    <td>${fmtDur(T.s150)}</td><td>${fmtDur(T.s175)}</td><td>${fmtDur(T.s200)}</td>
-    <td>${T.diff!==0?(T.diff>0?'+':'')+fmtDur(T.diff):''}</td>
+    <td colspan="5">סה"כ חודשי (עשרוני)</td>
+    <td>${fmtDec(T.stdSum)}</td><td>${fmtDec(T.total)}</td>
+    <td>${fmtDec(T.h100)}</td><td>${fmtDec(T.h125)}</td><td>${fmtDec(T.h150)}</td>
+    <td>${fmtDec(T.s150)}</td><td>${fmtDec(T.s175)}</td><td>${fmtDec(T.s200)}</td>
+    <td>${T.diff!==0?(T.diff>0?'+':'')+fmtDec(T.diff):''}</td>
   </tr></tfoot>
 </table>
 <div class="sum">
-  <div class="box">תקן חודשי<b>${fmtDur(T.stdSum)} (${T.stdDays} ימים)</b></div>
-  <div class="box">שעות בפועל<b>${fmtDur(T.total)}</b></div>
+  <div class="box">תקן חודשי<b>${fmtDec(T.stdSum)} (${T.stdDays} ימים)</b></div>
+  <div class="box">שעות בפועל<b>${fmtDec(T.total)} · ${fmtDur(T.total)}</b></div>
   <div class="box">ימי עבודה<b>${T.workdays}</b></div>
-  <div class="box">היעדרות בתשלום<b>${fmtDur(T.absStd)}</b></div>
+  <div class="box">היעדרות בתשלום<b>${fmtDec(T.absStd)}</b></div>
   ${pay!=null?`<div class="box">שכר ברוטו משוער<b>${pay.toLocaleString('he-IL',{maximumFractionDigits:0})} ₪</b></div>`:''}
 </div>
 <div class="sig"><div>תאריך</div><div>שם המאשר/ת</div><div>חתימה</div></div>
