@@ -37,6 +37,16 @@ header .toplinks a{
 }
 header .toplinks a:hover{background:#fff; color:var(--ink); border-color:#fff;}
 header .save-state{font-size:12px; color:#8FD4C4; transition:opacity .4s;}
+.upsell{
+  background:var(--teal-soft); border-bottom:1px solid #9FE1CB;
+  padding:10px 24px; display:flex; align-items:center; gap:14px; flex-wrap:wrap;
+}
+.upsell .utext{font-size:13px; color:#085041; flex:1; min-width:260px; line-height:1.6;}
+.upsell .ubtn{
+  background:var(--teal); color:#fff; font-size:13px; font-weight:600;
+  padding:7px 18px; border-radius:20px; text-decoration:none; white-space:nowrap;
+}
+.upsell .ubtn:hover{background:#0A6552;}
 .wrap{max-width:1240px; margin:0 auto; padding:18px 20px;}
 
 /* ---- toolbar ---- */
@@ -226,6 +236,11 @@ dialog .actions{display:flex; gap:10px; justify-content:flex-start; margin-top:1
   </nav>
   <span class="save-state" id="saveState"></span>
 </header>
+
+<div class="upsell">
+  <span class="utext">💡 זוהי גרסת התנסות חינמית — הנתונים נשמרים בדפדפן בלבד. לקוחות המשרד נהנים מהמערכת המלאה: שמירה מאובטחת בענן, פורטל אישי לכל מעסיק, נעילת חודשים ודוחות.</span>
+  <a class="ubtn" href="https://yaar-clock.netlify.app">כניסה למערכת ←</a>
+</div>
 
 <div class="wrap">
 
