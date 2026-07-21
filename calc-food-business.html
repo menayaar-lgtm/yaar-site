@@ -93,17 +93,52 @@ const REST_CHECK = [
   "ראנווי של 12–18 חודשים מתוקצב להרצה",
 ];
 
-/* ---------------- רכיבי UI ---------------- */
+/* מזהה את סימן היחידה מתוך פונקציית הפורמט, כדי שההזנה הידנית תישאר נקייה */
+function unitOf(fmt){
+  if(!fmt) return {pre:"",suf:""};
+  const s=String(fmt(1)).trim();
+  if(s.startsWith("₪")) return {pre:"₪",suf:""};
+  if(s.endsWith("%"))  return {pre:"",suf:"%"};
+  return {pre:"",suf:""};
+}
 function Slider({label,value,set,min,max,step,fmt,hint}){
+  const [draft,setDraft]=useState(null);
+  const u=unitOf(fmt);
+  // הטווח מתרחב אוטומטית אם הוזן ערך מחוץ לברירת המחדל
+  const lo=Math.min(min,value), hi=Math.max(max,value);
+  const outside=value<min||value>max;
+  const commit=(raw)=>{
+    const n=parseFloat(String(raw).replace(/[^0-9.\-]/g,""));
+    if(!isNaN(n)) set(n);
+    setDraft(null);
+  };
+  const shown=draft!==null?draft:String(value);
   return (
     <div style={{marginBottom:16}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:6}}>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6,gap:8}}>
         <span style={{fontSize:13,fontWeight:600,color:T.ink}}>{label}</span>
-        <span style={{fontSize:14,fontWeight:800,color:T.green,fontVariantNumeric:"tabular-nums"}}>{fmt?fmt(value):value}</span>
+        <span style={{display:"inline-flex",alignItems:"center",gap:1,fontSize:14,fontWeight:800,
+          color:T.green,background:T.cream,border:"1px solid "+T.line,borderRadius:7,padding:"2px 7px"}}>
+          {u.pre && <span>{u.pre}</span>}
+          <input type="text" inputMode="decimal" value={shown}
+            title="אפשר להקליד כל סכום — הסרגל יתרחב בהתאם"
+            onFocus={(e)=>{setDraft(String(value));e.target.select();}}
+            onChange={(e)=>setDraft(e.target.value)}
+            onBlur={(e)=>commit(e.target.value)}
+            onKeyDown={(e)=>{if(e.key==="Enter")e.target.blur();}}
+            style={{width:Math.max(3,shown.length+1)+"ch",border:"none",background:"transparent",
+              color:T.green,fontSize:14,fontWeight:800,fontFamily:"inherit",textAlign:"center",
+              direction:"ltr",padding:0,outline:"none",fontVariantNumeric:"tabular-nums"}} />
+          {u.suf && <span>{u.suf}</span>}
+        </span>
       </div>
-      <input type="range" min={min} max={max} step={step} value={value}
+      <input type="range" min={lo} max={hi} step={step} value={value}
         onChange={(e)=>set(parseFloat(e.target.value))} style={{width:"100%"}} />
-      {hint && <div style={{fontSize:11,color:T.muted,marginTop:3}}>{hint}</div>}
+      {(hint||outside) && (
+        <div style={{fontSize:11,color:outside?T.wheat:T.muted,marginTop:3}}>
+          {outside?"ערך מחוץ לטווח המומלץ ("+(fmt?fmt(min):min)+"–"+(fmt?fmt(max):max)+") — הסרגל הותאם":hint}
+        </div>
+      )}
     </div>
   );
 }
