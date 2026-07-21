@@ -15,6 +15,16 @@
   input[type=range]::-moz-range-thumb{width:18px;height:18px;border-radius:50%;background:#4F7C46;cursor:pointer;border:2px solid #fff;}
   button{font-family:inherit;}
   #loading{font-family:system-ui,Arial;text-align:center;padding:80px 20px;color:#7C8A7E;}
+  @media print{
+    @page{size:A4;margin:14mm;}
+    html,body{background:#fff !important;}
+    .no-print{display:none !important;}
+    .report-page{padding:0 !important;}
+    /* שמירה על צבעי הרקע בייצוא ל-PDF */
+    *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;}
+    table{page-break-inside:avoid;}
+    tr{page-break-inside:avoid;}
+  }
 </style>
 </head>
 <body>
@@ -241,38 +251,67 @@ function ColumnChart({data,height=220,fmt}){
     </div>
   );
 }
-function GroupChart({data,series,height=220}){
+function GroupChart({data,series,height=250}){
   const all=data.flatMap(d=>series.map(s=>d[s.key]));
   const posMax=Math.max(0,...all), negMax=Math.max(0,...all.map(v=>-v));
   const range=(posMax+negMax)||1;
-  const H=height-44;
+  const H=height-56;
   const zeroTop=(posMax/range)*H;
   return (
     <div style={{height}}>
       <div style={{position:"relative",height:H,display:"flex",alignItems:"flex-end",gap:24,padding:"0 10px"}}>
         <div style={{position:"absolute",left:0,right:0,top:zeroTop,borderTop:"1px solid "+T.ink}} />
         {data.map((d,i)=>(
-          <div key={i} style={{flex:1,position:"relative",height:H,display:"flex",justifyContent:"center",gap:8}}>
+          <div key={i} style={{flex:1,position:"relative",height:H,display:"flex",justifyContent:"center",gap:10}}>
             {series.map((s,j)=>{
               const v=d[s.key], h=Math.abs(v)/range*H, top=v>=0?zeroTop-h:zeroTop;
-              return <div key={j} style={{width:26,position:"relative",height:H}}>
+              return <div key={j} style={{width:28,position:"relative",height:H}}>
                 <div title={nis(v)} style={{position:"absolute",top,height:h,left:0,right:0,background:s.color,
                   borderRadius:v>=0?"5px 5px 0 0":"0 0 5px 5px"}} />
+                <div style={{position:"absolute",top:v>=0?Math.max(0,top-15):top+h+2,left:-8,right:-8,
+                  textAlign:"center",fontSize:10,fontWeight:800,color:s.color,whiteSpace:"nowrap"}}>{k(v)}</div>
               </div>;
             })}
           </div>
         ))}
       </div>
-      <div style={{display:"flex",gap:24,padding:"4px 10px"}}>
-        {data.map((d,i)=><div key={i} style={{flex:1,textAlign:"center",fontSize:11,color:T.muted}}>{d.name}</div>)}
+      <div style={{display:"flex",gap:24,padding:"6px 10px 0"}}>
+        {data.map((d,i)=><div key={i} style={{flex:1,textAlign:"center",fontSize:11,fontWeight:700,color:T.basalt}}>{d.name}</div>)}
       </div>
-      <div style={{display:"flex",justifyContent:"center",gap:18,marginTop:4}}>
+      <div style={{display:"flex",justifyContent:"center",gap:18,marginTop:6}}>
         {series.map((s,j)=>(
           <span key={j} style={{display:"inline-flex",alignItems:"center",gap:6,fontSize:11,color:T.ink}}>
             <span style={{width:12,height:12,background:s.color,borderRadius:3}} />{s.label}
           </span>
         ))}
       </div>
+    </div>
+  );
+}
+/* טבלת מספרים מדויקים מתחת לגרף — הגרף מראה מגמה, הטבלה מראה סכומים */
+function ProjTable({proj}){
+  return (
+    <div style={{marginTop:10,overflow:"auto"}}>
+      <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+        <thead><tr>
+          <th style={{...th,padding:"7px 10px"}}>שנה</th>
+          <th style={{...th,padding:"7px 10px"}}>מחזור חודשי</th>
+          <th style={{...th,padding:"7px 10px"}}>רווח תפעולי חודשי</th>
+          <th style={{...th,padding:"7px 10px"}}>מחזור שנתי</th>
+          <th style={{...th,padding:"7px 10px"}}>רווח שנתי</th>
+        </tr></thead>
+        <tbody>
+          {proj.map((p,i)=>(
+            <tr key={i} style={{background:i%2?T.cream:"transparent"}}>
+              <td style={{...td,padding:"7px 10px",fontWeight:700}}>{p.name}</td>
+              <td style={{...td,padding:"7px 10px"}}>{nis(p.rev)}</td>
+              <td style={{...td,padding:"7px 10px",fontWeight:700,color:p.prof>=0?T.pos:T.neg}}>{nis(p.prof)}</td>
+              <td style={{...td,padding:"7px 10px",color:T.muted}}>{nis(p.rev*12)}</td>
+              <td style={{...td,padding:"7px 10px",fontWeight:700,color:p.prof>=0?T.pos:T.neg}}>{nis(p.prof*12)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -333,8 +372,87 @@ function PricerTab({mode}){
   );
 }
 
+/* ---------------- דוח להורדה / הדפסה ---------------- */
+function ReportView({r,onClose}){
+  const today=new Date().toLocaleDateString("he-IL",{day:"numeric",month:"long",year:"numeric"});
+  return (
+    <div style={{background:"#fff",minHeight:"100vh"}}>
+      <div className="no-print" style={{display:"flex",gap:10,justifyContent:"flex-end",marginBottom:18,flexWrap:"wrap"}}>
+        <button onClick={()=>window.print()} style={{fontSize:14,fontWeight:700,padding:"10px 22px",borderRadius:10,border:"none",
+          background:T.green,color:"#fff",cursor:"pointer"}}>הורד / הדפס דוח (PDF)</button>
+        <button onClick={onClose} style={{fontSize:14,fontWeight:700,padding:"10px 22px",borderRadius:10,
+          border:"1px solid "+T.line,background:T.paper,color:T.ink,cursor:"pointer"}}>← חזרה למחשבון</button>
+      </div>
+      <div className="no-print" style={{fontSize:12,color:T.muted,marginBottom:20,background:T.wheatLt,
+        border:"1px solid #ecd9a8",borderRadius:10,padding:"10px 14px"}}>
+        בחלון ההדפסה בחרו יעד <b>״שמירה כ-PDF״</b>. מומלץ לסמן ״גרפיקת רקע״ כדי לשמור על הצבעים.
+      </div>
+
+      <div className="report-page" style={{background:"#fff",padding:"6px 2px"}}>
+        <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:16,
+          borderBottom:"3px solid "+T.basalt,paddingBottom:14,marginBottom:20}}>
+          <div>
+            <h1 style={{margin:0,fontSize:24,fontWeight:800,color:T.basalt}}>דוח כדאיות עסק מזון</h1>
+            <div style={{fontSize:13,color:T.muted,marginTop:4}}>{r.modeLabel} · נערך בתאריך {today}</div>
+          </div>
+          <div style={{textAlign:"left",background:r.ebitda>=0?T.greenLt:T.cherryLt,border:"1px solid "+(r.ebitda>=0?"#cfe0c6":"#e9cabf"),
+            borderRadius:10,padding:"10px 16px",minWidth:170}}>
+            <div style={{fontSize:11,color:T.muted}}>שורה תחתונה חודשית</div>
+            <div style={{fontSize:24,fontWeight:800,color:r.ebitda>=0?T.pos:T.neg}}>{nis(r.ebitda)}</div>
+            <div style={{fontSize:11,fontWeight:700,color:r.ebitda>=0?T.pos:T.neg}}>{r.ebitda>=0?"העסק רווחי":"העסק בהפסד"}</div>
+          </div>
+        </div>
+
+        <SectionTitle>מדדי מפתח</SectionTitle>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:10}}>
+          {r.kpis.map((s,i)=><Stat key={i} label={s.label} value={s.value} tone={s.tone} sub={s.sub} />)}
+        </div>
+
+        <SectionTitle>מדדי תקינות</SectionTitle>
+        <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+          {r.chips.map((c,i)=><Chip key={i} ok={c.ok}>{c.text}</Chip>)}
+        </div>
+
+        <SectionTitle>מבנה רווח והפסד חודשי</SectionTitle>
+        <Table head={["סעיף","סכום חודשי","% מהמחזור","סכום שנתי"]}>
+          {r.rows.map((row,i)=>(
+            <tr key={i} style={{background:row.strong?T.greenLt:i%2?T.cream:"transparent"}}>
+              <td style={{...td,fontWeight:row.strong?800:500}}>{row.label}</td>
+              <td style={{...td,fontWeight:row.strong?800:600,color:row.neg?T.neg:T.ink}}>{nis(row.v)}</td>
+              <td style={{...td,color:T.muted}}>{r.revenue>0?pct((row.v/r.revenue)*100):"—"}</td>
+              <td style={{...td,color:T.muted}}>{nis(row.v*12)}</td>
+            </tr>
+          ))}
+        </Table>
+
+        <SectionTitle>תחזית 3 שנים</SectionTitle>
+        <div style={{background:T.paper,border:"1px solid "+T.line,borderRadius:12,padding:14}}>
+          <GroupChart data={r.proj} series={[{key:"rev",color:T.basalt,label:"מחזור חודשי"},{key:"prof",color:T.green,label:"רווח תפעולי חודשי"}]} />
+          <ProjTable proj={r.proj} />
+        </div>
+
+        <SectionTitle>ההנחות שעליהן מבוסס הדוח</SectionTitle>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",gap:8}}>
+          {r.assumptions.map((a,i)=>(
+            <div key={i} style={{display:"flex",justifyContent:"space-between",gap:10,background:T.paper,
+              border:"1px solid "+T.line,borderRadius:9,padding:"9px 13px",fontSize:12}}>
+              <span style={{color:T.muted}}>{a.label}</span>
+              <span style={{fontWeight:800,color:T.basalt}}>{a.value}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{fontSize:11,color:T.muted,marginTop:24,paddingTop:12,borderTop:"1px solid "+T.line,lineHeight:1.6}}>
+          דוח זה מבוסס על ההנחות שהוזנו בכלי ועל טווחים ענפיים כלליים. אין אלה נתונים היסטוריים מאומתים, ואין בדוח משום ייעוץ פיננסי, מיסויי או משפטי.
+          יש לאמת עלויות מול הצעות מחיר וספקים ספציפיים לפני קבלת החלטת השקעה.
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* ---------------- מחשבון כדאיות — הפצה / קמעונאות ---------------- */
-function FinanceDist(){
+function FinanceDist({onReport}){
   const [invest,setInvest]=useState(320000);
   const [revenue,setRevenue]=useState(240000);
   const [baseMargin,setBaseMargin]=useState(38);
@@ -372,6 +490,47 @@ function FinanceDist(){
     const rMul=y===1?1:y===2?1.6:2.4, oMul=y===1?1:y===2?1.1:1.25;
     const r=revenue*rMul, gp=r*(calc.effMargin/100), op=calc.opex*oMul;
     return {name:"שנה "+y, rev:Math.round(r), prof:Math.round(gp-op)};
+  });
+
+  const buildReport=()=>({
+    modeLabel:"הפצה / קמעונאות מזון", revenue, ebitda:calc.ebitda, proj,
+    kpis:[
+      {label:"מחזור חודשי",value:nis(revenue)},
+      {label:"רווח גולמי / חודש",value:nis(calc.grossProfit),tone:"pos"},
+      {label:"רווח תפעולי (EBITDA)",value:nis(calc.ebitda),tone:calc.ebitda>=0?"pos":"neg"},
+      {label:"נקודת איזון (מחזור)",value:isFinite(calc.breakeven)?nis(calc.breakeven):"—"},
+      {label:"החזר השקעה",value:calc.ebitda>0?Math.ceil(invest/calc.ebitda)+" חודשים":"אין החזר",
+        tone:calc.ebitda>0?"pos":"neg",sub:calc.ebitda>0?"בקצב הרווח הנוכחי":"העסק בהפסד"},
+    ],
+    chips:[
+      {ok:calc.effMargin>=20,text:"מרווח אפקטיבי "+pct(calc.effMargin)},
+      {ok:waste<=15,text:"פחת "+waste+"%"},
+      {ok:calc.logPct<=12,text:"לוגיסטיקה "+pct(calc.logPct)+" מהמחזור"},
+      {ok:calc.safety>=0,text:(calc.safety>=0?"מעל נקודת איזון":"מתחת לאיזון")+" ("+pct(calc.safety)+")"},
+    ],
+    rows:[
+      {label:"הכנסות",v:revenue,strong:true},
+      {label:"עלות הסחורה (כולל פחת)",v:revenue-calc.grossProfit},
+      {label:"רווח גולמי",v:calc.grossProfit,strong:true},
+      {label:"שכירות מחסן",v:rent},
+      {label:"שכר (צוות + יזם)",v:salary},
+      {label:"לוגיסטיקה",v:logistics},
+      {label:"ביטוחים",v:insurance},
+      {label:"שיווק ומיתוג",v:marketing},
+      {label:"שונות (חשמל/ארנונה/תקשורת)",v:overhead},
+      {label:"סך הוצאות תפעול",v:calc.opex,strong:true},
+      {label:"רווח תפעולי (EBITDA)",v:calc.ebitda,strong:true,neg:calc.ebitda<0},
+    ],
+    assumptions:[
+      {label:"מרווח גולמי בסיס",value:baseMargin+"%"},
+      {label:"פחת",value:waste+"%"},
+      {label:"מרווח אפקטיבי",value:pct(calc.effMargin)},
+      {label:"השקעה ראשונית",value:nis(invest)},
+      {label:"תמהיל B2B",value:b2b+"%"},
+      {label:"תמהיל C2B",value:c2b+"%"},
+      {label:"מתנות / מעובד",value:gifts+"%"},
+      {label:"צמיחה בתחזית",value:"שנה 2 ×1.6 · שנה 3 ×2.4"},
+    ],
   });
 
   return (
@@ -431,15 +590,20 @@ function FinanceDist(){
           </div>
         </Panel>
         <Panel title="תחזית 3 שנים (לפי הפרמטרים הנוכחיים)">
-          <GroupChart data={proj} series={[{key:"rev",color:T.basalt,label:"מחזור"},{key:"prof",color:T.green,label:"רווח תפעולי"}]} />
+          <GroupChart data={proj} series={[{key:"rev",color:T.basalt,label:"מחזור חודשי"},{key:"prof",color:T.green,label:"רווח תפעולי חודשי"}]} />
+          <ProjTable proj={proj} />
         </Panel>
+        <button onClick={()=>onReport(buildReport())} style={{width:"100%",fontSize:14,fontWeight:800,padding:"13px",
+          borderRadius:12,border:"none",background:T.basalt,color:"#fff",cursor:"pointer"}}>
+          הפק דוח גרפי להורדה ↓
+        </button>
       </div>
     </div>
   );
 }
 
 /* ---------------- מחשבון כדאיות — מסעדה / בית קפה ---------------- */
-function FinanceRest(){
+function FinanceRest({onReport}){
   const [invest,setInvest]=useState(600000);
   const [revenue,setRevenue]=useState(180000);
   const [foodCost,setFoodCost]=useState(30);
@@ -483,6 +647,47 @@ function FinanceRest(){
     const lc=r*(labor/100);
     const fx=calc.fixed*oMul;
     return {name:"שנה "+y, rev:Math.round(r), prof:Math.round(gp-lc-fx)};
+  });
+
+  const buildReport=()=>({
+    modeLabel:"מסעדה / בית קפה", revenue, ebitda:calc.ebitda, proj,
+    kpis:[
+      {label:"מחזור חודשי",value:nis(revenue)},
+      {label:"רווח גולמי / חודש",value:nis(calc.grossProfit),tone:"pos"},
+      {label:"רווח תפעולי (EBITDA)",value:nis(calc.ebitda),tone:calc.ebitda>=0?"pos":"neg"},
+      {label:"עלות פריים",value:pct(calc.prime),tone:calc.prime<=65?"pos":"neg",sub:"מזון + עבודה"},
+      {label:"נקודת איזון (מחזור)",value:isFinite(calc.breakeven)?nis(calc.breakeven):"—"},
+      {label:"החזר השקעה",value:calc.ebitda>0?Math.ceil(invest/calc.ebitda)+" חודשים":"אין החזר",
+        tone:calc.ebitda>0?"pos":"neg",sub:calc.ebitda>0?"בקצב הרווח הנוכחי":"העסק בהפסד"},
+    ],
+    chips:[
+      {ok:calc.prime<=65,text:"עלות פריים "+pct(calc.prime)},
+      {ok:foodCost<=35,text:"עלות מזון "+foodCost+"%"},
+      {ok:labor<=35,text:"עבודה "+labor+"%"},
+      {ok:calc.rentPct<=10,text:"שכירות "+pct(calc.rentPct)+" מהמחזור"},
+      {ok:calc.safety>=0,text:(calc.safety>=0?"מעל נקודת איזון":"מתחת לאיזון")+" ("+pct(calc.safety)+")"},
+    ],
+    rows:[
+      {label:"הכנסות",v:revenue,strong:true},
+      {label:"עלות מזון (כולל פחת)",v:revenue*(calc.effFood/100)},
+      {label:"רווח גולמי",v:calc.grossProfit,strong:true},
+      {label:"עלות עבודה",v:calc.laborCost},
+      {label:"שכירות",v:rent},
+      {label:"הוצאות תפעול נוספות",v:otherOpex},
+      {label:"סך הוצאות קבועות",v:calc.fixed,strong:true},
+      {label:"רווח תפעולי (EBITDA)",v:calc.ebitda,strong:true,neg:calc.ebitda<0},
+    ],
+    assumptions:[
+      {label:"עלות מזון",value:foodCost+"%"},
+      {label:"פחת / בלאי",value:waste+"%"},
+      {label:"עלות עבודה",value:labor+"%"},
+      {label:"מרווח גולמי אפקטיבי",value:pct(calc.grossMargin)},
+      {label:"השקעה ראשונית",value:nis(invest)},
+      {label:"תמהיל אוכל",value:food+"%"},
+      {label:"תמהיל משקאות",value:bev+"%"},
+      {label:"תמהיל משלוחים",value:delivery+"%"},
+      {label:"צמיחה בתחזית",value:"שנה 2 ×1.4 · שנה 3 ×1.8"},
+    ],
   });
 
   return (
@@ -541,15 +746,20 @@ function FinanceRest(){
           </div>
         </Panel>
         <Panel title="תחזית 3 שנים (לפי הפרמטרים הנוכחיים)">
-          <GroupChart data={proj} series={[{key:"rev",color:T.basalt,label:"מחזור"},{key:"prof",color:T.green,label:"רווח תפעולי"}]} />
+          <GroupChart data={proj} series={[{key:"rev",color:T.basalt,label:"מחזור חודשי"},{key:"prof",color:T.green,label:"רווח תפעולי חודשי"}]} />
+          <ProjTable proj={proj} />
         </Panel>
+        <button onClick={()=>onReport(buildReport())} style={{width:"100%",fontSize:14,fontWeight:800,padding:"13px",
+          borderRadius:12,border:"none",background:T.basalt,color:"#fff",cursor:"pointer"}}>
+          הפק דוח גרפי להורדה ↓
+        </button>
       </div>
     </div>
   );
 }
 
-function FinanceTab({mode}){
-  return mode==="rest"?<FinanceRest/>:<FinanceDist/>;
+function FinanceTab({mode,onReport}){
+  return mode==="rest"?<FinanceRest onReport={onReport}/>:<FinanceDist onReport={onReport}/>;
 }
 
 /* ---------------- מדדי ענף ---------------- */
@@ -633,6 +843,15 @@ function ChecklistTab({mode}){
 function App(){
   const [mode,setMode]=useState("dist"); // dist | rest
   const [tab,setTab]=useState("finance");
+  const [report,setReport]=useState(null);
+  useEffect(()=>{ if(report) window.scrollTo(0,0); },[report]);
+  if(report) return (
+    <div style={{fontFamily:"system-ui,'Segoe UI',Arial,sans-serif",background:"#fff",minHeight:"100vh",color:T.ink,padding:"18px 16px 40px"}}>
+      <div style={{maxWidth:900,margin:"0 auto"}}>
+        <ReportView r={report} onClose={()=>setReport(null)} />
+      </div>
+    </div>
+  );
   const tabs=[
     {id:"finance",label:"מחשבון כדאיות"},
     {id:"pricer",label:mode==="rest"?"תמחור מנה":"תמחור מוצר"},
@@ -665,7 +884,7 @@ function App(){
               color:tab===t.id?T.basalt:T.muted,borderBottom:"3px solid "+(tab===t.id?T.green:"transparent"),marginBottom:-2}}>{t.label}</button>
           ))}
         </div>
-        {tab==="finance"&&<FinanceTab mode={mode}/>}
+        {tab==="finance"&&<FinanceTab mode={mode} onReport={setReport}/>}
         {tab==="pricer"&&<PricerTab mode={mode}/>}
         {tab==="bench"&&<BenchmarksTab mode={mode}/>}
         {tab==="check"&&<ChecklistTab mode={mode}/>}
