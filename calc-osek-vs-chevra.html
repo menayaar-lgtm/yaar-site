@@ -189,14 +189,60 @@ footer{padding:28px 0 50px;text-align:center;color:var(--muted);font-size:12.5px
 footer .disc{max-width:760px;margin:0 auto 14px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 18px;text-align:start}
 footer .foot-logo{height:40px;opacity:.85;margin-bottom:10px}
 
+/* ---------- Report button ---------- */
+.report-btn{display:inline-flex;align-items:center;gap:6px;font-size:14px;font-weight:600;cursor:pointer;
+  padding:9px 14px;border-radius:10px;border:1px solid var(--sage);background:var(--sage-soft);color:var(--sage-deep);
+  font-family:inherit;transition:.15s}
+.report-btn:hover{background:var(--sage);color:#fff}
+
+/* ---------- Print-only elements (hidden on screen) ---------- */
+.print-only{display:none}
+.print-date{font-size:13px;color:var(--muted);margin-top:6px}
+.assump-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px 20px}
+.assump-grid div{display:flex;justify-content:space-between;font-size:13.5px;padding:5px 0;border-bottom:1px solid var(--line)}
+.assump-grid div span:first-child{color:var(--muted)}
+.assump-grid div span:last-child{font-weight:700;color:var(--forest)}
+
 /* ---------- Responsive ---------- */
 @media(max-width:760px){
   .head-row{flex-wrap:wrap}
   .head-cta{order:3;width:100%}
-  .head-cta a{flex:1 1 0;justify-content:center}
+  .head-cta a,.head-cta button{flex:1 1 0;justify-content:center}
   .cards{grid-template-columns:1fr}
   .slider-grid{grid-template-columns:1fr}
   .cta-band{flex-direction:column;align-items:flex-start}
+}
+
+/* ---------- Print / PDF report ---------- */
+@media print{
+  @page{size:A4;margin:12mm}
+  *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
+  body{background:#fff;font-size:12px}
+  .wrap{max-width:100%;padding:0}
+  /* hide interactive & marketing */
+  .head-cta,#controlsPanel,.cta-band,footer .foot-logo,#footName{display:none !important}
+  /* show print-only */
+  .print-only{display:block !important}
+  #assumptionsPanel{display:block !important}
+  /* header cleanup */
+  header{border-bottom:2px solid var(--sage);background:#fff}
+  .head-row{padding:0 0 10px}
+  .logo-card{box-shadow:none;border:0;padding:0}
+  .logo-card img{height:54px}
+  .head-titles h1{font-size:20px}
+  /* keep result colors, flatten shadows */
+  .verdict,.card,.panel{box-shadow:none !important;break-inside:avoid}
+  .hero{padding:10px 0}
+  .cards{gap:10px;margin-top:10px}
+  .card{border:1px solid var(--line)}
+  section.panel{margin-top:12px;padding:14px;border:1px solid var(--line)}
+  .panel h2{font-size:15px}
+  .tbl{font-size:11px} .tbl th,.tbl td{padding:6px 8px}
+  table,tr,.chart-wrap,svg.chart{break-inside:avoid}
+  .chart-legend{font-size:11px}
+  footer{padding:12px 0 0} footer .disc{font-size:10.5px;break-inside:avoid}
+  /* avoid orphaned headings */
+  h1,h2{break-after:avoid}
 }
 </style>
 </head>
@@ -226,8 +272,10 @@ const BRAND = {
       <div class="eyebrow" id="brandEyebrow">הנהלת חשבונות וראיית חשבון</div>
       <h1>מחשבון כדאיות: עוסק מורשה או חברה בע״מ?</h1>
       <p>השוואה מבוססת נתוני מס 2026 — מיסים, שווי שימוש ברכב ועלויות תפעול</p>
+      <p class="print-only print-date" id="printDate"></p>
     </div>
     <div class="head-cta">
+      <button id="btnReport" class="report-btn" type="button">📄 הפק דוח סיכום</button>
       <a id="ctaSiteTop" class="primary" href="#">לאתר שלנו</a>
       <a id="ctaWaTop" href="#">ייעוץ בוואטסאפ</a>
     </div>
@@ -263,8 +311,14 @@ const BRAND = {
     </div>
   </div>
 
+  <!-- ASSUMPTIONS SUMMARY (print report) -->
+  <section class="panel print-only" id="assumptionsPanel">
+    <h2>הנחות הדוח</h2>
+    <div class="assump-grid" id="assumpGrid"></div>
+  </section>
+
   <!-- CONTROLS -->
-  <section class="panel">
+  <section class="panel" id="controlsPanel">
     <h2>הנתונים שלך</h2>
     <p class="hint">המחוונים המרכזיים. אצל עוסק מורשה אין משיכת שכר או צבירה — כל הרווח אישי. זיכוי "אזור ספר" מקטין את מס היחיד ולכן דוחה את נקודת ההכרעה כלפי מעלה.</p>
     <div class="slider-grid">
@@ -795,6 +849,27 @@ function update(){
   const sole = calcSole(s.profit, p, s.opts);
   const comp = calcCompany(s.profit, s.salary, s.reten, p, s.opts);
 
+  // ===== תוצאה עליונה (הפרש) — מחושבת ומוצגת ראשונה, חסינה לשינויים =====
+  const soleNetV = Number.isFinite(sole.net) ? sole.net : 0;
+  const compNetV = Number.isFinite(comp.totalValue) ? comp.totalValue : 0;
+  const delta = compNetV - soleNetV;
+  document.getElementById('cardSole').classList.toggle('is-winner', delta < 0);
+  document.getElementById('cardCompany').classList.toggle('is-winner', delta >= 0);
+  const near = Math.abs(delta) < 8000;
+  document.getElementById('verdict').className = 'verdict ' + (near?'tie':(delta>=0?'company':'sole'));
+  if(near){
+    document.getElementById('vHead').textContent = 'אתם בדיוק על נקודת ההכרעה';
+    document.getElementById('vSub').textContent = 'ההפרש זניח — ההחלטה תלויה בשיקולים נוספים (אחריות מוגבלת, צמיחה, גיוס הון).';
+  } else if(delta>0){
+    document.getElementById('vHead').textContent = 'חברה בע״מ משתלמת יותר';
+    document.getElementById('vSub').textContent = 'היתרון נובע בעיקר מהשארת חלק מהרווח בחברה במס 23% וחיסכון בביטוח לאומי על דיבידנד.';
+  } else {
+    document.getElementById('vHead').textContent = 'עדיף להישאר עוסק מורשה';
+    document.getElementById('vSub').textContent = 'בנקודה הזו עלויות התפעול של החברה גבוהות מהחיסכון במס שהיא מייצרת.';
+  }
+  document.getElementById('vDelta').textContent =
+    (delta>=0?'יתרון לחברה: ':'יתרון לעוסק מורשה: ') + money(Math.abs(delta)) + ' לשנה';
+
   // labels
   document.getElementById('lblProfit').textContent = money(s.profit);
   document.getElementById('lblSalary').textContent = money(s.salary);
@@ -804,6 +879,8 @@ function update(){
   // עלות מעביד ונטו — מסגור ייעוצי (עלות שכר, לא ברוטו/נטו)
   document.getElementById('subSalaryCost').textContent = 'עלות מעביד: ' + money(comp.employerCost);
   document.getElementById('subSalaryNet').textContent  = 'נטו ביד: ' + money(comp.salaryNet);
+  // print report — assumptions summary
+  buildAssumptions(s, p, comp);
   if(s.opts.spouse){
     document.getElementById('subSpouseCost').textContent = 'עלות מעביד: ' + money(comp.spouseCost);
     document.getElementById('subSpouseNet').textContent  = 'נטו ביד: ' + money(comp.spouseNet);
@@ -838,29 +915,6 @@ function update(){
   compRows += row('עודפים בחברה' + (s.opts.cons?' (אחרי מס עתידי)':''), comp.retainedValue);
   if(s.opts.spouse && comp.spouseNet>0) compRows += rowMuted('+ נטו בן/בת זוג (זהה בשני המסלולים)', comp.spouseNet);
   document.getElementById('compRows').innerHTML = compRows;
-
-  // winner
-  const delta = comp.totalValue - sole.net;
-  const cardSole = document.getElementById('cardSole'), cardComp = document.getElementById('cardCompany');
-  cardSole.classList.toggle('is-winner', delta < 0);
-  cardComp.classList.toggle('is-winner', delta >= 0);
-
-  // verdict
-  const v = document.getElementById('verdict');
-  const near = Math.abs(delta) < 8000;
-  v.className = 'verdict ' + (near?'tie':(delta>=0?'company':'sole'));
-  if(near){
-    document.getElementById('vHead').textContent = 'אתם בדיוק על נקודת ההכרעה';
-    document.getElementById('vSub').textContent = 'ההפרש זניח — ההחלטה תלויה בשיקולים נוספים (אחריות מוגבלת, צמיחה, גיוס הון).';
-  } else if(delta>0){
-    document.getElementById('vHead').textContent = 'חברה בע״מ משתלמת יותר';
-    document.getElementById('vSub').textContent = 'היתרון נובע בעיקר מהשארת חלק מהרווח בחברה במס 23% וחיסכון בביטוח לאומי על דיבידנד.';
-  } else {
-    document.getElementById('vHead').textContent = 'עדיף להישאר עוסק מורשה';
-    document.getElementById('vSub').textContent = 'בנקודה הזו עלויות התפעול של החברה גבוהות מהחיסכון במס שהיא מייצרת.';
-  }
-  document.getElementById('vDelta').textContent =
-    (delta>=0?'יתרון לחברה: ':'יתרון לעוסק מורשה: ') + money(Math.abs(delta)) + ' לשנה';
 
   // breakdown table
   const soleArea = p.areaPct>0 ? p.areaPct*Math.min(sole.taxableBase, p.areaCeil) : 0;
@@ -898,6 +952,29 @@ function update(){
 
 function row(label, val){
   return `<div><span>${label}</span><span>${val<0?'−':''}${money(Math.abs(val))}</span></div>`;
+}
+// בניית טבלת ההנחות לדוח ההדפסה
+function buildAssumptions(s, p, comp){
+  const g = document.getElementById('assumpGrid');
+  if(!g) return;
+  const rows = [];
+  const R = (k,v)=>rows.push(`<div><span>${k}</span><span>${v}</span></div>`);
+  R('רווח שנתי (לפני מס)', money(s.profit));
+  R('שכר בעלים בחברה (ברוטו)', money(s.salary));
+  R('עלות מעביד כוללת', money(comp.employerCost));
+  R('רווח שנשאר בחברה', Math.round(s.reten*100)+'%');
+  R('נקודות זיכוי', p.creditPts.toFixed(2));
+  const areaOn = document.getElementById('tArea').checked && p.areaPct>0;
+  const areaName = (document.getElementById('areaSearch').value||'').trim();
+  R('זיכוי אזור ספר', areaOn ? (areaName ? areaName+' · '+Math.round(p.areaPct*100)+'%' : Math.round(p.areaPct*100)+'%') : 'ללא');
+  const mods = [];
+  if(s.opts.veh) mods.push('רכב צמוד');
+  if(s.opts.pension) mods.push('פנסיה וקרן השתלמות');
+  if(s.opts.spouse) mods.push('בן/בת זוג בעסק');
+  if(s.opts.wallet) mods.push('חברת ארנק');
+  if(s.opts.cons) mods.push('חישוב שמרני');
+  R('מודולים פעילים', mods.length ? mods.join(' · ') : '—');
+  g.innerHTML = rows.join('');
 }
 function rowSub(label, val){ // שורת ביניים מודגשת (סכום)
   return `<div class="subrow"><span>${label}</span><span>${val<0?'−':''}${money(Math.abs(val))}</span></div>`;
@@ -1007,6 +1084,11 @@ function applyBrand(){
   ['ctaSite','ctaSiteTop'].forEach(id=>document.getElementById(id).href=BRAND.websiteUrl);
   document.getElementById('ctaFb').href = BRAND.facebookUrl;
   [...document.querySelectorAll('#ctaSite,#ctaSiteTop,#ctaFb,#ctaWa,#ctaWaTop')].forEach(a=>{a.target='_blank';a.rel='noopener';});
+  // דוח סיכום: תאריך + כפתור הדפסה/PDF
+  const d = new Date();
+  document.getElementById('printDate').textContent =
+    'דוח נכון לתאריך ' + d.toLocaleDateString('he-IL', {day:'numeric', month:'long', year:'numeric'});
+  document.getElementById('btnReport').addEventListener('click', ()=>window.print());
 }
 
 // toggle styling + param panels show
