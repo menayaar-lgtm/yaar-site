@@ -334,7 +334,9 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
       <option value="auto">אוטומטי — לפי גובה ההפקדה</option>
       <option value="mutav">מוטב</option>
       <option value="reg">רגיל</option></select></div>
-    <div class="fld"><label>הכנסה מזכה שנוצלה כשכיר</label><input type="number" id="pensSalaryUsed" value="0" step="1000"></div>
+    <div class="fld"><label>משכורת מבוטחת <small>(שהופרש בגינה לפנסיה)</small></label>
+      <input type="number" id="pensSalaryUsed" value="0" step="1000">
+      <button class="btn o small" id="pensFromSalary" type="button" style="margin-top:4px;font-size:11.5px;padding:3px 8px">מלא לפי המשכורת שהוזנה</button></div>
   </div>
   <div class="leg">חוק פנסיה חובה לעצמאים</div>
   <div class="g2">
@@ -357,7 +359,9 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
 </div><div class="mf"><button class="btn" id="pensOpt" type="button">מלא הפקדה מיטבית</button><button class="btn o" id="pensMin" type="button">מלא מינימום חובה</button><button class="btn o" data-close>סגור</button></div></dialog>
 
 <dialog id="dKh"><h3>קרן השתלמות לעצמאים<button data-close>×</button></h3><div class="mb">
-  <div class="fld"><label>הכנסה קובעת שנוצלה בקרן השתלמות כשכיר</label><input type="number" id="khSalaryUsed" value="0" step="1000"></div>
+  <div class="fld"><label>משכורת שבגינה הופרש לקרן השתלמות כשכיר</label>
+    <input type="number" id="khSalaryUsed" value="0" step="1000">
+    <button class="btn o small" id="khFromSalary" type="button" style="margin-top:4px;font-size:11.5px;padding:3px 8px">מלא לפי המשכורת שהוזנה</button></div>
   <p class="note" id="khInfo"></p>
 </div><div class="mf"><button class="btn" id="khOpt" type="button">מלא עד תקרת ההטבה במס</button><button class="btn o" data-close>סגור</button></div></dialog>
 
@@ -705,7 +709,8 @@ function update(){
 
   /* --- deposits (מחושבים לפני הב״ל: ניכוי קרן ההשתלמות לפי ס׳ 17(5א) מקטין גם את בסיס דמי הביטוח) --- */
   const mz = num('mzCeil');
-  const pAvail = Math.max(0, 2*mz - num('pensSalaryUsed'));
+  const insuredSal = Math.min(num('pensSalaryUsed'), mz);   /* לפי הנמוך מבין המשכורת המבוטחת לתקרת הרובד */
+  const pAvail = Math.max(0, 2*mz - insuredSal);
   const pInc = Math.min(profit, pAvail);
   const L1 = Math.min(pInc, mz);
   const L2 = Math.max(0, pInc - mz);
@@ -929,10 +934,13 @@ function update(){
       ' המקסימום האפשרי ב־2026 הוא '+money(num('pMandLowRate')/100*mStep + num('pMandHighRate')/100*(mCeil-mStep))+'.';
 
   $('pensInfo').innerHTML = profit>0
-    ? 'רובד ראשון '+money(L1)+' × '+num('pDed')+'% · רובד שני '+money(L2)+' × '+d2r+'%'+
-      (L2>0 ? (unlocked ? ' (רובד מוגדל פעיל)' : ' — הפקדה של '+money(mutavMin+num('pUnlock')/100*L2)+' תעלה אותו ל־'+num('pDed2h')+'%') : '')+
-      '.<br>מעמד: <b>'+(isMutav?'עמית מוטב':'עמית רגיל')+'</b> · סף עמית מוטב '+money(mutavMin)+'.'+
-      (num('pensSalaryUsed')>0 ? '<br>נוצלו '+money(num('pensSalaryUsed'))+' בחלק השכיר — התקרה הופחתה בהתאם.' : '')+
+    ? 'תקרת הכנסה מזכה: '+money(2*mz)+
+      (insuredSal>0 ? ' פחות משכורת מבוטחת '+money(insuredSal)+
+        (num('pensSalaryUsed')>mz ? ' (הוגבלה לתקרת הרובד '+money(mz)+')' : '')+
+        ' = <b>'+money(pAvail)+'</b>' : '')+
+      '.<br>הרובד הזמין להפקדה כעצמאי: '+money(pInc)+
+      (pAvail<=0 ? ' — <b>המשכורת המבוטחת ממצה את התקרה; הפקדה כעצמאי לא תיצור הטבת מס.</b>' : '')+
+      (pAvail>0 ? '<br>מעמד: <b>'+(isMutav?'עמית מוטב':'עמית רגיל')+'</b> · סף עמית מוטב '+money(mutavMin)+'.' : '')+
       '<br>ההפקדה שממצה את הטבת המס: <b>'+money(pOpt.amount)+'</b>'+
       (pOpt.amount>0 ? ' (חיסכון במס '+money(pOpt.saving)+')' : '')+
       (pOpt.amount>0 && pOpt.amount<pOptimal ? '. מעבר לסכום זה ההפקדה כבר לא מקטינה את המס.' :
@@ -964,7 +972,7 @@ function update(){
 
   $('khInfo').innerHTML = profit>0
     ? 'ניכוי מוכר עד '+num('khDed')+'% מהכנסה קובעת של '+money(khBase)+': <b>'+money(khDedCap)+'</b>'+
-      (num('khSalaryUsed')>0 ? ' (לאחר הפחתת '+money(num('khSalaryUsed'))+' שנוצלו בחלק השכיר)' : '')+'.'+
+      (num('khSalaryUsed')>0 ? ' — לאחר הפחתת משכורת של '+money(num('khSalaryUsed'))+' שבגינה הופרש לקרן השתלמות כשכיר' : '')+'.'+
       (khDedCap<=0
         ? '<br><b>התקרה נוצלה במלואה בחלק השכיר — הפקדה נוספת כעצמאי לא תיצור הטבת מס.</b>'
         : '<br>ההפקדה שממצה את הטבת המס: <b>'+money(khOptR.amount)+'</b>'+
@@ -1097,6 +1105,8 @@ $('pensMin').addEventListener('click', ()=>{
   $('pens').value = Math.round(window.__PMIN||0); update();
   if(!(window.__PMIN>0)) alert('בנתונים הנוכחיים אין חובת הפקדה לפנסיה.');
 });
+$('pensFromSalary').addEventListener('click', ()=>{ $('pensSalaryUsed').value = Math.round(num('salary')); update(); });
+$('khFromSalary').addEventListener('click', ()=>{ $('khSalaryUsed').value = Math.round(num('salary')); update(); });
 $('bPrint').addEventListener('click', ()=>{ buildReport(); window.print(); });
 $('bPrint2').addEventListener('click', ()=>{ $('dDetail').close(); buildReport(); window.print(); });
 $('bReset').addEventListener('click', ()=>{ if(confirm('לאפס את כל הנתונים?')) location.reload(); });
@@ -1223,7 +1233,7 @@ $('planSearch').addEventListener('input', renderPlans);
 /* ניקוי שדות אחרי שמירה, כדי שהשמירה הבאה תתחיל נקייה */
 function clearPlanFields(){ $('planName').value=''; $('planNote').value=''; }
 
-const BUILD = 'v13';
+const BUILD = 'v14';
 $('buildTag').textContent = ' · ' + BUILD + ' · ' + (API_BASE ? 'פנימי' : 'ציבורי');
 
 /* שמירה מקומית — קיימת בשתי הגרסאות */
