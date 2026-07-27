@@ -168,6 +168,7 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
     <b>מחשבון מס לעצמאים</b>
     <span>יער צפון · רואי חשבון ויועצי מס</span>
     <span class="sp">
+      <span id="authBox"></span>
       <a href="#" id="lnkSite" target="_blank" rel="noopener">אתר</a>
       <a href="#" id="lnkFb" target="_blank" rel="noopener">פייסבוק</a>
       <a href="#" id="lnkWa" target="_blank" rel="noopener">וואטסאפ</a>
@@ -260,14 +261,15 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
 
       <div class="acts">
         <button class="btn" id="bPrint" type="button">דוח PDF</button>
-        <button class="btn o" id="bPlans" data-open="dPlans" type="button" hidden>תכנונים</button>
+        <button class="btn o" id="bPlans" data-open="dPlans" type="button" hidden>שמור / פתח תכנון</button>
         <button class="btn o" data-open="dDetail" type="button">פירוט מלא</button>
         <button class="btn o" id="bCopy" type="button">העתק סיכום</button>
         <a class="btn o" id="ctaWa" href="#" target="_blank" rel="noopener" style="text-decoration:none">וואטסאפ</a>
       </div>
 
       <p class="foot">הערכה בלבד לצורכי התמצאות. אינה מהווה ייעוץ מס או חוות דעת ואינה מחליפה בדיקה פרטנית.
-      מבוסס על לוח הניכויים של רשות המסים 2026 ושיעורי המוסד לביטוח לאומי 2026.</p>
+      מבוסס על לוח הניכויים של רשות המסים 2026 ושיעורי המוסד לביטוח לאומי 2026.
+      <span id="buildTag" style="opacity:.55"></span></p>
     </div>
 
   </div>
@@ -473,17 +475,27 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
 </div><div class="mf"><button class="btn" data-close>סגור</button></div></dialog>
 
 <dialog id="dPlans" style="max-width:600px"><h3>תכנונים שמורים<button data-close>×</button></h3><div class="mb">
-  <div class="g2">
-    <div class="fld"><label>שם התכנון / הלקוח</label><input type="text" id="planName" placeholder="לדוגמה: ישראל ישראלי 2026"></div>
-    <div class="fld"><label>הערה</label><input type="text" id="planNote" placeholder="אופציונלי"></div>
+  <div id="planLogin" hidden>
+    <p class="note">שמירת תכנוני לקוחות דורשת כניסה עם משתמש וסיסמה — אותם פרטים של מערכת הנוכחות.</p>
+    <div class="g2">
+      <div class="fld"><label>אימייל</label><input type="email" id="loginEmail" autocomplete="username"></div>
+      <div class="fld"><label>סיסמה</label><input type="password" id="loginPass" autocomplete="current-password"></div>
+    </div>
+    <div class="acts" style="margin-top:8px"><button class="btn" id="loginBtn" type="button">התחברות</button></div>
   </div>
-  <div class="acts" style="margin-top:8px">
-    <button class="btn" id="planSave" type="button">שמור בשם</button>
-    <button class="btn o" id="planRefresh" type="button">רענן רשימה</button>
+  <div id="planArea" hidden>
+    <div class="g2">
+      <div class="fld"><label>שם התכנון / הלקוח</label><input type="text" id="planName" placeholder="לדוגמה: ישראל ישראלי"></div>
+      <div class="fld"><label>הערה</label><input type="text" id="planNote" placeholder="אופציונלי"></div>
+    </div>
+    <div class="acts" style="margin-top:8px">
+      <button class="btn" id="planSave" type="button">שמור בשם</button>
+      <button class="btn o" id="planRefresh" type="button">רענן רשימה</button>
+    </div>
+    <div class="leg">התכנונים שלי</div>
+    <table class="det" id="planList"></table>
   </div>
   <p class="note" id="planMsg"></p>
-  <div class="leg">התכנונים שלי</div>
-  <table class="det" id="planList"></table>
 </div><div class="mf"><button class="btn o" data-close>סגור</button></div></dialog>
 
 <div class="report" id="report"></div>
@@ -501,6 +513,8 @@ const CALC_COMPARE = 'https://www.yaar.biz/calc-osek-vs-chevra.html';
 /* שמירת תכנונים: ריק = גרסה ציבורית ללא שמירה.
    בגרסה הפנימית (בתוך yaar-clock) הנתיב הוא '/api/plans'. */
 const API_BASE = '';
+const API_ROOT = '/api';
+const INTERNAL_URL = 'https://yaar-clock.netlify.app/tax.html';
 const getToken = () => {
   const direct = localStorage.getItem('token') || localStorage.getItem('authToken') || localStorage.getItem('jwt');
   if(direct) return direct;
@@ -1083,8 +1097,27 @@ async function api(method, path, body){
   return r.json();
 }
 const planMsg = (t,bad)=>{ const e=$('planMsg'); if(e){ e.innerHTML = bad ? '<b style="color:var(--rust)">'+t+'</b>' : t; } };
+function isAdmin(){ const p = tokenPayload(); return !!(p && p.role === 'admin'); }
+
+function refreshAuth(){
+  const me = API_BASE ? tokenPayload() : null;
+  if(!API_BASE){
+    $('authBox').innerHTML = '<a href="'+INTERNAL_URL+'">כניסת צוות ←</a>';
+    return;
+  }
+  const ok = me && me.role === 'admin';
+  $('bPlans').hidden = false;
+  $('planLogin').hidden = !!ok;
+  $('planArea').hidden = !ok;
+  $('authBox').innerHTML = me
+    ? (me.name||'מחובר') + ' · <a href="#" data-logout>יציאה</a>'
+    : '<a href="#" data-login>כניסה</a>';
+  if(ok) loadPlans();
+  else if(me) planMsg('שמירת תכנונים זמינה לצוות המשרד בלבד (הרשאת מנהל).', true);
+}
+
 async function loadPlans(){
-  if(!API_BASE) return;
+  if(!API_BASE || !isAdmin()) return;
   try{
     const rows = await api('GET','');
     $('planList').innerHTML = rows.length
@@ -1095,9 +1128,29 @@ async function loadPlans(){
       : '<tr><td colspan="3" style="color:var(--muted)">אין עדיין תכנונים שמורים.</td></tr>';
   }catch(e){ planMsg(e.message, true); }
 }
-const ME = API_BASE ? tokenPayload() : null;
-if(API_BASE && ME && ME.role === 'admin'){
-  $('bPlans').hidden = false;
+
+const BUILD = 'v8';
+$('buildTag').textContent = ' · ' + BUILD + ' · ' + (API_BASE ? 'פנימי' : 'ציבורי');
+
+if(API_BASE){
+  $('loginBtn').addEventListener('click', async ()=>{
+    const email = ($('loginEmail').value||'').trim(), pass = $('loginPass').value||'';
+    if(!email || !pass){ planMsg('יש להזין אימייל וסיסמה.', true); return; }
+    $('loginBtn').disabled = true; planMsg('מתחבר…');
+    try{
+      const r = await fetch(API_ROOT+'/login', {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({email, password: pass})});
+      const j = await r.json();
+      if(!r.ok) throw new Error(j.error || 'שגיאת התחברות');
+      localStorage.setItem('token', j.token);
+      $('loginPass').value = '';
+      refreshAuth();
+      planMsg('שלום ' + ((j.me && j.me.name) || '') + '.');
+    }catch(e){ planMsg(e.message, true); }
+    finally{ $('loginBtn').disabled = false; }
+  });
+  $('loginPass').addEventListener('keydown', e=>{ if(e.key==='Enter') $('loginBtn').click(); });
+
   $('planSave').addEventListener('click', async ()=>{
     const name = ($('planName').value||'').trim() || ($('cName').value||'').trim();
     if(!name){ planMsg('יש להזין שם לתכנון.', true); return; }
@@ -1116,8 +1169,23 @@ if(API_BASE && ME && ME.role === 'admin'){
               await api('DELETE','/'+dl.dataset.planDel); planMsg('התכנון נמחק.'); loadPlans(); }
     }catch(err){ planMsg(err.message, true); }
   });
-  $('bPlans').addEventListener('click', ()=>{ planMsg('מחובר כ־'+(ME.name||'')); loadPlans(); });
+  $('bPlans').addEventListener('click', refreshAuth);
 }
+
+document.addEventListener('click', e=>{
+  if(e.target.closest('[data-login]')){ e.preventDefault(); $('dPlans').showModal(); refreshAuth(); }
+  if(e.target.closest('[data-logout]')){
+    e.preventDefault();
+    if(!confirm('להתנתק מהמערכת?')) return;
+    Object.keys(localStorage).forEach(k=>{
+      const v = localStorage.getItem(k);
+      if(typeof v === 'string' && /^[\w-]+\.[\w-]+\.[\w-]+$/.test(v)) localStorage.removeItem(k);
+    });
+    ['token','authToken','jwt'].forEach(k=>localStorage.removeItem(k));
+    refreshAuth();
+  }
+});
+refreshAuth();
 
 $('cpManual').value = buildCP();
 update();
