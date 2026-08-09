@@ -451,7 +451,7 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
     <div class="fld"><label>קרן השתלמות מקטינה בסיס ב״ל</label><select id="niKhReduces">
       <option value="1">כן — ניכוי ס׳ 17(5א)</option><option value="0">לא</option></select></div>
     <div class="fld"><label>קופת גמל מקטינה בסיס ב״ל</label><select id="niPensReduces">
-      <option value="1">כן — ס׳ 345 לחוק הב״ל</option><option value="0">לא</option></select></div>
+      <option value="0">לא — ניכוי אישי ס׳ 47</option><option value="1">כן — ס׳ 345</option></select></div>
     <div class="fld"><label>הכנסות פסיביות בב״ל</label><select id="niPassiveSel"><option value="0">לא</option><option value="1">כן</option></select></div>
   </div>
   <div class="leg">הפקדות וזיכויים</div>
@@ -1233,7 +1233,7 @@ $('planSearch').addEventListener('input', renderPlans);
 /* ניקוי שדות אחרי שמירה, כדי שהשמירה הבאה תתחיל נקייה */
 function clearPlanFields(){ $('planName').value=''; $('planNote').value=''; }
 
-const BUILD = 'v14';
+const BUILD = 'v15';
 $('buildTag').textContent = ' · ' + BUILD + ' · ' + (API_BASE ? 'פנימי' : 'ציבורי');
 
 /* שמירה מקומית — קיימת בשתי הגרסאות */
