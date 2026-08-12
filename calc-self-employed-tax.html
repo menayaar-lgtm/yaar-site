@@ -296,7 +296,12 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
     <div class="fld"><label>מס שנוכה מהמשכורת</label><input type="number" id="salaryTax" value="0" step="500"></div>
     <div class="fld"><label>מענק פטור ממס</label><input type="number" id="grantExempt" value="0" step="500"></div>
   </div>
-  <p class="note">המשכורת ממצה תחילה את המדרגה המופחתת בביטוח לאומי, ולכן הכנסת העצמאי מחויבת בשיעור המלא מהשקל הראשון.</p>
+  <div class="leg">הפרשות המעסיק — משפיעות על התקרות כעצמאי</div>
+  <label class="chk"><input type="checkbox" id="salPens" checked> המעסיק מפריש לפנסיה (המשכורת מבוטחת)</label>
+  <label class="chk"><input type="checkbox" id="salKh"> המעסיק מפריש לקרן השתלמות</label>
+  <div class="fld"><label>משכורת מבוטחת בפועל <small>(רק אם שונה מהברוטו — למשל שכר שהופרשו בגינו פיצויים בלבד)</small></label>
+    <input type="number" id="salInsured" value="0" step="1000" placeholder="ריק = כל הברוטו"></div>
+  <p class="note" id="salInfo"></p>
 </div><div class="mf"><button class="btn" data-close>סגור</button></div></dialog>
 
 <dialog id="dRent"><h3>שכר דירה למגורים<button data-close>×</button></h3><div class="mb">
@@ -336,7 +341,7 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
       <option value="reg">רגיל</option></select></div>
     <div class="fld"><label>משכורת מבוטחת <small>(שהופרש בגינה לפנסיה)</small></label>
       <input type="number" id="pensSalaryUsed" value="0" step="1000">
-      <button class="btn o small" id="pensFromSalary" type="button" style="margin-top:4px;font-size:11.5px;padding:3px 8px">מלא לפי המשכורת שהוזנה</button></div>
+      <button class="btn o small" id="pensFromSalary" type="button" style="margin-top:4px;font-size:11.5px;padding:3px 8px">סנכרן מחדש עם המשכורת</button></div>
   </div>
   <div class="leg">חוק פנסיה חובה לעצמאים</div>
   <div class="g2">
@@ -361,7 +366,7 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
 <dialog id="dKh"><h3>קרן השתלמות לעצמאים<button data-close>×</button></h3><div class="mb">
   <div class="fld"><label>משכורת שבגינה הופרש לקרן השתלמות כשכיר</label>
     <input type="number" id="khSalaryUsed" value="0" step="1000">
-    <button class="btn o small" id="khFromSalary" type="button" style="margin-top:4px;font-size:11.5px;padding:3px 8px">מלא לפי המשכורת שהוזנה</button></div>
+    <button class="btn o small" id="khFromSalary" type="button" style="margin-top:4px;font-size:11.5px;padding:3px 8px">סנכרן מחדש עם המשכורת</button></div>
   <p class="note" id="khInfo"></p>
 </div><div class="mf"><button class="btn" id="khOpt" type="button">מלא עד תקרת ההטבה במס</button><button class="btn o" data-close>סגור</button></div></dialog>
 
@@ -637,6 +642,7 @@ $('town').addEventListener('input', e=>{
 /* ---- credit points ---- */
 const CP_KIDS = {kids0:1.5, kids15:2.5, kids612:1, kids1317:1, kids18:0.5, kidsDis:2};
 let CP_EDITED = false;
+const SAL_EDIT = {pens:false, kh:false};
 function buildCP(){
   let p = ($('gender').value==='f') ? 2.75 : 2.25;
   $('cpBase').value = p;
@@ -703,6 +709,13 @@ function update(){
   const age = num('age');
   const passiveFloor = age>=60 ? 0 : num('passiveFloor');
   const salary = num('salary'), milPay = num('milPay'), otherPersonal = num('grantTaxable');
+
+  /* --- תיאום שכיר/עצמאי: המשכורת המבוטחת מקטינה את התקרות כעצמאי --- */
+  const salBase = num('salInsured') > 0 ? num('salInsured') : salary;
+  const salPensAmt = (salary > 0 && $('salPens').checked) ? salBase : 0;
+  const salKhAmt   = (salary > 0 && $('salKh').checked)   ? salBase : 0;
+  if(!SAL_EDIT.pens && document.activeElement !== $('pensSalaryUsed')) $('pensSalaryUsed').value = Math.round(salPensAmt);
+  if(!SAL_EDIT.kh   && document.activeElement !== $('khSalaryUsed'))   $('khSalaryUsed').value   = Math.round(salKhAmt);
 
   const cpTotal = (CP_EDITED && num('cpManual')>0) ? num('cpManual') : buildCP();
   const cpValue = cpTotal*num('cpVal')*12;
@@ -905,7 +918,15 @@ function update(){
   html('pensHintS', profit>0 ? (mandShort>0 ? '<span class="warn">חסר '+money(mandShort)+' לחובה</span>' : hintFor(pens, pOpt)) : '');
   html('khHintS', profit>0 ? hintFor(num('kh'), khOptR) : '');
   html('sProfit', profit>0 ? money(profit/12)+' לחודש' : '');
-  html('sSalary', salary>0 ? (num('salaryTax')>0 ? 'נוכה '+money(num('salaryTax')) : 'ללא ניכוי מס') : '');
+  html('sSalary', salary>0
+    ? (salPensAmt>0 || salKhAmt>0 ? '<b>שכיר+עצמאי</b>' : (num('salaryTax')>0 ? 'נוכה '+money(num('salaryTax')) : 'ללא ניכוי מס'))
+    : '');
+  $('salInfo').innerHTML = salary>0
+    ? 'המשכורת מצטרפת להכנסה מהעסק לצורך <b>מדרגות המס ומס יסף</b>, ונקודות הזיכוי נספרות פעם אחת לשניהם.'+
+      '<br>בביטוח לאומי המשכורת ממצה תחילה את המדרגה המופחתת, ולכן הכנסת העצמאי מחויבת בשיעור המלא מהשקל הראשון.'+
+      (salPensAmt>0 ? '<br>משכורת מבוטחת '+money(salPensAmt)+' → תקרת ההפקדה לפנסיה כעצמאי יורדת ל־'+money(pAvail)+'.' : '')+
+      (salKhAmt>0 ? '<br>קרן השתלמות כשכיר '+money(salKhAmt)+' → ההכנסה הקובעת לקרן השתלמות כעצמאי יורדת ל־'+money(khBase)+'.' : '')
+    : 'אם יש גם משכורת, הזנתה כאן משפיעה על מדרגות המס ועל התקרות להפקדה כעצמאי.';
   html('sRent', rent>0 ? 'מסלול <b>'+TR[rentTrack]+'</b>' : '');
   html('sSolar', solar>0 ? 'מסלול <b>'+TR[solarTrack]+'</b>' : '');
   html('sCap', cap>0 ? num('capRate')+'% · מס '+money(capTax) : '');
@@ -1105,8 +1126,10 @@ $('pensMin').addEventListener('click', ()=>{
   $('pens').value = Math.round(window.__PMIN||0); update();
   if(!(window.__PMIN>0)) alert('בנתונים הנוכחיים אין חובת הפקדה לפנסיה.');
 });
-$('pensFromSalary').addEventListener('click', ()=>{ $('pensSalaryUsed').value = Math.round(num('salary')); update(); });
-$('khFromSalary').addEventListener('click', ()=>{ $('khSalaryUsed').value = Math.round(num('salary')); update(); });
+$('pensSalaryUsed').addEventListener('input', ()=>{ SAL_EDIT.pens = true; });
+$('khSalaryUsed').addEventListener('input', ()=>{ SAL_EDIT.kh = true; });
+$('pensFromSalary').addEventListener('click', ()=>{ SAL_EDIT.pens = false; update(); });
+$('khFromSalary').addEventListener('click', ()=>{ SAL_EDIT.kh = false; $('salKh').checked = true; update(); });
 $('bPrint').addEventListener('click', ()=>{ buildReport(); window.print(); });
 $('bPrint2').addEventListener('click', ()=>{ $('dDetail').close(); buildReport(); window.print(); });
 $('bReset').addEventListener('click', ()=>{ if(confirm('לאפס את כל הנתונים?')) location.reload(); });
@@ -1233,7 +1256,7 @@ $('planSearch').addEventListener('input', renderPlans);
 /* ניקוי שדות אחרי שמירה, כדי שהשמירה הבאה תתחיל נקייה */
 function clearPlanFields(){ $('planName').value=''; $('planNote').value=''; }
 
-const BUILD = 'v15';
+const BUILD = 'v16';
 $('buildTag').textContent = ' · ' + BUILD + ' · ' + (API_BASE ? 'פנימי' : 'ציבורי');
 
 /* שמירה מקומית — קיימת בשתי הגרסאות */
