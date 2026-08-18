@@ -299,8 +299,12 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
   <div class="leg">הפרשות המעסיק — משפיעות על התקרות כעצמאי</div>
   <label class="chk"><input type="checkbox" id="salPens" checked> המעסיק מפריש לפנסיה (המשכורת מבוטחת)</label>
   <label class="chk"><input type="checkbox" id="salKh"> המעסיק מפריש לקרן השתלמות</label>
-  <div class="fld"><label>משכורת מבוטחת בפועל <small>(רק אם שונה מהברוטו — למשל שכר שהופרשו בגינו פיצויים בלבד)</small></label>
-    <input type="number" id="salInsured" value="0" step="1000" placeholder="ריק = כל הברוטו"></div>
+  <div class="g2">
+    <div class="fld"><label>הכנסה מבוטחת <small>(קוד 244 בטופס 106)</small></label>
+      <input type="number" id="salInsured" value="0" step="1000" placeholder="ריק = כל הברוטו"></div>
+    <div class="fld"><label>שכר לקרן השתלמות <small>(קוד 218 בטופס 106)</small></label>
+      <input type="number" id="salKhBase" value="0" step="1000" placeholder="ריק = כל הברוטו"></div>
+  </div>
   <p class="note" id="salInfo"></p>
 </div><div class="mf"><button class="btn" data-close>סגור</button></div></dialog>
 
@@ -711,9 +715,8 @@ function update(){
   const salary = num('salary'), milPay = num('milPay'), otherPersonal = num('grantTaxable');
 
   /* --- תיאום שכיר/עצמאי: המשכורת המבוטחת מקטינה את התקרות כעצמאי --- */
-  const salBase = num('salInsured') > 0 ? num('salInsured') : salary;
-  const salPensAmt = (salary > 0 && $('salPens').checked) ? salBase : 0;
-  const salKhAmt   = (salary > 0 && $('salKh').checked)   ? salBase : 0;
+  const salPensAmt = (salary > 0 && $('salPens').checked) ? (num('salInsured') > 0 ? num('salInsured') : salary) : 0;
+  const salKhAmt   = (salary > 0 && $('salKh').checked)   ? (num('salKhBase') > 0 ? num('salKhBase') : salary) : 0;
   if(!SAL_EDIT.pens && document.activeElement !== $('pensSalaryUsed')) $('pensSalaryUsed').value = Math.round(salPensAmt);
   if(!SAL_EDIT.kh   && document.activeElement !== $('khSalaryUsed'))   $('khSalaryUsed').value   = Math.round(salKhAmt);
 
@@ -739,9 +742,9 @@ function update(){
   const pensCredBase = Math.min(Math.max(0, pens - pensDeduction), pCredCeil);
   const pensCredit = pensCredBase * num('pCredRate')/100;
   const pensUnused = Math.max(0, pens - pensDeduction - pensCredBase);
-  const pOptimal = L2 > 0
-    ? Math.max(mutavMin + num('pUnlock')/100*L2, (num('pDed')+num('pCred'))/100*L1)
-    : (num('pDed')+num('pCred'))/100*L1;
+  const pDedMaxU = num('pDed')/100*L1 + (L2>0 ? num('pDed2h')/100*L2 : 0);
+  const unlockPoint = L2>0 ? Math.ceil(mutavMin + num('pUnlock')/100*L2) : 0;
+  const pOptimal = Math.max(pDedMaxU + pCredCeil, unlockPoint, (num('pDed')+num('pCred'))/100*L1);
   window.__POPT = pOptimal;
   /* חוק פנסיה חובה לעצמאים */
   const mStep = num('pMandStep'), mCeil = num('pMandCeil');
@@ -1256,7 +1259,7 @@ $('planSearch').addEventListener('input', renderPlans);
 /* ניקוי שדות אחרי שמירה, כדי שהשמירה הבאה תתחיל נקייה */
 function clearPlanFields(){ $('planName').value=''; $('planNote').value=''; }
 
-const BUILD = 'v16';
+const BUILD = 'v18';
 $('buildTag').textContent = ' · ' + BUILD + ' · ' + (API_BASE ? 'פנימי' : 'ציבורי');
 
 /* שמירה מקומית — קיימת בשתי הגרסאות */
