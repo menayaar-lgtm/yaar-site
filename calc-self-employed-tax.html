@@ -350,6 +350,7 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
   <div class="leg">חוק פנסיה חובה לעצמאים</div>
   <div class="g2">
     <div class="fld"><label>הופקד כשכיר בפועל <small>(עובד + מעסיק)</small></label><input type="number" id="pensSalaryDeposit" value="0" step="500"></div>
+    <div class="fld"><label>שיעור הפרשה כשכיר (%) <small>(עובד + מעסיק)</small></label><input type="number" id="salPensRate" value="12.5" step="0.25"></div>
     <div class="fld"><label>&nbsp;</label><label class="chk"><input type="checkbox" id="pensNew6m"> טרם חלפו 6 חודשים מפתיחת העסק</label></div>
   </div>
   <p class="note" id="pensMand"></p>
@@ -646,7 +647,7 @@ $('town').addEventListener('input', e=>{
 /* ---- credit points ---- */
 const CP_KIDS = {kids0:1.5, kids15:2.5, kids612:1, kids1317:1, kids18:0.5, kidsDis:2};
 let CP_EDITED = false;
-const SAL_EDIT = {pens:false, kh:false};
+const SAL_EDIT = {pens:false, kh:false, dep:false};
 function buildCP(){
   let p = ($('gender').value==='f') ? 2.75 : 2.25;
   $('cpBase').value = p;
@@ -727,23 +728,28 @@ function update(){
   const mz = num('mzCeil');
   const insuredSal = Math.min(num('pensSalaryUsed'), mz);   /* לפי הנמוך מבין המשכורת המבוטחת לתקרת הרובד */
   const pAvail = Math.max(0, 2*mz - insuredSal);
-  const pInc = Math.min(profit, pAvail);
+  const uninsuredSal = Math.max(0, salary - num('pensSalaryUsed'));   /* שכר שלא הופרש בגינו — נחשב הכנסה מזכה */
+  const pElig = profit + uninsuredSal;
+  const pInc = Math.min(pElig, pAvail);
   const L1 = Math.min(pInc, mz);
   const L2 = Math.max(0, pInc - mz);
   const mutavMin = num('pMutav');
   const pens = num('pens');
   const pSt = $('pStatus').value;
-  const isMutav = pSt==='mutav' || (pSt==='auto' && pens >= mutavMin && L2 > 0);
-  const unlocked = isMutav && (pens - mutavMin >= num('pUnlock')/100*L2);
+  if(!SAL_EDIT.dep && document.activeElement !== $('pensSalaryDeposit'))
+    $('pensSalaryDeposit').value = Math.round(num('pensSalaryUsed') * num('salPensRate')/100);
+  const pensAll = pens + num('pensSalaryDeposit');   /* מבחן "עמית מוטב" סופר גם הפקדות כשכיר */
+  const isMutav = pSt==='mutav' || (pSt==='auto' && pensAll >= mutavMin && L2 > 0);
+  const unlocked = isMutav && (pensAll - mutavMin >= num('pUnlock')/100*L2);
   const d2r = !isMutav ? 0 : (unlocked ? num('pDed2h') : num('pDed2'));
   const pDedMax = num('pDed')/100*L1 + d2r/100*L2;
   const pensDeduction = Math.min(pens, pDedMax);
-  const pCredCeil = num('pCred')/100 * Math.min(profit, 2*mz);
+  const pCredCeil = num('pCred')/100 * Math.min(pElig, 2*mz);
   const pensCredBase = Math.min(Math.max(0, pens - pensDeduction), pCredCeil);
   const pensCredit = pensCredBase * num('pCredRate')/100;
   const pensUnused = Math.max(0, pens - pensDeduction - pensCredBase);
   const pDedMaxU = num('pDed')/100*L1 + (L2>0 ? num('pDed2h')/100*L2 : 0);
-  const unlockPoint = L2>0 ? Math.ceil(mutavMin + num('pUnlock')/100*L2) : 0;
+  const unlockPoint = L2>0 ? Math.max(0, Math.ceil(mutavMin + num('pUnlock')/100*L2 - num('pensSalaryDeposit'))) : 0;
   const pOptimal = Math.max(pDedMaxU + pCredCeil, unlockPoint, (num('pDed')+num('pCred'))/100*L1);
   window.__POPT = pOptimal;
   /* חוק פנסיה חובה לעצמאים */
@@ -958,7 +964,8 @@ function update(){
       ' המקסימום האפשרי ב־2026 הוא '+money(num('pMandLowRate')/100*mStep + num('pMandHighRate')/100*(mCeil-mStep))+'.';
 
   $('pensInfo').innerHTML = profit>0
-    ? 'תקרת הכנסה מזכה: '+money(2*mz)+
+    ? (uninsuredSal>0 ? 'בסיס: רווח מהעסק '+money(profit)+' + משכורת שאינה מבוטחת '+money(uninsuredSal)+' = '+money(pElig)+'.<br>' : '')+
+      'תקרת הכנסה מזכה: '+money(2*mz)+
       (insuredSal>0 ? ' פחות משכורת מבוטחת '+money(insuredSal)+
         (num('pensSalaryUsed')>mz ? ' (הוגבלה לתקרת הרובד '+money(mz)+')' : '')+
         ' = <b>'+money(pAvail)+'</b>' : '')+
@@ -1130,6 +1137,7 @@ $('pensMin').addEventListener('click', ()=>{
   if(!(window.__PMIN>0)) alert('בנתונים הנוכחיים אין חובת הפקדה לפנסיה.');
 });
 $('pensSalaryUsed').addEventListener('input', ()=>{ SAL_EDIT.pens = true; });
+$('pensSalaryDeposit').addEventListener('input', ()=>{ SAL_EDIT.dep = true; });
 $('khSalaryUsed').addEventListener('input', ()=>{ SAL_EDIT.kh = true; });
 $('pensFromSalary').addEventListener('click', ()=>{ SAL_EDIT.pens = false; update(); });
 $('khFromSalary').addEventListener('click', ()=>{ SAL_EDIT.kh = false; $('salKh').checked = true; update(); });
@@ -1259,7 +1267,7 @@ $('planSearch').addEventListener('input', renderPlans);
 /* ניקוי שדות אחרי שמירה, כדי שהשמירה הבאה תתחיל נקייה */
 function clearPlanFields(){ $('planName').value=''; $('planNote').value=''; }
 
-const BUILD = 'v18';
+const BUILD = 'v20';
 $('buildTag').textContent = ' · ' + BUILD + ' · ' + (API_BASE ? 'פנימי' : 'ציבורי');
 
 /* שמירה מקומית — קיימת בשתי הגרסאות */
