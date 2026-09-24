@@ -3,24 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>מחשבון ימי הבראה</title>
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<title>מחשבון ימי הבראה | יער צפון</title>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #0d1117;
-    --surface: #161b22;
-    --surface2: #21262d;
-    --border: #30363d;
-    --gold: #d4a017;
-    --gold-light: #f0c040;
-    --gold-dim: rgba(212,160,23,0.15);
-    --text: #e6edf3;
-    --text-dim: #8b949e;
-    --green: #3fb950;
-    --green-dim: rgba(63,185,80,0.12);
-    --blue: #58a6ff;
-    --blue-dim: rgba(88,166,255,0.12);
-    --red: #f85149;
+    /* יער צפון brand palette — light, professional, clean */
+    --bg:        #f5f7f2;
+    --surface:   #ffffff;
+    --surface2:  #f0f3ec;
+    --border:    #dde3d8;
+    --border2:   #c8d1c0;
+
+    /* Primary: forest green */
+    --primary:       #2d5a27;
+    --primary-light: #3d7a35;
+    --primary-dim:   rgba(45,90,39,0.08);
+    --primary-mid:   rgba(45,90,39,0.15);
+
+    /* Accent: warm gold/ochre */
+    --accent:     #8a6e2f;
+    --accent-dim: rgba(138,110,47,0.10);
+
+    --text:      #1a2e17;
+    --text-mid:  #3d5239;
+    --text-dim:  #7a8f74;
+
+    --green-ok:  #2a7a3b;
+    --green-dim: rgba(42,122,59,0.10);
+    --red:       #c0392b;
+    --red-dim:   rgba(192,57,43,0.10);
+
+    /* Period colors */
+    --p0: #2d5a27; --p0-dim: rgba(45,90,39,0.10);
+    --p1: #8a6e2f; --p1-dim: rgba(138,110,47,0.10);
+    --p2: #2a6e8a; --p2-dim: rgba(42,110,138,0.10);
+    --p3: #6e2a8a; --p3-dim: rgba(110,42,138,0.10);
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -33,67 +50,136 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 40px 16px 60px;
+    padding: 0 0 60px;
   }
 
-  body::before {
+  /* ─── Header bar ─── */
+  .site-header {
+    width: 100%;
+    background: var(--primary);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 58px;
+    margin-bottom: 0;
+  }
+
+  .site-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  .logo-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+
+  .logo-name {
+    font-size: 17px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.3px;
+  }
+
+  .logo-tagline {
+    font-size: 10px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.65);
+    letter-spacing: 0.2px;
+  }
+
+  .header-right {
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .header-right a { color: rgba(255,255,255,0.75); text-decoration: none; }
+  .header-right a:hover { color: #fff; }
+
+  /* ─── Hero strip ─── */
+  .hero {
+    width: 100%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    padding: 36px 24px 32px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
     content: '';
-    position: fixed;
+    position: absolute;
     inset: 0;
     background-image:
-      linear-gradient(rgba(212,160,23,0.04) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(212,160,23,0.04) 1px, transparent 1px);
-    background-size: 40px 40px;
+      radial-gradient(circle at 20% 80%, rgba(255,255,255,0.06) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255,255,255,0.06) 0%, transparent 50%);
     pointer-events: none;
-    z-index: 0;
   }
 
-  .container { position: relative; z-index: 1; width: 100%; max-width: 700px; }
-
-  header { text-align: center; margin-bottom: 40px; }
-
-  .badge {
+  .hero-badge {
     display: inline-block;
-    background: var(--gold-dim);
-    border: 1px solid var(--gold);
-    color: var(--gold);
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.9);
     font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 3px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
     text-transform: uppercase;
-    padding: 5px 14px;
+    padding: 4px 14px;
     border-radius: 20px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
 
-  h1 {
-    font-size: clamp(28px, 5vw, 44px);
+  .hero h1 {
+    font-size: clamp(24px, 4.5vw, 38px);
     font-weight: 900;
-    line-height: 1.1;
-    margin-bottom: 10px;
-    background: linear-gradient(135deg, #e6edf3 0%, var(--gold-light) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #fff;
+    line-height: 1.15;
+    margin-bottom: 8px;
   }
 
-  .subtitle { color: var(--text-dim); font-size: 14px; font-weight: 300; }
+  .hero p {
+    font-size: 14px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.72);
+  }
 
+  /* ─── Main content ─── */
+  .container {
+    width: 100%;
+    max-width: 700px;
+    padding: 32px 16px 0;
+  }
+
+  /* ─── Cards ─── */
   .card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 28px;
-    margin-bottom: 20px;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(45,90,39,0.06);
   }
 
   .card-title {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: var(--gold);
-    margin-bottom: 20px;
+    color: var(--primary);
+    margin-bottom: 18px;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -103,31 +189,38 @@
     content: '';
     display: block;
     width: 3px;
-    height: 16px;
-    background: var(--gold);
+    height: 14px;
+    background: var(--primary);
     border-radius: 2px;
   }
 
+  /* ─── Form ─── */
   .form-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px;
+    gap: 14px;
   }
 
   @media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
 
-  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
   .field.full { grid-column: 1 / -1; }
 
-  label { font-size: 12px; font-weight: 500; color: var(--text-dim); letter-spacing: 0.5px; }
+  label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-mid);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
 
   input, select {
     background: var(--surface2);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 10px 14px;
+    padding: 9px 12px;
     font-family: 'Heebo', sans-serif;
-    font-size: 15px;
+    font-size: 14px;
     color: var(--text);
     transition: border-color 0.2s, box-shadow 0.2s;
     width: 100%;
@@ -136,62 +229,25 @@
 
   input:focus, select:focus {
     outline: none;
-    border-color: var(--gold);
-    box-shadow: 0 0 0 3px rgba(212,160,23,0.15);
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-dim);
   }
 
-  select option { background: var(--surface2); }
+  select option { background: #fff; }
 
-  /* Rate rows */
-  .rate-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr 44px;
-    gap: 10px;
-    align-items: end;
-    margin-bottom: 10px;
-  }
-
-  .rate-row:last-of-type { margin-bottom: 0; }
-
-  .rate-remove-btn {
-    width: 36px;
-    height: 36px;
-    background: rgba(248,81,73,0.12);
-    border: 1px solid rgba(248,81,73,0.3);
+  .chip-display {
+    background: var(--surface2);
+    border: 1px solid var(--border);
     border-radius: 8px;
-    color: var(--red);
-    font-size: 18px;
-    cursor: pointer;
+    padding: 9px 12px;
+    font-size: 14px;
+    color: var(--text-dim);
+    min-height: 38px;
     display: flex;
     align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    flex-shrink: 0;
-    align-self: end;
-    padding-bottom: 1px;
   }
 
-  .rate-remove-btn:hover { background: rgba(248,81,73,0.25); }
-
-  .add-rate-btn {
-    background: none;
-    border: 1px dashed var(--border);
-    border-radius: 8px;
-    color: var(--text-dim);
-    font-family: 'Heebo', sans-serif;
-    font-size: 13px;
-    padding: 8px 14px;
-    cursor: pointer;
-    width: 100%;
-    margin-top: 10px;
-    transition: all 0.2s;
-    text-align: right;
-  }
-
-  .add-rate-btn:hover { border-color: var(--gold); color: var(--gold); }
-
-  .rate-hint { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
-
+  /* ─── Toggle ─── */
   .toggle-group {
     display: flex;
     border: 1px solid var(--border);
@@ -201,7 +257,7 @@
 
   .toggle-group button {
     flex: 1;
-    padding: 10px;
+    padding: 9px;
     background: var(--surface2);
     border: none;
     color: var(--text-dim);
@@ -213,119 +269,195 @@
   }
 
   .toggle-group button.active {
-    background: var(--gold-dim);
-    color: var(--gold-light);
+    background: var(--primary-dim);
+    color: var(--primary);
     font-weight: 700;
   }
 
   .toggle-group button:not(:last-child) { border-left: 1px solid var(--border); }
 
+  /* ─── Rate rows ─── */
+  .rate-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 38px;
+    gap: 10px;
+    align-items: end;
+    margin-bottom: 10px;
+  }
+
+  .rate-remove-btn {
+    width: 32px;
+    height: 32px;
+    background: var(--red-dim);
+    border: 1px solid rgba(192,57,43,0.2);
+    border-radius: 7px;
+    color: var(--red);
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .rate-remove-btn:hover { background: rgba(192,57,43,0.18); }
+
+  .add-rate-btn {
+    background: none;
+    border: 1.5px dashed var(--border2);
+    border-radius: 8px;
+    color: var(--text-dim);
+    font-family: 'Heebo', sans-serif;
+    font-size: 13px;
+    padding: 8px 14px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 8px;
+    transition: all 0.2s;
+    text-align: right;
+  }
+
+  .add-rate-btn:hover { border-color: var(--primary); color: var(--primary); }
+  .rate-hint { font-size: 11px; color: var(--text-dim); margin-top: 8px; line-height: 1.5; }
+
+  /* ─── Calc button ─── */
   .calc-btn {
     width: 100%;
-    padding: 14px;
-    background: linear-gradient(135deg, var(--gold), #b8860b);
+    padding: 13px;
+    background: var(--primary);
     border: none;
     border-radius: 10px;
-    color: #0d1117;
+    color: #fff;
     font-family: 'Heebo', sans-serif;
     font-size: 16px;
     font-weight: 700;
     cursor: pointer;
     transition: all 0.2s;
-    margin-top: 8px;
+    letter-spacing: 0.3px;
   }
 
-  .calc-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(212,160,23,0.35); filter: brightness(1.08); }
+  .calc-btn:hover { background: var(--primary-light); box-shadow: 0 4px 16px rgba(45,90,39,0.25); transform: translateY(-1px); }
   .calc-btn:active { transform: translateY(0); }
 
-  .results { display: none; animation: fadeUp 0.4s ease; }
+  .error-msg {
+    background: var(--red-dim);
+    border: 1px solid rgba(192,57,43,0.25);
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-size: 13px;
+    color: var(--red);
+    display: none;
+    margin-top: 10px;
+  }
+
+  /* ─── Results ─── */
+  .results { display: none; animation: fadeUp 0.35s ease; margin-top: 16px; }
   .results.show { display: block; }
 
   @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(12px); }
+    from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
+  /* Main result */
   .result-main {
-    background: linear-gradient(135deg, rgba(212,160,23,0.12), rgba(212,160,23,0.04));
-    border: 1px solid rgba(212,160,23,0.4);
-    border-radius: 16px;
-    padding: 28px;
+    background: var(--primary);
+    border-radius: 12px;
+    padding: 28px 24px;
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
   }
 
-  .result-label { font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
-  .result-number { font-size: clamp(52px, 10vw, 80px); font-weight: 900; color: var(--gold-light); line-height: 1; margin-bottom: 4px; }
-  .result-unit { font-size: 18px; color: var(--text-dim); font-weight: 300; }
-  .result-value { margin-top: 16px; font-size: 22px; font-weight: 700; color: var(--green); }
-  .result-value span { font-size: 13px; font-weight: 400; color: var(--text-dim); display: block; margin-top: 2px; }
+  .result-main::before {
+    content: '';
+    position: absolute;
+    top: -30px; left: -30px;
+    width: 160px; height: 160px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+  }
 
+  .result-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.65); margin-bottom: 8px; }
+  .result-number { font-size: clamp(52px, 10vw, 76px); font-weight: 900; color: #fff; line-height: 1; margin-bottom: 4px; }
+  .result-unit { font-size: 17px; color: rgba(255,255,255,0.65); font-weight: 400; }
+  .result-value { margin-top: 16px; font-size: 20px; font-weight: 700; color: #b8f0a8; }
+  .result-value span { font-size: 12px; font-weight: 400; color: rgba(255,255,255,0.55); display: block; margin-top: 3px; }
+
+  /* Breakdown */
   .breakdown {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 20px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 16px;
   }
 
-  @media (max-width: 500px) { .breakdown { grid-template-columns: 1fr; } }
+  @media (max-width: 500px) { .breakdown { grid-template-columns: 1fr 1fr; } }
 
   .breakdown-item {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 16px;
+    padding: 14px 10px;
     text-align: center;
+    box-shadow: 0 1px 3px rgba(45,90,39,0.05);
   }
 
-  .breakdown-item .bi-val { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
-  .breakdown-item .bi-label { font-size: 11px; color: var(--text-dim); letter-spacing: 0.5px; }
+  .breakdown-item .bi-val { font-size: 18px; font-weight: 700; color: var(--primary); margin-bottom: 3px; }
+  .breakdown-item .bi-label { font-size: 10px; color: var(--text-dim); letter-spacing: 0.3px; text-transform: uppercase; }
 
+  /* Payment card */
   .payment-card {
-    background: linear-gradient(135deg, var(--green-dim), rgba(63,185,80,0.02));
-    border: 1px solid rgba(63,185,80,0.35);
-    border-radius: 16px;
-    padding: 22px 24px;
-    margin-bottom: 20px;
+    background: var(--green-dim);
+    border: 1px solid rgba(42,122,59,0.25);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
     display: flex;
     align-items: center;
-    gap: 20px;
+    gap: 16px;
+    box-shadow: 0 1px 3px rgba(45,90,39,0.05);
   }
 
-  .payment-icon { font-size: 36px; flex-shrink: 0; }
+  .payment-icon { font-size: 30px; flex-shrink: 0; }
   .payment-info { flex: 1; }
-  .payment-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--green); margin-bottom: 4px; }
-  .payment-date { font-size: 22px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
-  .payment-countdown { font-size: 13px; color: var(--text-dim); }
-  .payment-countdown strong { color: var(--green); }
+  .payment-label { font-size: 10px; letter-spacing: 2px; text-transform: uppercase; color: var(--green-ok); margin-bottom: 3px; font-weight: 600; }
+  .payment-date { font-size: 18px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+  .payment-countdown { font-size: 12px; color: var(--text-dim); }
+  .payment-countdown strong { color: var(--green-ok); }
 
+  /* Tables */
   .table-card {
     background: var(--surface);
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: 12px;
     overflow: hidden;
-    margin-bottom: 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(45,90,39,0.05);
   }
 
   .table-header {
-    padding: 14px 20px;
+    padding: 13px 18px;
     border-bottom: 1px solid var(--border);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 2px;
     text-transform: uppercase;
-    color: var(--gold);
+    color: var(--primary);
     display: flex;
     align-items: center;
     gap: 10px;
+    background: var(--surface2);
   }
 
-  /* Period legend pills */
-  .period-legend { display: flex; gap: 8px; flex-wrap: wrap; margin-right: auto; }
+  .period-legend { display: flex; gap: 6px; flex-wrap: wrap; margin-right: auto; }
+
   .period-pill {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     font-size: 10px;
     font-weight: 600;
     padding: 2px 8px;
@@ -333,115 +465,146 @@
     letter-spacing: 0;
     text-transform: none;
   }
-  .period-pill .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+
+  .period-pill .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; }
 
   table { width: 100%; border-collapse: collapse; }
-  th, td { padding: 11px 16px; text-align: right; font-size: 13px; }
-  th { color: var(--text-dim); font-weight: 500; background: var(--surface2); font-size: 11px; letter-spacing: 0.5px; }
+  th, td { padding: 10px 16px; text-align: right; font-size: 13px; }
+
+  th {
+    color: var(--text-dim);
+    font-weight: 600;
+    background: var(--surface2);
+    font-size: 11px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+  }
+
   td { border-top: 1px solid var(--border); }
+  tbody tr:hover td { background: var(--surface2); }
 
-  /* Current year highlight */
-  tr.highlight td { background: var(--gold-dim); color: var(--gold-light); font-weight: 700; }
+  tr.highlight td {
+    background: var(--primary-dim);
+    color: var(--primary);
+    font-weight: 700;
+  }
 
-  /* Period color bands */
-  tr.period-a td { border-right: 3px solid var(--blue); }
-  tr.period-b td { border-right: 3px solid var(--green); }
-  tr.period-c td { border-right: 3px solid #c678dd; }
-  tr.period-d td { border-right: 3px solid #e5c07b; }
+  tr.highlight:hover td { background: var(--primary-mid); }
 
-  /* Period separator row */
+  /* Period color left-border */
+  tr.period-0 td { border-right: 3px solid var(--p0); }
+  tr.period-1 td { border-right: 3px solid var(--p1); }
+  tr.period-2 td { border-right: 3px solid var(--p2); }
+  tr.period-3 td { border-right: 3px solid var(--p3); }
+
+  tr.past td { opacity: 0.5; }
+
   tr.period-divider td {
     background: var(--surface2);
     text-align: center;
     font-size: 11px;
     font-weight: 700;
-    letter-spacing: 1.5px;
-    padding: 6px 16px;
-    border-top: 2px dashed var(--border);
+    padding: 5px 16px;
+    border-top: 2px dashed var(--border2);
+    letter-spacing: 0.5px;
   }
 
-  tr.past td { opacity: 0.55; }
-
-  /* Rate tag in table */
   .rate-tag {
     display: inline-block;
     font-size: 10px;
-    font-weight: 600;
+    font-weight: 700;
     padding: 1px 6px;
     border-radius: 4px;
-    margin-right: 4px;
     vertical-align: middle;
   }
 
-  .tag-a { background: var(--blue-dim); color: var(--blue); }
-  .tag-b { background: var(--green-dim); color: var(--green); }
-  .tag-c { background: rgba(198,120,221,0.15); color: #c678dd; }
-  .tag-d { background: rgba(229,192,123,0.15); color: #e5c07b; }
+  .rtag-0 { background: var(--p0-dim); color: var(--p0); }
+  .rtag-1 { background: var(--p1-dim); color: var(--p1); }
+  .rtag-2 { background: var(--p2-dim); color: var(--p2); }
+  .rtag-3 { background: var(--p3-dim); color: var(--p3); }
 
+  /* Note */
   .note {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-right: 3px solid var(--gold);
+    background: var(--accent-dim);
+    border: 1px solid rgba(138,110,47,0.2);
+    border-right: 3px solid var(--accent);
     border-radius: 8px;
-    padding: 14px 16px;
+    padding: 12px 14px;
     font-size: 12px;
-    color: var(--text-dim);
+    color: var(--text-mid);
     line-height: 1.6;
+    margin-bottom: 16px;
   }
 
-  .note strong { color: var(--text); }
+  .note strong { color: var(--accent); }
 
-  .error-msg {
-    background: rgba(248, 81, 73, 0.1);
-    border: 1px solid rgba(248,81,73,0.4);
-    border-radius: 8px;
-    padding: 12px 16px;
-    font-size: 13px;
-    color: var(--red);
-    display: none;
-    margin-top: 12px;
+  /* Footer bar */
+  .site-footer {
+    width: 100%;
+    background: var(--primary);
+    padding: 16px 24px;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    margin-top: 40px;
   }
 
-  .chip-display {
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-    font-size: 15px;
-    color: var(--text-dim);
-    min-height: 42px;
-    display: flex;
-    align-items: center;
-  }
+  .site-footer a { color: rgba(255,255,255,0.7); text-decoration: none; }
+  .site-footer a:hover { color: #fff; }
 </style>
 </head>
 <body>
+
+<!-- Header -->
+<header class="site-header">
+  <a class="site-logo" href="https://www.yaar.biz" target="_blank">
+    <!-- Tree SVG logo -->
+    <svg class="logo-icon" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="17" cy="17" r="17" fill="rgba(255,255,255,0.12)"/>
+      <!-- trunk -->
+      <rect x="15.5" y="22" width="3" height="6" rx="1" fill="rgba(255,255,255,0.8)"/>
+      <!-- canopy layers -->
+      <polygon points="17,5 25,18 9,18" fill="rgba(255,255,255,0.9)"/>
+      <polygon points="17,10 24,21 10,21" fill="rgba(255,255,255,0.65)"/>
+    </svg>
+    <div class="logo-text">
+      <span class="logo-name">יער צפון</span>
+      <span class="logo-tagline">כל השירותים הפיננסיים תחת קורת גג אחת</span>
+    </div>
+  </a>
+  <div class="header-right">
+    <a href="tel:046762466">04-6762466</a>
+    <span>·</span>
+    <a href="https://www.yaar.biz" target="_blank">yaar.biz</a>
+  </div>
+</header>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-badge">כלי דיגיטלי</div>
+  <h1>מחשבון ימי הבראה</h1>
+  <p>חישוב זכאות לפי ותק, מגזר ותעריפים מרובים — כולל הפרדה בין תקופות</p>
+</div>
+
+<!-- Main -->
 <div class="container">
-  <header>
-    <div class="badge">כלי חישוב</div>
-    <h1>מחשבון ימי הבראה</h1>
-    <p class="subtitle">חישוב ימי הבראה לפי ותק, מגזר ותעריפים מרובים</p>
-  </header>
 
   <div class="card">
     <div class="card-title">פרטי העובד</div>
     <div class="form-grid">
-
       <div class="field">
         <label>תאריך תחילת עבודה</label>
         <input type="date" id="start-date" />
       </div>
-
       <div class="field">
         <label>ותק מחושב</label>
         <div class="chip-display" id="seniority-chip">הזן תאריך לחישוב</div>
       </div>
-
       <div class="field">
         <label>היקף משרה (%)</label>
         <input type="number" id="scope" min="1" max="100" value="100" />
       </div>
-
       <div class="field">
         <label>מגזר</label>
         <div class="toggle-group">
@@ -449,25 +612,21 @@
           <button onclick="setSector('public',this)">ציבורי</button>
         </div>
       </div>
-
     </div>
   </div>
 
-  <!-- Rate periods card -->
   <div class="card">
     <div class="card-title">תעריפי הבראה לפי תקופה</div>
-
     <div id="rates-container"></div>
-
     <button class="add-rate-btn" onclick="addRateRow()">+ הוסף תקופת תעריף נוספת</button>
-    <div class="rate-hint">כל תשלום שנתי יחושב לפי התעריף שהיה בתוקף <strong>ביולי של אותה שנה</strong>. הוסף שורה לכל פעם שהתעריף השתנה.</div>
+    <div class="rate-hint">כל תשלום שנתי מחושב לפי התעריף שהיה בתוקף <strong>ביולי של אותה שנה</strong>. הוסף שורה לכל עדכון תעריף.</div>
   </div>
 
   <button class="calc-btn" onclick="calculate()">חשב ימי הבראה ◀</button>
   <div class="error-msg" id="error"></div>
 
   <!-- Results -->
-  <div class="results" id="results" style="margin-top:20px;">
+  <div class="results" id="results">
 
     <div class="result-main">
       <div class="result-label">זכאות שנתית נוכחית</div>
@@ -538,70 +697,66 @@
     </div>
 
     <div class="note">
-      <strong>הערה:</strong> מועד התשלום מחושב לפי יולי של כל שנת עבודה (נוהג מקובל). כל תשלום משויך לתעריף שהיה בתוקף <strong>ביולי של אותה שנה</strong> &#x2014; לא לפי תאריך תחילת העבודה. הפרדה ויזואלית בין תקופות מודגשת בצבעים.
+      <strong>הערה:</strong> מועד התשלום מחושב לפי יולי של כל שנת עבודה (נוהג מקובל). כל תשלום משויך לתעריף שהיה בתוקף <strong>ביולי של אותה שנה</strong>. הפרדה ויזואלית בין תקופות מוצגת בצבעים. מומלץ לאמת מול גורם מוסמך.
     </div>
-  </div>
-</div>
+
+  </div><!-- /results -->
+</div><!-- /container -->
+
+<footer class="site-footer">
+  <strong style="color:rgba(255,255,255,0.8)">יער צפון</strong> &nbsp;·&nbsp; הנהלת חשבונות וראיית חשבון &nbsp;·&nbsp;
+  א.ת. בני יהודה, דרום הגולן &nbsp;·&nbsp;
+  <a href="tel:046762466">04-6762466</a> &nbsp;·&nbsp;
+  <a href="https://www.yaar.biz" target="_blank">yaar.biz</a>
+</footer>
 
 <script>
 let currentSector = 'private';
 
-// Period colors
 const PERIOD_COLORS = [
-  { cls: 'period-a', tag: 'tag-a', color: '#58a6ff', label: 'תקופה א\'' },
-  { cls: 'period-b', tag: 'tag-b', color: '#3fb950', label: 'תקופה ב\'' },
-  { cls: 'period-c', tag: 'tag-c', color: '#c678dd', label: 'תקופה ג\'' },
-  { cls: 'period-d', tag: 'tag-d', color: '#e5c07b', label: 'תקופה ד\'' },
+  { cls:'period-0', tag:'rtag-0', color:'#2d5a27' },
+  { cls:'period-1', tag:'rtag-1', color:'#8a6e2f' },
+  { cls:'period-2', tag:'rtag-2', color:'#2a6e8a' },
+  { cls:'period-3', tag:'rtag-3', color:'#6e2a8a' },
 ];
 
 const SCALE = {
   private: [
-    { from:1,  to:1,   days:5  },
-    { from:2,  to:3,   days:6  },
-    { from:4,  to:10,  days:7  },
-    { from:11, to:15,  days:8  },
-    { from:16, to:19,  days:9  },
-    { from:20, to:99,  days:10 },
+    {from:1,to:1,days:5},{from:2,to:3,days:6},{from:4,to:10,days:7},
+    {from:11,to:15,days:8},{from:16,to:19,days:9},{from:20,to:99,days:10}
   ],
   public: [
-    { from:1,  to:1,   days:6  },
-    { from:2,  to:3,   days:7  },
-    { from:4,  to:10,  days:8  },
-    { from:11, to:15,  days:9  },
-    { from:16, to:19,  days:10 },
-    { from:20, to:99,  days:11 },
+    {from:1,to:1,days:6},{from:2,to:3,days:7},{from:4,to:10,days:8},
+    {from:11,to:15,days:9},{from:16,to:19,days:10},{from:20,to:99,days:11}
   ]
 };
 
-const DEFAULT_RATES = { private: 378, public: 470 };
+const DEFAULT_RATES = {private:378, public:470};
 const HE_MONTHS = ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'];
 
-// ---- Rate rows ----
 let rateRowId = 0;
 
 function addRateRow(dateVal, rateVal) {
   const id = ++rateRowId;
   const container = document.getElementById('rates-container');
+  const isFirst = container.querySelectorAll('.rate-row').length === 0;
   const div = document.createElement('div');
   div.className = 'rate-row';
   div.id = 'rate-row-' + id;
 
-  const rows = container.querySelectorAll('.rate-row');
-  const isFirst = rows.length === 0;
-
   div.innerHTML =
     '<div class="field">' +
-      '<label>' + (isFirst ? 'תעריף ראשוני (&#x20AA;)' : 'תעריף חדש מתאריך (&#x20AA;)') + '</label>' +
+      '<label>' + (isFirst ? 'תעריף ראשוני (&#x20AA;)' : 'תעריף חדש (&#x20AA;)') + '</label>' +
       '<input type="number" id="rate-val-' + id + '" min="1" placeholder="378" value="' + (rateVal || (isFirst ? DEFAULT_RATES[currentSector] : '')) + '" />' +
     '</div>' +
     '<div class="field">' +
-      '<label>' + (isFirst ? 'בתוקף מ&shy;' : 'החל מתאריך') + '</label>' +
+      '<label>' + (isFirst ? 'בתוקף מ' : 'החל מתאריך') + '</label>' +
       (isFirst
-        ? '<div class="chip-display" style="font-size:13px;color:var(--text-dim);">תחילת העסקה</div>'
-        : '<input type="date" id="rate-date-' + id + '" value="' + (dateVal || '') + '" />'
+        ? '<div class="chip-display" style="font-size:12px;color:var(--text-dim)">תחילת ההעסקה</div>'
+        : '<input type="date" id="rate-date-' + id + '" value="' + (dateVal||'') + '" />'
       ) +
     '</div>' +
-    '<button class="rate-remove-btn" onclick="removeRateRow(' + id + ')" ' + (isFirst ? 'style="visibility:hidden"' : '') + '>&#x2715;</button>';
+    '<button class="rate-remove-btn" onclick="removeRateRow(' + id + ')" ' + (isFirst?'style="visibility:hidden"':'') + '>&#x2715;</button>';
 
   container.appendChild(div);
 }
@@ -612,40 +767,19 @@ function removeRateRow(id) {
 }
 
 function getRatePeriods(startDateStr) {
-  // Returns sorted array of { fromDate: Date, rate: number }
-  // First row has fromDate = startDate
-  const container = document.getElementById('rates-container');
-  const rows = container.querySelectorAll('.rate-row');
+  const rows = document.getElementById('rates-container').querySelectorAll('.rate-row');
   const periods = [];
-
   rows.forEach((row, i) => {
     const rateInput = row.querySelector('input[type="number"]');
     const dateInput = row.querySelector('input[type="date"]');
     const rate = parseFloat(rateInput ? rateInput.value : '');
     if (isNaN(rate) || rate <= 0) return;
-    let fromDate;
-    if (i === 0) {
-      fromDate = new Date(startDateStr);
-    } else {
-      if (!dateInput || !dateInput.value) return;
-      fromDate = new Date(dateInput.value);
-    }
+    const fromDate = i === 0 ? new Date(startDateStr) : (dateInput && dateInput.value ? new Date(dateInput.value) : null);
+    if (!fromDate) return;
     periods.push({ fromDate, rate });
   });
-
-  // Sort by date ascending
-  periods.sort((a, b) => a.fromDate - b.fromDate);
+  periods.sort((a,b) => a.fromDate - b.fromDate);
   return periods;
-}
-
-function getRateForDate(payDate, periods) {
-  // Find the last period whose fromDate <= payDate
-  let result = periods[0];
-  for (const p of periods) {
-    if (p.fromDate <= payDate) result = p;
-    else break;
-  }
-  return result;
 }
 
 function getPeriodIndex(payDate, periods) {
@@ -661,64 +795,49 @@ function setSector(sector, btn) {
   currentSector = sector;
   document.querySelectorAll('.toggle-group button').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
-  // Update first rate row default
   const firstRateInput = document.querySelector('#rates-container .rate-row input[type="number"]');
-  if (firstRateInput && (firstRateInput.value === '378' || firstRateInput.value === '470')) {
+  if (firstRateInput && (firstRateInput.value == 378 || firstRateInput.value == 470))
     firstRateInput.value = DEFAULT_RATES[sector];
-  }
 }
 
-function getDays(years, sector) {
+function getDays(y, sector) {
   const scale = SCALE[sector];
-  for (const row of scale) {
-    if (years >= row.from && years <= row.to) return row.days;
-  }
-  return years < 1 ? 0 : scale[scale.length - 1].days;
+  for (const row of scale) if (y >= row.from && y <= row.to) return row.days;
+  return y < 1 ? 0 : scale[scale.length-1].days;
 }
 
-function fmt(n) {
-  return n.toLocaleString('he-IL', { maximumFractionDigits: 2 });
-}
+function fmt(n) { return n.toLocaleString('he-IL', {maximumFractionDigits:2}); }
 
-function calcYearsFromDate(dateStr) {
+function calcYears(dateStr) {
   if (!dateStr) return null;
-  const start = new Date(dateStr);
-  const now = new Date();
+  const start = new Date(dateStr), now = new Date();
   if (start > now) return null;
-  let years = now.getFullYear() - start.getFullYear();
+  let y = now.getFullYear() - start.getFullYear();
   const m = now.getMonth() - start.getMonth();
-  if (m < 0 || (m === 0 && now.getDate() < start.getDate())) years--;
-  return Math.max(0, years);
+  if (m < 0 || (m === 0 && now.getDate() < start.getDate())) y--;
+  return Math.max(0, y);
 }
 
 function updateSeniority() {
   const val = document.getElementById('start-date').value;
-  const years = calcYearsFromDate(val);
+  const years = calcYears(val);
   const chip = document.getElementById('seniority-chip');
-  if (years === null) {
-    chip.style.color = 'var(--text-dim)';
-    chip.textContent = 'תאריך לא תקין';
-  } else if (years === 0) {
-    chip.style.color = 'var(--text-dim)';
-    chip.textContent = 'פחות משנה (שנה ראשונה)';
-  } else {
-    chip.style.color = 'var(--gold-light)';
-    chip.textContent = years === 1 ? 'שנה אחת' : years + ' שנים';
-  }
+  if (years === null) { chip.style.color='var(--text-dim)'; chip.textContent='תאריך לא תקין'; }
+  else if (years === 0) { chip.style.color='var(--text-dim)'; chip.textContent='פחות משנה (שנה ראשונה)'; }
+  else { chip.style.color='var(--primary)'; chip.style.fontWeight='700'; chip.textContent = years===1?'שנה אחת':years+' שנים'; }
 }
 
-function getPaymentDate(startDateStr, workYear) {
-  const start = new Date(startDateStr);
-  const startMonth = start.getMonth();
-  const anniversaryYear = start.getFullYear() + workYear;
-  const payYear = startMonth > 6 ? anniversaryYear + 1 : anniversaryYear;
-  return new Date(payYear, 6, 1); // July 1
+function getPayDate(startStr, workYear) {
+  const start = new Date(startStr);
+  const annivYear = start.getFullYear() + workYear;
+  const payYear = start.getMonth() > 6 ? annivYear + 1 : annivYear;
+  return new Date(payYear, 6, 1);
 }
 
-function daysUntil(date) {
+function daysUntil(d) {
   const now = new Date(); now.setHours(0,0,0,0);
-  const d = new Date(date); d.setHours(0,0,0,0);
-  return Math.round((d - now) / (1000*60*60*24));
+  const dt = new Date(d); dt.setHours(0,0,0,0);
+  return Math.round((dt - now)/(1000*60*60*24));
 }
 
 function calculate() {
@@ -727,100 +846,86 @@ function calculate() {
   const err     = document.getElementById('error');
   err.style.display = 'none';
 
-  if (!dateStr) { err.textContent = 'אנא בחר תאריך תחילת עבודה.'; err.style.display = 'block'; return; }
-  const years = calcYearsFromDate(dateStr);
-  if (years === null) { err.textContent = 'תאריך תחילת עבודה לא יכול להיות בעתיד.'; err.style.display = 'block'; return; }
-  if (isNaN(scope) || scope <= 0 || scope > 100) { err.textContent = 'היקף המשרה חייב להיות בין 1 ל-100.'; err.style.display = 'block'; return; }
+  if (!dateStr) { err.textContent='אנא בחר תאריך תחילת עבודה.'; err.style.display='block'; return; }
+  const years = calcYears(dateStr);
+  if (years === null) { err.textContent='תאריך תחילת עבודה לא יכול להיות בעתיד.'; err.style.display='block'; return; }
+  if (isNaN(scope)||scope<=0||scope>100) { err.textContent='היקף המשרה חייב להיות בין 1 ל-100.'; err.style.display='block'; return; }
 
   const periods = getRatePeriods(dateStr);
-  if (periods.length === 0) { err.textContent = 'אנא הזן לפחות תעריף אחד.'; err.style.display = 'block'; return; }
+  if (!periods.length) { err.textContent='אנא הזן לפחות תעריף אחד.'; err.style.display='block'; return; }
 
-  // Current rate = last applicable period as of today
   const now = new Date();
-  const currentPeriod = getRateForDate(now, periods);
-  const currentRate = currentPeriod.rate;
+  const curPeriod = periods[getPeriodIndex(now, periods)];
+  const curRate = curPeriod.rate;
 
   const baseDays = getDays(years, currentSector);
-  const adjDays  = baseDays * (scope / 100);
-  const total    = adjDays * currentRate;
+  const adjDays  = baseDays * (scope/100);
+  const total    = adjDays * curRate;
 
   document.getElementById('res-days').textContent = fmt(adjDays);
-  document.getElementById('res-value').innerHTML = '&#x20AA;' + fmt(total) + ' <span>לפי תעריף &#x20AA;' + fmt(currentRate) + '</span>';
-
-  const yearsLabel = years === 0 ? 'שנה ראשונה' : years === 1 ? 'שנה אחת' : years + ' שנים';
-  document.getElementById('bi-years').textContent = yearsLabel;
+  document.getElementById('res-value').innerHTML = '&#x20AA;' + fmt(total) + ' <span>לפי תעריף &#x20AA;' + fmt(curRate) + '</span>';
+  document.getElementById('bi-years').textContent = years===0?'שנה ראשונה':years===1?'שנה אחת':years+' שנים';
   document.getElementById('bi-scope').textContent = scope + '%';
-  document.getElementById('bi-rate').textContent = '&#x20AA;' + fmt(currentRate);
-  document.getElementById('bi-sector').textContent = currentSector === 'private' ? 'פרטי' : 'ציבורי';
+  document.getElementById('bi-rate').textContent  = '&#x20AA;' + fmt(curRate);
+  document.getElementById('bi-sector').textContent = currentSector==='private'?'פרטי':'ציבורי';
 
   // Next payment
-  let nextPayDate = null;
-  for (let y = 1; y <= years + 5; y++) {
-    const pd = getPaymentDate(dateStr, y);
-    if (pd >= now) { nextPayDate = { date: pd, workYear: y }; break; }
-  }
-  if (nextPayDate) {
-    const d = nextPayDate.date;
-    const diff = daysUntil(d);
-    document.getElementById('pay-date').textContent = 'יולי ' + d.getFullYear() + ' (שנת עבודה ' + nextPayDate.workYear + ')';
-    let ct = diff === 0 ? '<strong>היום!</strong>' : diff > 0 ? 'עוד <strong>' + diff + ' ימים</strong>' : 'עבר לפני ' + Math.abs(diff) + ' ימים';
-    document.getElementById('pay-countdown').innerHTML = ct;
+  for (let y=1; y<=years+5; y++) {
+    const pd = getPayDate(dateStr, y);
+    if (pd >= now) {
+      const diff = daysUntil(pd);
+      document.getElementById('pay-date').textContent = 'יולי ' + pd.getFullYear() + ' (שנת עבודה ' + y + ')';
+      document.getElementById('pay-countdown').innerHTML =
+        diff===0 ? '<strong>היום!</strong>' :
+        diff>0   ? 'עוד <strong>' + diff + ' ימים</strong>' :
+                   'עבר לפני ' + Math.abs(diff) + ' ימים';
+      break;
+    }
   }
 
   // Multi-year table
   const multiBody = document.getElementById('multi-body');
   multiBody.innerHTML = '';
-  const totalRows = Math.max(years + 3, 5);
-
-  // Build period legend (only periods that actually appear)
-  const usedPeriodIndices = new Set();
-
+  const totalRows = Math.max(years+3, 5);
+  const usedIdx = new Set();
   const rows = [];
-  for (let y = 1; y <= totalRows; y++) {
-    const pd = getPaymentDate(dateStr, y);
+
+  for (let y=1; y<=totalRows; y++) {
+    const pd = getPayDate(dateStr, y);
     const pIdx = getPeriodIndex(pd, periods);
     const p = periods[pIdx];
     const d = getDays(y, currentSector);
-    const adj = d * (scope / 100);
+    const adj = d * (scope/100);
     const val = adj * p.rate;
-    const isPast = pd < now;
-    const isCurrent = y === years;
-    usedPeriodIndices.add(pIdx);
-    rows.push({ y, pd, pIdx, p, d, adj, val, isPast, isCurrent });
+    usedIdx.add(pIdx);
+    rows.push({ y, pd, pIdx, p, d, adj, val, isPast: pd < now, isCurrent: y===years });
   }
 
   // Legend
   const legend = document.getElementById('period-legend');
   legend.innerHTML = '';
   if (periods.length > 1) {
-    [...usedPeriodIndices].sort().forEach(i => {
+    [...usedIdx].sort().forEach(i => {
       const pc = PERIOD_COLORS[i % PERIOD_COLORS.length];
+      const p = periods[i];
       const pill = document.createElement('div');
       pill.className = 'period-pill';
-      pill.style.background = pc.color + '22';
-      pill.style.color = pc.color;
-      pill.style.border = '1px solid ' + pc.color + '55';
-      // Label: first period = "תעריף X", others = "תעריף X מ-DATE"
-      const p = periods[i];
-      const rateLabel = '&#x20AA;' + fmt(p.rate);
-      const dateLabel = i === 0 ? '' : ' | מ-' + HE_MONTHS[p.fromDate.getMonth()] + ' ' + p.fromDate.getFullYear();
-      pill.innerHTML = '<span class="dot" style="background:' + pc.color + '"></span>' + rateLabel + dateLabel;
+      pill.style.cssText = 'background:' + pc.color + '18;color:' + pc.color + ';border:1px solid ' + pc.color + '44';
+      const dateLabel = i===0 ? '' : ' | מ-' + HE_MONTHS[p.fromDate.getMonth()] + ' ' + p.fromDate.getFullYear();
+      pill.innerHTML = '<span class="dot" style="background:' + pc.color + '"></span>&#x20AA;' + fmt(p.rate) + dateLabel;
       legend.appendChild(pill);
     });
   }
 
-  // Render rows with dividers between period changes
   let lastPIdx = null;
   rows.forEach(r => {
-    // Insert divider when period changes (not at first row)
     if (lastPIdx !== null && r.pIdx !== lastPIdx && periods.length > 1) {
       const pc = PERIOD_COLORS[r.pIdx % PERIOD_COLORS.length];
       const div = document.createElement('tr');
       div.className = 'period-divider';
-      div.innerHTML = '<td colspan="5" style="color:' + pc.color + ';border-top:2px dashed ' + pc.color + '44;">' +
-        '&#x21D3; תעריף חדש: &#x20AA;' + fmt(r.p.rate) + ' החל מ-' +
-        HE_MONTHS[r.p.fromDate.getMonth()] + ' ' + r.p.fromDate.getFullYear() +
-        '</td>';
+      div.innerHTML = '<td colspan="5" style="color:' + pc.color + ';border-color:' + pc.color + '33">' +
+        '&#x21D3; תעריף חדש: &#x20AA;' + fmt(r.p.rate) +
+        ' &#x2014; החל מ-' + HE_MONTHS[r.p.fromDate.getMonth()] + ' ' + r.p.fromDate.getFullYear() + '</td>';
       multiBody.appendChild(div);
     }
     lastPIdx = r.pIdx;
@@ -832,7 +937,7 @@ function calculate() {
     else if (r.isPast) tr.classList.add('past');
     if (periods.length > 1) tr.classList.add(pc.cls);
 
-    const rateTag = periods.length > 1
+    const rateCell = periods.length > 1
       ? '<span class="rate-tag ' + pc.tag + '">&#x20AA;' + fmt(r.p.rate) + '</span>'
       : '&#x20AA;' + fmt(r.p.rate);
 
@@ -840,44 +945,42 @@ function calculate() {
       '<td>שנה ' + r.y + (r.isPast && !r.isCurrent ? ' &#x2713;' : '') + '</td>' +
       '<td>' + pdStr + '</td>' +
       '<td>' + fmt(r.adj) + '</td>' +
-      '<td>' + rateTag + '</td>' +
+      '<td>' + rateCell + '</td>' +
       '<td>&#x20AA;' + fmt(r.val) + '</td>';
     multiBody.appendChild(tr);
   });
 
   // Scale table
-  document.getElementById('tbl-sector').textContent = currentSector === 'private' ? 'פרטי' : 'ציבורי';
+  document.getElementById('tbl-sector').textContent = currentSector==='private'?'פרטי':'ציבורי';
   const tbody = document.getElementById('scale-body');
   tbody.innerHTML = '';
   SCALE[currentSector].forEach(row => {
     const d = row.days;
-    const val = d * (scope / 100) * currentRate;
-    const label = row.from === row.to ? 'שנה ' + row.from
-      : row.to >= 99 ? 'שנה ' + row.from + ' ומעלה'
-      : 'שנות ' + row.from + '–' + row.to;
-    const isActive = years >= row.from && years <= row.to;
+    const val = d*(scope/100)*curRate;
+    const label = row.from===row.to ? 'שנה '+row.from
+      : row.to>=99 ? 'שנה '+row.from+' ומעלה'
+      : 'שנות '+row.from+'–'+row.to;
     const tr = document.createElement('tr');
-    if (isActive) tr.classList.add('highlight');
+    if (years>=row.from && years<=row.to) tr.classList.add('highlight');
     tr.innerHTML =
-      '<td>' + label + '</td>' +
-      '<td>' + d + ' ימים' + (scope < 100 ? ' &#x2192; ' + fmt(d*(scope/100)) : '') + '</td>' +
-      '<td>&#x20AA;' + fmt(val) + '</td>';
+      '<td>'+label+'</td>' +
+      '<td>'+d+' ימים'+(scope<100?' &#x2192; '+fmt(d*(scope/100)):'')+' </td>' +
+      '<td>&#x20AA;'+fmt(val)+'</td>';
     tbody.appendChild(tr);
   });
 
   document.getElementById('results').classList.add('show');
-  document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  document.getElementById('results').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
-// Init
 document.addEventListener('DOMContentLoaded', () => {
   const today = new Date().toISOString().split('T')[0];
   document.getElementById('start-date').setAttribute('max', today);
   document.getElementById('start-date').addEventListener('change', updateSeniority);
-  addRateRow(); // add first (base) rate row
+  addRateRow();
 });
 
-document.addEventListener('keydown', e => { if (e.key === 'Enter') calculate(); });
+document.addEventListener('keydown', e => { if (e.key==='Enter') calculate(); });
 </script>
 </body>
 </html>
