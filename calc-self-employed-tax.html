@@ -237,6 +237,11 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
         <button class="btn o" data-open="dParams" type="button">פרמטרים 2026</button>
         <button class="btn o" id="bReset" type="button">איפוס</button>
       </div>
+
+      <div class="sec" style="margin-top:14px">הערות<span class="r" id="noteCount"></span></div>
+      <textarea id="notes" rows="3" placeholder="הערות חופשיות לתכנון — הנחות, סיכומים מול הלקוח, מה לבדוק בהמשך…"
+        style="width:100%;border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-family:inherit;
+               font-size:13.5px;line-height:1.5;resize:vertical;background:var(--card);color:var(--ink)"></textarea>
     </div>
 
     <!-- ============ RESULTS ============ -->
@@ -257,7 +262,7 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
       <div class="led mut"><span>בסיס לחיוב</span><b id="oNiBase">—</b></div>
       <div class="led"><span>דמי ביטוח לאומי</span><b id="oNi">—</b></div>
       <div class="led"><span>דמי ביטוח בריאות</span><b id="oHe">—</b></div>
-      <div class="led tot"><span>סה״כ חבות לשנה</span><b id="oNiDue">—</b></div>
+      <div class="led tot"><span>סה״כ חבות לשנה<small style="font-weight:400;color:var(--muted);font-size:11.5px" id="oNiMonthly"></small></span><b id="oNiDue">—</b></div>
       <div class="led mut"><span>שולם בפועל (כולל בריאות)</span><b id="oNiPaid">—</b></div>
       <div class="led hl"><span id="oBalNiLbl">יתרה לתשלום</span><b id="oBalNi">—</b></div>
 
@@ -283,10 +288,6 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
         <a class="btn o" id="ctaWa" href="#" target="_blank" rel="noopener" style="text-decoration:none">וואטסאפ</a>
       </div>
 
-      <div class="sec" style="margin-top:14px">הערות<span class="r" id="noteCount"></span></div>
-      <textarea id="notes" rows="3" placeholder="הערות חופשיות לתכנון — הנחות, סיכומים מול הלקוח, מה לבדוק בהמשך…"
-        style="width:100%;border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-family:inherit;
-               font-size:13.5px;line-height:1.5;resize:vertical;background:var(--card);color:var(--ink)"></textarea>
 
       <p class="foot">הערכה בלבד לצורכי התמצאות. אינה מהווה ייעוץ מס או חוות דעת ואינה מחליפה בדיקה פרטנית.
       מבוסס על לוח הניכויים של רשות המסים 2026 ושיעורי המוסד לביטוח לאומי 2026.
@@ -304,6 +305,20 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
       <option value="calc">לפי החישוב התיאורטי</option>
     </select></div>
   <p class="note" id="niPaidInfo"></p>
+
+  <div class="leg">חישוב הפוך — איזו הכנסה מייצרת מקדמה נתונה</div>
+  <div class="g2">
+    <div class="fld"><label>מקדמה חודשית רצויה <small>(ב״ל + בריאות)</small></label>
+      <input type="number" id="revMonthly" value="0" step="50"></div>
+    <div class="fld"><label>&nbsp;</label>
+      <button class="btn o" id="revApply" type="button">העתק להכנסה מהעסק</button></div>
+  </div>
+  <div class="acts" style="margin-top:4px">
+    <button class="btn o" id="revMin" type="button">מינימום ביטוח לאומי</button>
+    <span style="flex:1"></span>
+  </div>
+  <p class="note" id="revMinOut"></p>
+  <p class="note" id="revOut"></p>
 </div><div class="mf"><button class="btn" data-close>סגור</button></div></dialog>
 
 <dialog id="dSalary"><h3>משכורת כשכיר<button data-close>×</button></h3><div class="mb">
@@ -451,7 +466,8 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
   <div class="g3">
     <div class="fld"><label>מדרגה מופחתת עד (חודשי)</label><input type="number" id="niStep" value="7703"></div>
     <div class="fld"><label>תקרת חיוב (חודשי)</label><input type="number" id="niCeil" value="51910"></div>
-    <div class="fld"><label>הכנסה מזערית שנתית</label><input type="number" id="niMin" value="0"></div>
+    <div class="fld"><label>הכנסה מזערית שנתית <small>(0 = מנוטרל)</small></label><input type="number" id="niMin" value="0"></div>
+    <div class="fld"><label>הכנסה מזערית לחודש <small>(btl 2026)</small></label><input type="number" id="niMinM" value="3442"></div>
     <div class="fld"><label>ב״ל עצמאי מופחת (%)</label><input type="number" id="sNiLow" value="4.47" step="0.01"></div>
     <div class="fld"><label>ב״ל עצמאי מלא (%)</label><input type="number" id="sNiHigh" value="12.83" step="0.01"></div>
     <div class="fld"><label>בריאות מופחת (%)</label><input type="number" id="sHeLow" value="3.23" step="0.01"></div>
@@ -918,6 +934,7 @@ function update(){
   txt('oNi', money(selfNi.total));
   txt('oHe', money(selfHe.total));
   txt('oNiDue', money(niTotal));
+  txt('oNiMonthly', niTotal>0 ? '  ·  ' + money(niTotal/12) + ' לחודש' : '');
   txt('oNiPaid', money(niPaidTot));
   txt('oBalNiLbl', balNi>=0 ? 'יתרה לתשלום' : 'החזר מביטוח לאומי');
   txt('oBalNi', money(Math.abs(balNi)));
@@ -1111,6 +1128,72 @@ function update(){
   }
   N(balNi>=0?'יתרה לתשלום':'החזר צפוי', Math.abs(balNi), 'total');
   $('niTable').innerHTML = nr.join('');
+  /* --- חישוב הפוך: מהמקדמה החודשית אל ההכנסה --- */
+  /* --- חישוב הפוך: מהמקדמה החודשית אל הרווח שיש להצהיר עליו --- */
+  /* מחזיר את דמי הביטוח השנתיים עבור רווח מוצהר, כולל החישוב המעגלי של ניכוי ה-52% */
+  const niTotalForProfit = p => {
+    const pre = Math.max(0, p
+      - ($('niKhReduces').value==='1' ? khDeduction : 0)
+      - ($('niPensReduces').value==='1' ? pensDeduction : 0));
+    let base = Math.max(pre, num('niMin')), r = {total:0};
+    for(let i=0;i<60;i++){
+      r = niOn(base/12, salM, niLowR, niHighR);
+      const nb = $('niBaseMode').value==='after'
+        ? Math.max(num('niMin'), pre - r.total*niDedR)
+        : Math.max(pre, num('niMin'));
+      if(Math.abs(nb-base)<1){ base=nb; break; }
+      base=nb;
+    }
+    r = niOn(base/12, salM, niLowR, niHighR);
+    const h = heFixed>0 ? heFixed : niOn(base/12, salM, num('sHeLow'), num('sHeHigh')).total;
+    return {total: r.total + h, ni: r.total, he: h, base: base};
+  };
+  /* --- דמי ביטוח מינימליים: לפי ההכנסה המזערית שקבע הביטוח הלאומי --- */
+  const minAnnual = num('niMinM')*12;
+  const minRes = (function(){
+    /* דמי המינימום נגבים על ההכנסה המזערית עצמה — בלי הפחתת ניכוי ה-52% */
+    const r = niOn(minAnnual/12, salM, niLowR, niHighR);
+    const h = heFixed>0 ? heFixed : niOn(minAnnual/12, salM, num('sHeLow'), num('sHeHigh')).total;
+    return {total: r.total + h, ni: r.total, he: h};
+  })();
+  window.__NIMIN = minRes.total/12;
+  $('revMinOut').innerHTML = num('niMinM')>0
+    ? 'הכנסה מזערית לפי ביטוח לאומי: <b>'+money(num('niMinM'))+'</b> לחודש ('+money(minAnnual)+' לשנה).'+
+      '<br>מי שהכנסתו נמוכה מכך משלם דמי ביטוח מההכנסה המזערית — <b>'+money(minRes.total/12)+' לחודש</b> ('+
+      money(minRes.total)+' לשנה): ביטוח לאומי '+money(minRes.ni/12)+' · בריאות '+money(minRes.he/12)+'.'+
+      (profit>0 && profit < minAnnual
+        ? '<br><span class="warn">הרווח שהוזן ('+money(profit/12)+' לחודש) נמוך מההכנסה המזערית.</span>'
+        : '')
+    : '';
+
+  const revTarget = num('revMonthly')*12;
+  window.__NIREV = 0;
+  if(revTarget > 0){
+    const capProfit = num('niCeil')*12*1.3;
+    const maxPay = niTotalForProfit(capProfit).total;
+    const minPay = niTotalForProfit(0).total;
+    if(revTarget > maxPay + 1){
+      $('revOut').innerHTML = '<span class="warn">מקדמה של '+money(num('revMonthly'))+' לחודש חורגת מהמקסימום.</span>'+
+        ' בתקרת החיוב המקדמה המרבית היא '+money(maxPay/12)+' לחודש.';
+    } else if(revTarget < minPay - 1){
+      $('revOut').innerHTML = '<span class="warn">מקדמה נמוכה מהמינימום האפשרי</span> של '+money(minPay/12)+' לחודש.';
+    } else {
+      let lo = 0, hi = capProfit;
+      for(let i=0;i<90;i++){ const mid=(lo+hi)/2; if(niTotalForProfit(mid).total < revTarget) lo=mid; else hi=mid; }
+      const found = Math.round((lo+hi)/2);
+      const res = niTotalForProfit(found);
+      window.__NIREV = found;
+      $('revOut').innerHTML = 'כדי לשלם <b>'+money(num('revMonthly'))+'</b> לחודש ('+money(revTarget)+' לשנה) '+
+        'יש להצהיר על רווח של <b>'+money(found/12)+' לחודש</b> — <b>'+money(found)+' לשנה</b>.'+
+        '<br>בסיס החיוב בפועל: '+money(res.base)+' · מתוך המקדמה: ביטוח לאומי '+money(res.ni/12)+
+        ' · בריאות '+money(res.he/12)+' לחודש.'+
+        (salary>0 ? '<br>החישוב מתחשב בכך שהמשכורת ('+money(salary)+') ממצה תחילה את המדרגה המופחתת.' : '')+
+        '<br>מעמד: '+NI_STATUS_TXT[niSt]+'.';
+    }
+  } else {
+    $('revOut').innerHTML = 'מזינים את המקדמה החודשית שהעוסק רוצה לשלם, והמחשבון מחשב לאחור על איזה רווח יש להצהיר מול ביטוח לאומי.';
+  }
+
   $('niPaidInfo').innerHTML = niPaidTot>0
     ? 'שולמו '+money(niPaidTot)+'. לפי יחס החיוב השנה הסכום מתפצל ל־<b>'+money(paidNiOnly)+
       '</b> ביטוח לאומי ו־<b>'+money(paidHealth)+'</b> ביטוח בריאות.'+
@@ -1192,6 +1275,15 @@ $('pensSalaryDeposit').addEventListener('input', ()=>{ SAL_EDIT.dep = true; });
 $('khSalaryUsed').addEventListener('input', ()=>{ SAL_EDIT.kh = true; });
 $('pensFromSalary').addEventListener('click', ()=>{ SAL_EDIT.pens = false; update(); });
 $('khFromSalary').addEventListener('click', ()=>{ SAL_EDIT.kh = false; $('salKh').checked = true; update(); });
+$('revMin').addEventListener('click', ()=>{
+  if(window.__NIMIN>0){ $('revMonthly').value = Math.round(window.__NIMIN); update(); }
+});
+$('revApply').addEventListener('click', ()=>{
+  if(!(window.__NIREV>0)){ alert('יש להזין מקדמה חודשית בתחום האפשרי.'); return; }
+  $('profit').value = Math.round(window.__NIREV);
+  update();
+  try{ $('dNiPaid').close(); }catch(e){}
+});
 $('bPrint').addEventListener('click', ()=>{ buildReport(); window.print(); });
 $('bPrint2').addEventListener('click', ()=>{ $('dDetail').close(); buildReport(); window.print(); });
 $('bReset').addEventListener('click', ()=>{ if(confirm('לאפס את כל הנתונים?')) location.reload(); });
@@ -1318,7 +1410,7 @@ $('planSearch').addEventListener('input', renderPlans);
 /* ניקוי שדות אחרי שמירה, כדי שהשמירה הבאה תתחיל נקייה */
 function clearPlanFields(){ $('planName').value=''; $('planNote').value=''; }
 
-const BUILD = 'v22';
+const BUILD = 'v26';
 $('buildTag').textContent = ' · ' + BUILD + ' · ' + (API_BASE ? 'פנימי' : 'ציבורי');
 
 /* שמירה מקומית — קיימת בשתי הגרסאות */
