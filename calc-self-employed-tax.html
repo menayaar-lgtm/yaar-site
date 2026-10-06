@@ -257,7 +257,8 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
       <div class="led mut"><span>בסיס לחיוב</span><b id="oNiBase">—</b></div>
       <div class="led"><span>דמי ביטוח לאומי</span><b id="oNi">—</b></div>
       <div class="led"><span>דמי ביטוח בריאות</span><b id="oHe">—</b></div>
-      <div class="led mut"><span>מקדמות ששולמו</span><b id="oNiPaid">—</b></div>
+      <div class="led tot"><span>סה״כ חבות לשנה</span><b id="oNiDue">—</b></div>
+      <div class="led mut"><span>שולם בפועל (כולל בריאות)</span><b id="oNiPaid">—</b></div>
       <div class="led hl"><span id="oBalNiLbl">יתרה לתשלום</span><b id="oBalNi">—</b></div>
 
       <div class="led big"><span id="oFinalLbl">סה״כ לתשלום</span><b id="oFinal">—</b></div>
@@ -281,6 +282,11 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
         <button class="btn o" id="bCopy" type="button">העתק סיכום</button>
         <a class="btn o" id="ctaWa" href="#" target="_blank" rel="noopener" style="text-decoration:none">וואטסאפ</a>
       </div>
+
+      <div class="sec" style="margin-top:14px">הערות<span class="r" id="noteCount"></span></div>
+      <textarea id="notes" rows="3" placeholder="הערות חופשיות לתכנון — הנחות, סיכומים מול הלקוח, מה לבדוק בהמשך…"
+        style="width:100%;border:1px solid var(--line);border-radius:7px;padding:8px 10px;font-family:inherit;
+               font-size:13.5px;line-height:1.5;resize:vertical;background:var(--card);color:var(--ink)"></textarea>
 
       <p class="foot">הערכה בלבד לצורכי התמצאות. אינה מהווה ייעוץ מס או חוות דעת ואינה מחליפה בדיקה פרטנית.
       מבוסס על לוח הניכויים של רשות המסים 2026 ושיעורי המוסד לביטוח לאומי 2026.
@@ -911,7 +917,8 @@ function update(){
   txt('oNiBase', money(niBase));
   txt('oNi', money(selfNi.total));
   txt('oHe', money(selfHe.total));
-  txt('oNiPaid', money(num('advNi')));
+  txt('oNiDue', money(niTotal));
+  txt('oNiPaid', money(niPaidTot));
   txt('oBalNiLbl', balNi>=0 ? 'יתרה לתשלום' : 'החזר מביטוח לאומי');
   txt('oBalNi', money(Math.abs(balNi)));
   $('oBalNi').parentElement.className = 'led hl ' + (balNi>0?'neg':'pos');
@@ -957,6 +964,7 @@ function update(){
   html('sCp', cpValue>0 ? (CP_EDITED?'ידני · ':'')+'זיכוי <b>'+money(cpValue)+'</b>' : '');
   html('sLife', num('life')>0 ? 'זיכוי <b>'+money(lifeCredit)+'</b>' : '');
   html('sDon', donGross>0 ? (donCredit>0 ? 'זיכוי <b>'+money(donCredit)+'</b>' : '<span class="warn">מתחת לסף</span>') : '');
+  txt('noteCount', ($('notes').value||'').trim() ? ($('notes').value.trim().length+' תווים') : '');
   html('sNiDed', (usedPaid ? paidNiOnly : selfNi.total)>0
     ? num('niDedRate')+'% מ־<b>'+money(usedPaid ? paidNiOnly : selfNi.total)+'</b>'+(usedPaid?' ששולם':'') : '');
   html('sAdvNi', niPaidTot>0
@@ -1038,16 +1046,26 @@ function update(){
       'ברווח '+money(profit)+' כל שקל נוסף ממוסה כמעט במחצית. בחברה — 23% מס חברות ודחיית המס עד למשיכה. '+
       'התלות העיקרית: שיעור המשיכה, עלויות הציות וכללי הרווחים הלא־מחולקים. '+
       '<a href="'+CALC_COMPARE+'">למחשבון ההשוואה המלא ←</a></div>');
-  const tips=[];
+  const tips=[]; let saveTot = 0;
   if(profit>0 && mandShort>0) tips.push('<b>פנסיה חובה: חסרים '+money(mandShort)+' לעמידה בחוק פנסיה חובה לעצמאים.</b>');
-  if(profit>0 && pOpt.amount>pens) tips.push('פנסיה: הפקדה של עוד '+money(pOpt.amount-pens)+' תמצה את הטבת המס.');
+  if(profit>0 && pOpt.amount>pens){
+    const sv = Math.max(0, taxAt({pens:pens}) - taxAt({pens:pOpt.amount}));
+    tips.push('פנסיה: הפקדה של עוד '+money(pOpt.amount-pens)+' תמצה את הטבת המס — <b>חיסכון של '+money(sv)+' במס</b>.');
+    saveTot += sv;
+  }
   if(profit>0 && khDedCap<=0) tips.push('קרן השתלמות: התקרה נוצלה בחלק השכיר — הפקדה נוספת לא תקטין את המס.');
-  else if(profit>0 && khOptR.amount>num('kh')) tips.push('קרן השתלמות: הפקדה של עוד '+money(khOptR.amount-num('kh'))+' תמצה את ההטבה במס.');
+  else if(profit>0 && khOptR.amount>num('kh')){
+    const sv = Math.max(0, taxAt({kh:num('kh')}) - taxAt({kh:khOptR.amount}));
+    tips.push('קרן השתלמות: הפקדה של עוד '+money(khOptR.amount-num('kh'))+' תמצה את ההטבה במס — <b>חיסכון של '+money(sv)+' במס</b>.');
+    saveTot += sv;
+  }
   else if(profit>0 && khOptR.amount>0 && num('kh')<num('khExempt')) tips.push('קרן השתלמות: הטבת המס מוצתה; הפקדה עד '+money(num('khExempt'))+' עדיין פטורה ממס רווחי הון.');
   if(!num('townRate')) tips.push('לא נבחר יישוב מזכה — כדאי לבדוק ברשימה.');
   if(creditsRaw>credits) tips.push('זיכויים שלא נוצלו: '+money(creditsRaw-credits)+'.');
   if(donCarry>0) tips.push('עודף תרומות '+money(donCarry)+' — ניתן להעברה ל־3 שנים.');
-  if(tips.length) f.push('<div class="flag ok"><b>לבדיקה לפני סוף השנה</b>'+tips.join(' ')+'</div>');
+  if(tips.length) f.push('<div class="flag ok"><b>לבדיקה לפני סוף השנה'+
+    (saveTot>0 ? ' · חיסכון מצטבר אפשרי: <span style="color:var(--sage-deep)">'+money(saveTot)+'</span>' : '')+
+    '</b>'+tips.join(' ')+'</div>');
   $('flags').innerHTML = f.join('');
 
   /* --- detail tables --- */
@@ -1139,6 +1157,8 @@ function buildReport(){
     '<svg width="100%" height="34" viewBox="0 0 500 34" preserveAspectRatio="none">'+svg+'</svg>'+
     '<h4>מס הכנסה</h4><table>'+LAST.rows.join('')+'</table>'+
     '<h4>ביטוח לאומי ובריאות</h4><table>'+LAST.nr.join('')+'</table>'+
+    ((($('notes').value||'').trim()) ? '<h4>הערות</h4><p style="font-size:11px;white-space:pre-wrap;margin:0 0 8px">'+
+      ($('notes').value.replace(/[<>&]/g, m=>({'<':'&lt;','>':'&gt;','&':'&amp;'}[m])))+'</p>' : '')+
     '<div class="rf">נטו שנתי '+money(LAST.net)+' · נטו חודשי '+money(LAST.net/12)+' · מס אפקטיבי '+pct(LAST.eff)+
     ' · מס שולי '+pct(LAST.margTotal)+' · נקודות זיכוי '+LAST.cpTotal+'<br>'+
     'הופק במחשבון המס לעצמאים של '+BRAND.name+'. הערכה בלבד; אינה מהווה ייעוץ מס ואינה מחליפה בדיקה פרטנית. '+
@@ -1146,8 +1166,8 @@ function buildReport(){
 }
 
 /* ---- wiring ---- */
-document.addEventListener('input', e=>{ if(e.target.matches('input,select')) update(); });
-document.addEventListener('change', e=>{ if(e.target.matches('input,select')) update(); });
+document.addEventListener('input', e=>{ if(e.target.matches('input,select,textarea')) update(); });
+document.addEventListener('change', e=>{ if(e.target.matches('input,select,textarea')) update(); });
 $('cpApply').addEventListener('click', ()=>{ CP_EDITED=false; $('cpManual').value = buildCP(); $('cpManualM').value = $('cpManual').value; update(); });
 $('cpManual').addEventListener('input', ()=>{ CP_EDITED=true; });
 $('cpManualM').addEventListener('input', ()=>{ CP_EDITED=true; $('cpManual').value = $('cpManualM').value; update(); });
@@ -1189,7 +1209,7 @@ $('bCopy').addEventListener('click', ()=>{
 /* ---- שמירת תכנונים (גרסה פנימית בלבד) ---- */
 function collectState(){
   const s={};
-  document.querySelectorAll('input[id],select[id]').forEach(e=>{
+  document.querySelectorAll('input[id],select[id],textarea[id]').forEach(e=>{
     if(e.id==='planName'||e.id==='planNote') return;
     s[e.id] = e.type==='checkbox' ? e.checked : e.value;
   });
@@ -1298,7 +1318,7 @@ $('planSearch').addEventListener('input', renderPlans);
 /* ניקוי שדות אחרי שמירה, כדי שהשמירה הבאה תתחיל נקייה */
 function clearPlanFields(){ $('planName').value=''; $('planNote').value=''; }
 
-const BUILD = 'v21';
+const BUILD = 'v22';
 $('buildTag').textContent = ' · ' + BUILD + ' · ' + (API_BASE ? 'פנימי' : 'ציבורי');
 
 /* שמירה מקומית — קיימת בשתי הגרסאות */
