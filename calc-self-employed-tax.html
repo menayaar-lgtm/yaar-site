@@ -208,7 +208,7 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
     <div class="panel">
 
       <div class="sec">הכנסות</div>
-      <div class="ln"><span>עסק או משלח יד <small>רווח לפני מס</small></span><input type="number" id="profit" value="300000" step="1000"><span class="st" id="sProfit"></span></div>
+      <div class="ln"><span class="tap" tabindex="0" data-open="dProfit">עסק או משלח יד <small>רווח לפני מס</small></span><input type="number" id="profit" value="300000" step="1000"><span class="st" id="sProfit"></span></div>
       <div class="ln"><span class="tap" tabindex="0" data-open="dSalary">משכורת כשכיר <small>ברוטו</small></span><input type="number" id="salary" value="0" step="1000"><span class="st" id="sSalary"></span></div>
       <div class="ln"><span>תגמולי מילואים</span><input type="number" id="milPay" value="0" step="500"><span class="st"></span></div>
       <div class="ln"><span class="tap" tabindex="0" data-open="dRent">שכר דירה למגורים</span><input type="number" id="rent" value="0" step="1000"><span class="st" id="sRent"></span></div>
@@ -298,6 +298,15 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
 </div>
 
 <!-- ================= MODALS ================= -->
+<dialog id="dProfit"><h3>רווח ללא חבות במס הכנסה<button data-close>×</button></h3><div class="mb">
+  <p class="note">החישוב מוצא את הרווח הגבוה ביותר שבו <b>מס ההכנסה עדיין אפס</b>, לפי כל מה שמולא בטופס —
+  נקודות זיכוי, יישוב מזכה, הפקדות לפנסיה ולקרן השתלמות, ביטוח חיים, תרומות ושאר ההכנסות.</p>
+  <p class="note" id="zeroTaxOut"></p>
+</div><div class="mf">
+  <button class="btn" id="zeroApply" type="button">העתק לשורת הרווח</button>
+  <button class="btn o" data-close>סגור</button>
+</div></dialog>
+
 <dialog id="dNiPaid"><h3>ביטוח לאומי ששולם בפועל<button data-close>×</button></h3><div class="mb">
   <div class="fld"><label>בסיס הניכוי המוכר לצורכי מס</label>
     <select id="niDedSource">
@@ -548,6 +557,12 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
 </div></dialog>
 
 <dialog id="dPlans" style="max-width:620px"><h3>תכנונים שמורים<button data-close>×</button></h3><div class="mb">
+  <div id="planCtx" hidden style="background:var(--wash);border-inline-start:3px solid var(--sage-deep);
+       border-radius:6px;padding:7px 10px;margin-bottom:9px;font-size:12.5px;display:flex;align-items:center;gap:8px">
+    <span>עורך תכנון קיים: <b id="planCtxName"></b> <span id="planCtxWhere" style="color:var(--muted)"></span></span>
+    <button class="btn o" id="planNew" type="button"
+      style="margin-inline-start:auto;padding:3px 10px;font-size:11.5px">תכנון חדש</button>
+  </div>
   <div class="g2">
     <div class="fld"><label>שם התכנון / הלקוח</label><input type="text" id="planName" placeholder="לדוגמה: ישראל ישראלי"></div>
     <div class="fld"><label>הערה</label><input type="text" id="planNote" placeholder="אופציונלי"></div>
@@ -964,6 +979,27 @@ function update(){
   const html = (id,v) => { const e=$(id); if(e) e.innerHTML=v; };
   html('pensHintS', profit>0 ? (mandShort>0 ? '<span class="warn">חסר '+money(mandShort)+' לחובה</span>' : hintFor(pens, pOpt)) : '');
   html('khHintS', profit>0 ? hintFor(num('kh'), khOptR) : '');
+  /* --- הרווח המרבי ללא חבות במס הכנסה --- */
+  const zeroTax = (function(){
+    const CAP = 2000000;
+    if(taxAt({profit:0}) > 0.5) return -1;          /* כבר חייב במס גם ברווח אפס */
+    if(taxAt({profit:CAP}) <= 0.5) return CAP;      /* לא מגיע לחבות בטווח הנבדק */
+    let lo = 0, hi = CAP;
+    for(let i=0;i<60;i++){ const mid=(lo+hi)/2; if(taxAt({profit:mid}) <= 0.5) lo=mid; else hi=mid; }
+    return Math.floor(lo);
+  })();
+  window.__ZEROTAX = zeroTax;
+  $('zeroTaxOut').innerHTML = zeroTax < 0
+    ? '<span class="warn">כבר קיימת חבות במס גם ללא רווח מהעסק</span> — בשל הכנסות אחרות שהוזנו. '+
+      'הקטנת הרווח לבדה לא תאפס את המס.'
+    : 'עד רווח שנתי של <b>'+money(zeroTax)+'</b> (<b>'+money(zeroTax/12)+' לחודש</b>) '+
+      'לא תיווצר חבות במס הכנסה.'+
+      '<br>מעבר לסכום זה המס מתחיל להיצבר בשיעור של '+marginalRate(0,0)+'% על כל שקל נוסף.'+
+      (profit>zeroTax ? '<br><span class="warn">הרווח שהוזן ('+money(profit)+') גבוה ב־'+money(profit-zeroTax)+' מסף זה.</span>'
+                      : (profit>0 ? '<br>הרווח שהוזן ('+money(profit)+') נמוך מהסף — אין חבות במס.' : ''))+
+      '<br><span style="color:var(--muted)">דמי ביטוח לאומי ובריאות נגבים בנפרד ואינם מתאפסים בסף זה — '+
+      'המינימום נגבה גם ברווח נמוך.</span>';
+
   html('sProfit', profit>0 ? money(profit/12)+' לחודש' : '');
   html('sSalary', salary>0
     ? (salPensAmt>0 || salKhAmt>0 ? '<b>שכיר+עצמאי</b>' : (num('salaryTax')>0 ? 'נוכה '+money(num('salaryTax')) : 'ללא ניכוי מס'))
@@ -1275,6 +1311,12 @@ $('pensSalaryDeposit').addEventListener('input', ()=>{ SAL_EDIT.dep = true; });
 $('khSalaryUsed').addEventListener('input', ()=>{ SAL_EDIT.kh = true; });
 $('pensFromSalary').addEventListener('click', ()=>{ SAL_EDIT.pens = false; update(); });
 $('khFromSalary').addEventListener('click', ()=>{ SAL_EDIT.kh = false; $('salKh').checked = true; update(); });
+$('zeroApply').addEventListener('click', ()=>{
+  if(!(window.__ZEROTAX>0)){ alert('לא נמצא סף — קיימת חבות במס גם ללא רווח מהעסק.'); return; }
+  $('profit').value = Math.round(window.__ZEROTAX);
+  update();
+  try{ $('dProfit').close(); }catch(e){}
+});
 $('revMin').addEventListener('click', ()=>{
   if(window.__NIMIN>0){ $('revMonthly').value = Math.round(window.__NIMIN); update(); }
 });
@@ -1386,6 +1428,8 @@ function renderPlans(){
       '</td><td class="n" style="font-size:11.5px">'+tag+'</td>'+
       '<td class="n" style="color:var(--muted);font-size:11.5px">'+new Date(p.updated).toLocaleDateString('he-IL')+'</td>'+
       '<td class="n"><button class="btn o" style="padding:3px 9px;font-size:12px" data-open-plan '+ref+'>פתח</button> '+
+      '<button class="btn o" style="padding:3px 9px;font-size:12px" data-upd-plan '+ref+
+        ' data-name="'+encodeURIComponent(p.name)+'" title="דריסת התכנון בנתונים שעל המסך">עדכן</button> '+
       '<button class="btn o" style="padding:3px 9px;font-size:12px" data-del-plan '+ref+'>מחק</button></td></tr>';
   }).join('');
 }
@@ -1408,18 +1452,44 @@ async function loadPlans(){
 $('planSearch').addEventListener('input', renderPlans);
 
 /* ניקוי שדות אחרי שמירה, כדי שהשמירה הבאה תתחיל נקייה */
-function clearPlanFields(){ $('planName').value=''; $('planNote').value=''; }
+let CUR_PLAN = null;   /* {where:'server'|'local', id, name} — התכנון שנטען כרגע */
+function setCurPlan(p){
+  CUR_PLAN = p;
+  $('planCtx').hidden = !p;
+  if(p){
+    txt('planCtxName', p.name);
+    txt('planCtxWhere', p.where==='server' ? '· מערכת המשרד' : '· מחשב זה');
+  }
+  const lbl = n => n ? 'עדכן את "'+n+'"' : null;
+  $('planSaveLocal').textContent = (p && p.where==='local') ? lbl(p.name) : 'שמור במחשב זה';
+  $('planSave').textContent      = (p && p.where==='server') ? lbl(p.name) : 'שמור במערכת המשרד';
+}
+function clearPlanFields(){ $('planName').value=''; $('planNote').value=''; setCurPlan(null); }
 
-const BUILD = 'v26';
+/* אישור לפני דריסת תכנון קיים שאינו זה שנטען */
+function okToOverwrite(name, where){
+  if(CUR_PLAN && CUR_PLAN.where===where && CUR_PLAN.name.toLowerCase()===name.toLowerCase()) return true;
+  const exists = where==='local'
+    ? Object.keys(localAll()).some(n => n.toLowerCase()===name.toLowerCase())
+    : PLAN_ROWS.some(r => r.where==='server' && r.name.toLowerCase()===name.toLowerCase());
+  if(!exists) return true;
+  return confirm('כבר קיים תכנון בשם "'+name+'". לדרוס אותו?');
+}
+
+const BUILD = 'v28';
 $('buildTag').textContent = ' · ' + BUILD + ' · ' + (API_BASE ? 'פנימי' : 'ציבורי');
 
 /* שמירה מקומית — קיימת בשתי הגרסאות */
+$('planNew').addEventListener('click', ()=>{ clearPlanFields(); planMsg('מצב תכנון חדש — שמירה תיצור רשומה נוספת.'); });
 $('planSaveLocal').addEventListener('click', ()=>{
   const name = ($('planName').value||'').trim() || ($('cName').value||'').trim();
   if(!name){ planMsg('יש להזין שם לתכנון.', true); return; }
+  if(!okToOverwrite(name,'local')) return;
+  const upd = !!(CUR_PLAN && CUR_PLAN.where==='local' && CUR_PLAN.name.toLowerCase()===name.toLowerCase());
   localPut(name, $('planNote').value, collectState());
-  planMsg('"'+name+'" נשמר במחשב זה.');
-  clearPlanFields(); loadPlans();
+  planMsg('"'+name+'" '+(upd?'עודכן':'נשמר')+' במחשב זה.');
+  if(upd) setCurPlan({where:'local', name:name}); else clearPlanFields();
+  loadPlans();
 });
 
 if(API_BASE){
@@ -1434,7 +1504,8 @@ if(API_BASE){
       if(!r.ok) throw new Error(j.error || 'שגיאת התחברות');
       localStorage.setItem('token', j.token);
       $('loginPass').value = '';
-      refreshAuth();
+      setCurPlan(null);
+refreshAuth();
     }catch(e){ planMsg(e.message, true); }
     finally{ $('loginBtn').disabled = false; }
   });
@@ -1444,27 +1515,48 @@ if(API_BASE){
     const name = ($('planName').value||'').trim() || ($('cName').value||'').trim();
     if(!name){ planMsg('יש להזין שם לתכנון.', true); return; }
     try{
-      await api('POST','',{client_name:name, tax_year:2026, note:$('planNote').value||null, data:collectState()});
-      planMsg('"'+name+'" נשמר במערכת המשרד.'); clearPlanFields(); loadPlans();
+      if(!okToOverwrite(name,'server')) return;
+      const upd = !!(CUR_PLAN && CUR_PLAN.where==='server' && CUR_PLAN.name.toLowerCase()===name.toLowerCase());
+      const r = await api('POST','',{client_name:name, tax_year:2026, note:$('planNote').value||null, data:collectState()});
+      planMsg('"'+name+'" '+(upd?'עודכן':'נשמר')+' במערכת המשרד.');
+      setCurPlan({where:'server', id:(r&&r.id)||(CUR_PLAN&&CUR_PLAN.id), name:name});
+      loadPlans();
     }catch(e){ planMsg(e.message, true); }
   });
 }
 
 $('planList').addEventListener('click', async e=>{
-  const o = e.target.closest('[data-open-plan]'), dl = e.target.closest('[data-del-plan]');
-  const el = o || dl; if(!el) return;
+  const o = e.target.closest('[data-open-plan]'), dl = e.target.closest('[data-del-plan]'),
+        up = e.target.closest('[data-upd-plan]');
+  const el = o || dl || up; if(!el) return;
   const loc = el.dataset.loc ? decodeURIComponent(el.dataset.loc) : null;
   try{
     if(o){
       if(loc){ const rec = localAll()[loc]; if(!rec) return;
-               applyState(rec.data); $('planName').value = loc; $('planNote').value = rec.note||''; }
+               applyState(rec.data); $('planName').value = loc; $('planNote').value = rec.note||'';
+               setCurPlan({where:'local', name:loc}); }
       else { const p = await api('GET','?id='+el.dataset.srv); applyState(p.data);
-             $('planName').value = p.client_name; $('planNote').value = p.note||''; }
+             $('planName').value = p.client_name; $('planNote').value = p.note||'';
+             setCurPlan({where:'server', id:p.id, name:p.client_name}); }
       $('dPlans').close();
+    }
+    if(up){
+      const nm = decodeURIComponent(up.dataset.name);
+      if(!confirm('לדרוס את "'+nm+'" בנתונים שעל המסך?')) return;
+      if(loc){ localPut(nm, $('planNote').value || (localAll()[nm]||{}).note || '', collectState());
+               setCurPlan({where:'local', name:nm}); }
+      else { const r = await api('POST','',{client_name:nm, tax_year:2026,
+               note:$('planNote').value||null, data:collectState()});
+             setCurPlan({where:'server', id:(r&&r.id)||up.dataset.srv, name:nm}); }
+      $('planName').value = nm;
+      planMsg('"'+nm+'" עודכן בנתונים שעל המסך.');
+      loadPlans();
+      return;
     }
     if(dl){
       if(!confirm('למחוק את התכנון?')) return;
       if(loc) localDel(loc); else await api('DELETE','/'+el.dataset.srv);
+      if(CUR_PLAN && ((loc && CUR_PLAN.name===loc) || (!loc && String(CUR_PLAN.id)===String(el.dataset.srv)))) clearPlanFields();
       planMsg('התכנון נמחק.'); loadPlans();
     }
   }catch(err){ planMsg(err.message, true); }
