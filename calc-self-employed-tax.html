@@ -36,6 +36,8 @@ body{margin:0;background:var(--paper);color:var(--ink);font-family:'Assistant',s
 
 /* ---- guest notice ---- */
 .notice{background:#5C7385;color:#F0F4F6;font-size:12.5px;line-height:1.5}
+.notice.upd{background:var(--sage-deep)}
+.notice .in a + a{margin-inline-start:12px}
 .notice .in{max-width:1240px;margin:0 auto;padding:7px 14px}
 .notice a{color:#fff;font-weight:700;text-decoration:none;border-bottom:1px solid rgba(255,255,255,.5);white-space:nowrap}
 .notice a:hover{border-color:#fff}
@@ -185,6 +187,16 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
   </div>
 </div>
 
+<div class="notice upd" id="updNotice" hidden>
+  <div class="in">
+    <span id="updAvail">🔄 <b>גרסה חדשה של המחשבון זמינה.</b>
+      הנתונים שעל המסך יישמרו בעת הרענון.
+      <a href="#" id="updReload">רענון עכשיו ←</a>
+      <a href="#" id="updLater" style="opacity:.75;border-bottom-style:dashed">לא עכשיו</a></span>
+    <span id="updDone" hidden></span>
+  </div>
+</div>
+
 <div class="notice" id="guestNotice" hidden>
   <div class="in">💡 זוהי גרסת התנסות חינמית — התכנונים נשמרים בדפדפן זה בלבד.
   לקוחות וצוות יער צפון נהנים מהמערכת המלאה: שמירה מאובטחת בענן, גישה מכל מחשב וניהול תיקי לקוחות.
@@ -232,6 +244,7 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
       <div class="ln"><span>מקדמות מס הכנסה</span><input type="number" id="advTax" value="0" step="500"><span class="st"></span></div>
       <div class="ln"><span>ניכוי מס במקור</span><input type="number" id="wh" value="0" step="500"><span class="st"></span></div>
       <div class="ln"><span class="tap" tabindex="0" data-open="dNiPaid">ביטוח לאומי ששולם <small>כולל בריאות</small></span><input type="number" id="advNi" value="0" step="500"><span class="st" id="sAdvNi"></span></div>
+      <div class="ln calc"><span class="tap" tabindex="0" data-open="dNiDef">הגדרת עובד עצמאי <small>בביטוח לאומי</small></span><span class="val" id="oNiDefVal" style="font-size:12.5px">—</span><span class="st" id="sNiDefVal"></span></div>
 
       <div class="acts">
         <button class="btn o" data-open="dParams" type="button">פרמטרים 2026</button>
@@ -328,6 +341,29 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
   </div>
   <p class="note" id="revMinOut"></p>
   <p class="note" id="revOut"></p>
+</div><div class="mf"><button class="btn" data-close>סגור</button></div></dialog>
+
+<dialog id="dNiDef" style="max-width:600px"><h3>הגדרת עובד עצמאי בביטוח לאומי<button data-close>×</button></h3><div class="mb">
+  <div class="g2">
+    <div class="fld"><label>מעמד בהגדרה</label><select id="niDefSel">
+      <option value="auto">אוטומטי לפי הנתונים</option>
+      <option value="yes">עונה להגדרת עובד עצמאי</option>
+      <option value="no">אינו עונה להגדרה — הכנסה שלא מעבודה</option></select></div>
+    <div class="fld"><label>שעות עבודה שבועיות <small>(0 = לא הוזן)</small></label>
+      <input type="number" id="wHours" value="0" min="0" step="1"></div>
+  </div>
+  <p class="note" id="niDefTests"></p>
+  <p class="note" id="niDefOut"></p>
+  <div class="acts" style="margin-top:2px">
+    <button class="btn o" id="niDefMark" type="button">סמן כאינו עונה להגדרה</button>
+    <button class="btn o" id="niDefYes" type="button">סמן כעונה להגדרה</button>
+    <span style="flex:1"></span>
+  </div>
+  <p class="note">הגדרת «עובד עצמאי» בסעיף 1 לחוק הביטוח הלאומי מתקיימת בהתקיים אחד מהתנאים.
+  מי שאינו עונה לה נחשב לעניין דמי הביטוח כבעל הכנסה שלא מעבודה: שיעורים מופחתים, פטור על המדרגה הראשונה —
+  ומאידך אובדן זכאות לדמי לידה ולגמלה לשמירת הריון, ואי־ביטוח בענף נפגעי עבודה (המבוטח בו הוא «עובד עצמאי» הרשום בביטוח הלאומי).
+  לעניין מס הכנסה הסיווג אינו משתנה — ההכנסה נותרת הכנסה מעסק או ממשלח יד; ההשפעה היחידה היא בגובה הניכוי
+  לפי ס׳ 47א, הנגזר מדמי הביטוח הלאומי ששולמו בפועל.</p>
 </div><div class="mf"><button class="btn" data-close>סגור</button></div></dialog>
 
 <dialog id="dSalary"><h3>משכורת כשכיר<button data-close>×</button></h3><div class="mb">
@@ -504,6 +540,24 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
       <option value="0">לא — ניכוי אישי ס׳ 47</option><option value="1">כן — ס׳ 345</option></select></div>
     <div class="fld"><label>הכנסות פסיביות בב״ל</label><select id="niPassiveSel"><option value="0">לא</option><option value="1">כן</option></select></div>
   </div>
+  <div class="leg">אינו עונה להגדרת עובד עצמאי — הכנסה שלא מעבודה</div>
+  <div class="g3">
+    <div class="fld"><label>ב״ל מופחת (%)</label><input type="number" id="nqNiLow" value="6.92" step="0.01"></div>
+    <div class="fld"><label>ב״ל מלא (%)</label><input type="number" id="nqNiHigh" value="7" step="0.01"></div>
+    <div class="fld"><label>בריאות מופחת (%)</label><input type="number" id="nqHeLow" value="5.17" step="0.01"></div>
+    <div class="fld"><label>בריאות מלא (%)</label><input type="number" id="nqHeHigh" value="5.17" step="0.01"></div>
+    <div class="fld"><label>מדרגת פטור (חודשי)</label><input type="number" id="nqFloor" value="3442"></div>
+    <div class="fld"><label>אופן הפטור</label><select id="nqFloorMode">
+      <option value="ded">ניכוי — הסכום הראשון פטור</option>
+      <option value="thr">סף — מעבר לסף חיוב על הכל</option></select></div>
+    <div class="fld"><label>מינימום לחודש (₪)</label><input type="number" id="nqMin" value="266"></div>
+    <div class="fld"><label>החלת המינימום</label><select id="nqMinApply">
+      <option value="1">כן — כשאינו שכיר</option><option value="0">לא</option></select></div>
+    <div class="fld"><label>סף שעות — מלא (שבועי)</label><input type="number" id="defH1" value="20"></div>
+    <div class="fld"><label>סף הכנסה — 50% מהשכר הממוצע</label><input type="number" id="defInc1" value="6885"></div>
+    <div class="fld"><label>סף שעות — משולב</label><input type="number" id="defH2" value="12"></div>
+    <div class="fld"><label>סף הכנסה — 15% מהשכר הממוצע</label><input type="number" id="defInc2" value="2065"></div>
+  </div>
   <div class="leg">הפקדות וזיכויים</div>
   <div class="g3">
     <div class="fld"><label>תקרת הכנסה מזכה (9,700×12)</label><input type="number" id="mzCeil" value="116400"></div>
@@ -645,6 +699,13 @@ const num = id => {
   if(OV && id in OV) return OV[id];
   const e=$(id); const v=parseFloat(e&&e.value); return isNaN(v)?0:v;
 };
+/* מריץ את המנוע עם מעמד הגדרה חלופי (עונה / אינו עונה), בלי לגעת במסך */
+function niAtDef(v){
+  const el=$('niDefSel'); if(!el) return null;
+  const old=el.value; el.value=v; SILENT=true;
+  let r=null; try{ r=update(); } finally { SILENT=false; el.value=old; }
+  return r;
+}
 /* מריץ את מנוע החישוב עם ערך הפקדה חלופי, בלי לגעת במסך */
 function taxAt(ov){
   OV=ov; SILENT=true;
@@ -669,7 +730,7 @@ const WA = 'https://wa.me/'+BRAND.whatsapp+'?text='+encodeURIComponent(BRAND.waT
 
 /* ---- modals ---- */
 document.addEventListener('click', e=>{
-  const o=e.target.closest('[data-open]'); if(o){ $(o.dataset.open).showModal(); return; }
+  const o=e.target.closest('[data-open]'); if(o){ if(o.tagName==='A') e.preventDefault(); $(o.dataset.open).showModal(); return; }
   const c=e.target.closest('[data-close]'); if(c){ c.closest('dialog').close(); update(); }
 });
 document.addEventListener('keydown', e=>{
@@ -719,9 +780,9 @@ function ladderTax(from,to,minRate){
   return {tax,parts};
 }
 function marginalRate(inc,minRate){ for(const b of brackets()){ if(inc<=b.to) return Math.max(b.r,minRate||0); } return 47; }
-function niOn(m,used,lo,hi){
+function niOn(m,used,lo,hi,skip){
   const step=num('niStep'), ceil=num('niCeil');
-  const s=used, e=Math.min(ceil, used+m);
+  const s=used+(skip||0), e=Math.min(ceil, used+m);
   if(e<=s) return {low:0,high:0,total:0};
   const l=Math.max(0,Math.min(step,e)-Math.min(step,s)), h=Math.max(0,e-Math.max(step,s));
   return {low:l*12, high:h*12, total:(l*lo/100+h*hi/100)*12};
@@ -735,8 +796,28 @@ function retAge(){
   const t={1969:64.75,1968:64.5,1967:64.25,1966:64,1965:63.75,1964:63.5,1963:63.25,1962:63,1961:62+8/12,1960:62+4/12};
   return t[by]!==undefined ? t[by] : 62;
 }
-/* מעמד הב״ל: רגיל / הגיע לגיל פרישה ואינו מקבל קצבה / מקבל קצבת אזרח ותיק */
+/* הגדרת «עובד עצמאי» — ס׳ 1 לחוק הביטוח הלאומי: די בהתקיים אחד התנאים */
+function defCheck(){
+  const mo  = Math.min(12, Math.max(1, num('months')||12));
+  const inc = Math.max(0, num('profit'))/mo;
+  const h   = num('wHours');
+  const known = h > 0;
+  const c1 = known && h >= num('defH1');                                  /* 20 שעות שבועיות ומעלה */
+  const c2 = inc >= num('defInc1');                                       /* 50% מהשכר הממוצע */
+  const c3 = known && h >= num('defH2') && inc >= num('defInc2');         /* 12 שעות + 15% */
+  const meets = c2 || (known ? (c1||c3) : true);
+  return {inc:inc, h:h, known:known, c1:c1, c2:c2, c3:c3, meets:meets,
+          byIncome:c2, suggest: !c2 && (known ? !(c1||c3) : true)};
+}
+function niDef(){
+  const s = $('niDefSel') ? $('niDefSel').value : 'auto';
+  if(s==='yes') return true;
+  if(s==='no')  return false;
+  return defCheck().meets;
+}
+/* מעמד הב״ל: רגיל / הגיע לגיל פרישה ואינו מקבל קצבה / מקבל קצבת אזרח ותיק / אינו עונה להגדרה */
 function niStatus(){
+  if(!niDef()) return 'nq';
   const s = $('niStatusSel').value;
   if(s!=='auto') return s;
   const a = num('age');
@@ -745,7 +826,8 @@ function niStatus(){
   if(a < 18) return 'pension';
   return 'reg';
 }
-const NI_STATUS_TXT = {reg:'לפני גיל פרישה', retired:'גיל פרישה · ללא קצבה', pension:'מקבל קצבת אזרח ותיק'};
+const NI_STATUS_TXT = {reg:'לפני גיל פרישה', retired:'גיל פרישה · ללא קצבה', pension:'מקבל קצבת אזרח ותיק',
+                       nq:'אינו עונה להגדרת עובד עצמאי'};
 
 function exemptTrack(inc,ceil){
   if(inc<=ceil) return {exempt:inc, taxable:0};
@@ -813,28 +895,43 @@ function update(){
   window.__KHCAP = khDedCap;
 
   /* --- national insurance --- */
-  const niSt = niStatus();
-  const niLowR = niSt==='pension' ? num('sNiLowPen') : niSt==='retired' ? num('sNiLowRet') : num('sNiLow');
-  const niHighR = niSt==='pension' ? num('sNiHighPen') : niSt==='retired' ? num('sNiHighRet') : num('sNiHigh');
-  const heFixed = niSt==='pension' ? num('heFixedPen')*12 : 0;
-  const niDedR = num('niDedRate')/100;
   const salM = salary/12;
+  const niSt = niStatus();
+  const niLowR = niSt==='nq' ? num('nqNiLow') : niSt==='pension' ? num('sNiLowPen') : niSt==='retired' ? num('sNiLowRet') : num('sNiLow');
+  const niHighR = niSt==='nq' ? num('nqNiHigh') : niSt==='pension' ? num('sNiHighPen') : niSt==='retired' ? num('sNiHighRet') : num('sNiHigh');
+  const heLowR  = niSt==='nq' ? num('nqHeLow')  : num('sHeLow');
+  const heHighR = niSt==='nq' ? num('nqHeHigh') : num('sHeHigh');
+  const heFixed = niSt==='pension' ? num('heFixedPen')*12 : 0;
+  /* אינו עונה להגדרה: המדרגה הראשונה פטורה (ניכוי) או מהווה סף לחיוב על כל ההכנסה */
+  const nqFloorM = niSt==='nq' ? num('nqFloor') : 0;
+  const nqThr = niSt==='nq' && $('nqFloorMode').value==='thr';
+  const skipFor = m => niSt!=='nq' ? 0 : (nqThr ? (m <= nqFloorM ? m : 0) : Math.min(m, nqFloorM));
+  const niSelf = m => niOn(m, salM, niLowR, niHighR, skipFor(m));
+  const heSelf = m => heFixed>0 ? {low:0,high:0,total:heFixed} : niOn(m, salM, heLowR, heHighR, skipFor(m));
+  /* מי שאינו עובד משלם לפחות את דמי הביטוח המינימליים (143 ב״ל + 123 בריאות לחודש) */
+  const nqMinA = (niSt==='nq' && salary<=0 && $('nqMinApply').value==='1') ? num('nqMin')*12 : 0;
+  const niDedR = num('niDedRate')/100;
   const empNi = niOn(salM,0,num('eLow'),num('eHigh'));
   const niPre = Math.max(0, profit
     - ($('niKhReduces').value==='1' ? khDeduction : 0)
     - ($('niPensReduces').value==='1' ? pensDeduction : 0));
   let niBase = Math.max(niPre, num('niMin')), selfNi={total:0,low:0,high:0}, selfHe={total:0};
   for(let i=0;i<60;i++){
-    selfNi = niOn(niBase/12, salM, niLowR, niHighR);
+    selfNi = niSelf(niBase/12);
     const nb = $('niBaseMode').value==='after'
       ? Math.max(num('niMin'), niPre - selfNi.total*niDedR)
       : Math.max(niPre, num('niMin'));
     if(Math.abs(nb-niBase)<1){ niBase=nb; break; }
     niBase=nb;
   }
-  selfNi = niOn(niBase/12, salM, niLowR, niHighR);
-  selfHe = heFixed>0 ? {low:0, high:0, total:heFixed}
-                     : niOn(niBase/12, salM, num('sHeLow'), num('sHeHigh'));
+  selfNi = niSelf(niBase/12);
+  selfHe = heSelf(niBase/12);
+  let niFloored = false;
+  if(nqMinA>0 && selfNi.total + selfHe.total < nqMinA - 0.5){
+    niFloored = true;
+    selfNi = {low:0, high:0, total: nqMinA*143/266};
+    selfHe = {low:0, high:0, total: nqMinA*123/266};
+  }
   const niPaidTot = num('advNi');
   const niShare = (selfNi.total + selfHe.total) > 0 ? selfNi.total/(selfNi.total + selfHe.total) : 0;
   const paidNiOnly = niPaidTot * niShare;              /* רכיב הב״ל בלבד מתוך הסכום ששולם */
@@ -922,8 +1019,9 @@ function update(){
   const net = grossAll-totalTax-niTotal-empNi.total;
   const eff = grossAll>0 ? (totalTax+niTotal+empNi.total)/grossAll*100 : 0;
   const margTax = marginalRate(personalTaxable,0) + (surBase>num('surThr')?num('surRate'):0);
-  const niMargR = (personalTaxable/12<num('niCeil'))
-    ? (personalTaxable/12<=num('niStep') ? num('sNiLow')+num('sHeLow') : num('sNiHigh')+num('sHeHigh')) : 0;
+  const niMargR = (personalTaxable/12 >= num('niCeil')) ? 0
+    : (niSt==='nq' && !nqThr && personalTaxable/12 <= nqFloorM) ? 0
+    : (personalTaxable/12 <= num('niStep') ? niLowR+heLowR : niHighR+heHighR);
   const margTotal = margTax + niMargR*(1-margTax/100*niDedR);
 
   if(SILENT) return {totalTax:totalTax, niTotal:niTotal, balAll:balTax+balNi};
@@ -1099,6 +1197,31 @@ function update(){
       'ברווח '+money(profit)+' כל שקל נוסף ממוסה כמעט במחצית. בחברה — 23% מס חברות ודחיית המס עד למשיכה. '+
       'התלות העיקרית: שיעור המשיכה, עלויות הציות וכללי הרווחים הלא־מחולקים. '+
       '<a href="'+CALC_COMPARE+'">למחשבון ההשוואה המלא ←</a></div>');
+  /* --- הגדרת עובד עצמאי בביטוח לאומי --- */
+  {
+    const d = defCheck(), sel = $('niDefSel').value;
+    const alt = niAtDef(niSt==='nq' ? 'yes' : 'no');
+    const diff = alt ? (alt.niTotal + alt.totalTax) - (niTotal + totalTax) : 0;
+    if(niSt==='nq'){
+      f.push('<div class="flag"><b>מסומן כמי שאינו עונה להגדרת עובד עצמאי</b>'+
+        'דמי הביטוח מחושבים כהכנסה שלא מעבודה — '+money(niTotal)+' לשנה'+
+        (alt ? ', לעומת '+money(alt.niTotal)+' כעובד עצמאי' : '')+'. '+
+        (diff>1 ? 'החיסכון הכולל (ב״ל ומס) '+money(diff)+' לשנה. ' : '')+
+        '<b>במעמד זה אין זכאות לדמי לידה ולגמלה לשמירת הריון, ואין ביטוח בענף נפגעי עבודה.</b> '+
+        (d.byIncome ? '<span class="warn">שימו לב: ההכנסה החודשית ('+money(d.inc)+') עוברת את סף ה־'+
+           money(num('defInc1'))+' — לפי ההכנסה בלבד הוא כן עונה להגדרה.</span> ' : '')+
+        '<a href="#" data-open="dNiDef">לבדיקת ההגדרה ←</a></div>');
+    } else if(sel==='auto' && d.suggest && profit>0){
+      f.push('<div class="flag ok"><b>לבדיקה: האם עונה להגדרת «עובד עצמאי» בביטוח לאומי?</b>'+
+        'ההכנסה החודשית מהעסק '+money(d.inc)+' נמוכה מ־'+money(num('defInc1'))+
+        ' (50% מהשכר הממוצע), ולכן ההגדרה תלויה בשעות העבודה: '+num('defH1')+' שעות שבועיות, '+
+        'או '+num('defH2')+' שעות בתוספת הכנסה של '+money(num('defInc2'))+' לחודש.'+
+        (d.known ? '' : ' לא הוזנו שעות עבודה שבועיות.')+
+        (alt ? ' אם אינו עונה להגדרה דמי הביטוח יהיו '+money(alt.niTotal)+' במקום '+money(niTotal)+' לשנה' +
+               (diff<-1 ? ' (חיסכון '+money(-diff)+' כולל השפעת המס)' : '')+', אך ללא דמי לידה, שמירת הריון וביטוח נפגעי עבודה.' : '')+
+        ' <a href="#" data-open="dNiDef">להזנת שעות וסימון ←</a></div>');
+    }
+  }
   const tips=[]; let saveTot = 0;
   if(profit>0 && mandShort>0) tips.push('<b>פנסיה חובה: חסרים '+money(mandShort)+' לעמידה בחוק פנסיה חובה לעצמאים.</b>');
   if(profit>0 && pOpt.amount>pens){
@@ -1152,12 +1275,14 @@ function update(){
 
   const nr=[]; const N=(l,v,c)=>nr.push('<tr'+(c?' class="'+c+'"':'')+'><td>'+l+'</td><td class="n">'+(typeof v==='number'?money(v):v)+'</td></tr>');
   N('בסיס לחיוב', niBase, 'sum');
+  if(niSt==='nq' && !nqThr) N('מדרגה פטורה (עד '+money(nqFloorM)+' לחודש)', Math.min(niBase, nqFloorM*12), 'sub');
   N('מדרגה מופחתת (עד '+money(num('niStep'))+' לחודש)', selfNi.low, 'sub');
   N('מדרגה מלאה (עד תקרת '+money(num('niCeil'))+' לחודש)', selfNi.high, 'sub');
   N('דמי ביטוח לאומי', selfNi.total);
   N(heFixed>0 ? 'דמי ביטוח בריאות (מנוכים מהקצבה, '+money(num('heFixedPen'))+' לחודש)' : 'דמי ביטוח בריאות', selfHe.total);
   if(salary) N('ניכוי מהמשכורת — חלק העובד', empNi.total, 'sub');
-  N('סה״כ כעצמאי', niTotal, 'sum');
+  if(niFloored) N('נגבה המינימום של מבוטח שאינו עובד ('+money(num('nqMin'))+' לחודש)', '', 'sub');
+  N(niSt==='nq' ? 'סה״כ כבעל הכנסה שלא מעבודה' : 'סה״כ כעצמאי', niTotal, 'sum');
   if(niPaidTot){
     N('שולם בפועל (כולל בריאות)', '−'+money(niPaidTot), 'sub');
     N('מתוכו רכיב ב״ל '+money(paidNiOnly)+' · בריאות '+money(paidHealth), '', 'sub');
@@ -1173,27 +1298,39 @@ function update(){
       - ($('niPensReduces').value==='1' ? pensDeduction : 0));
     let base = Math.max(pre, num('niMin')), r = {total:0};
     for(let i=0;i<60;i++){
-      r = niOn(base/12, salM, niLowR, niHighR);
+      r = niSelf(base/12);
       const nb = $('niBaseMode').value==='after'
         ? Math.max(num('niMin'), pre - r.total*niDedR)
         : Math.max(pre, num('niMin'));
       if(Math.abs(nb-base)<1){ base=nb; break; }
       base=nb;
     }
-    r = niOn(base/12, salM, niLowR, niHighR);
-    const h = heFixed>0 ? heFixed : niOn(base/12, salM, num('sHeLow'), num('sHeHigh')).total;
-    return {total: r.total + h, ni: r.total, he: h, base: base};
+    r = niSelf(base/12);
+    let h = heSelf(base/12).total, nn = r.total;
+    if(nqMinA>0 && nn + h < nqMinA - 0.5){ nn = nqMinA*143/266; h = nqMinA*123/266; }
+    return {total: nn + h, ni: nn, he: h, base: base};
   };
   /* --- דמי ביטוח מינימליים: לפי ההכנסה המזערית שקבע הביטוח הלאומי --- */
-  const minAnnual = num('niMinM')*12;
+  const minAnnual = niSt==='nq' ? 0 : num('niMinM')*12;
   const minRes = (function(){
+    /* אינו עונה להגדרה: מינימום קבוע כמבוטח שאינו עובד */
+    if(niSt==='nq'){
+      const t = num('nqMin')*12;
+      return {total:t, ni:t*143/266, he:t*123/266, fixed:true};
+    }
     /* דמי המינימום נגבים על ההכנסה המזערית עצמה — בלי הפחתת ניכוי ה-52% */
-    const r = niOn(minAnnual/12, salM, niLowR, niHighR);
-    const h = heFixed>0 ? heFixed : niOn(minAnnual/12, salM, num('sHeLow'), num('sHeHigh')).total;
-    return {total: r.total + h, ni: r.total, he: h};
+    const r = niSelf(minAnnual/12);
+    const h = heSelf(minAnnual/12).total;
+    return {total: r.total + h, ni: r.total, he: h, fixed:false};
   })();
   window.__NIMIN = minRes.total/12;
-  $('revMinOut').innerHTML = num('niMinM')>0
+  $('revMinOut').innerHTML = niSt==='nq'
+    ? 'במעמד «אינו עונה להגדרת עובד עצמאי» אין הכנסה מזערית — אך התשלום לא יפחת מדמי הביטוח של מבוטח שאינו עובד: '+
+      '<b>'+money(num('nqMin'))+' לחודש</b> ('+money(num('nqMin')*12)+' לשנה: ביטוח לאומי 143 ₪ · בריאות 123 ₪).'+
+      '<br>המדרגה הראשונה — עד '+money(nqFloorM)+' לחודש — פטורה מדמי ביטוח'+
+      (nqMinA>0 ? '' : (salary>0 ? ', והמינימום אינו חל מכיוון שהוא מבוטח כשכיר' : ', והחלת המינימום נוטרלה בפרמטרים'))+'.'+
+      (niFloored ? '<br><b>בנתונים הנוכחיים החיוב לפי ההכנסה נמוך מהמינימום — נגבה המינימום.</b>' : '')
+    : num('niMinM')>0
     ? 'הכנסה מזערית לפי ביטוח לאומי: <b>'+money(num('niMinM'))+'</b> לחודש ('+money(minAnnual)+' לשנה).'+
       '<br>מי שהכנסתו נמוכה מכך משלם דמי ביטוח מההכנסה המזערית — <b>'+money(minRes.total/12)+' לחודש</b> ('+
       money(minRes.total)+' לשנה): ביטוח לאומי '+money(minRes.ni/12)+' · בריאות '+money(minRes.he/12)+'.'+
@@ -1230,6 +1367,41 @@ function update(){
     $('revOut').innerHTML = 'מזינים את המקדמה החודשית שהעוסק רוצה לשלם, והמחשבון מחשב לאחור על איזה רווח יש להצהיר מול ביטוח לאומי.';
   }
 
+  /* --- הגדרת עובד עצמאי: בדיקת התנאים --- */
+  {
+    const d = defCheck(), sel = $('niDefSel').value;
+    const ok = v => v ? '<b style="color:var(--sage-deep)">✓</b>' : '<span style="color:var(--rust)">✗</span>';
+    $('niDefTests').innerHTML =
+      'ההכנסה החודשית מהעסק: <b>'+money(d.inc)+'</b> ('+money(profit)+' ל־'+Math.min(12,Math.max(1,num('months')||12))+' חודשי פעילות)'+
+      (d.known ? ' · שעות שבועיות: <b>'+d.h+'</b>' : ' · שעות שבועיות: לא הוזנו')+
+      '<br>'+ok(d.c1)+' עובד '+num('defH1')+' שעות שבועיות בממוצע ומעלה'+
+      '<br>'+ok(d.c2)+' הכנסה חודשית ממוצעת של '+money(num('defInc1'))+' לפחות (50% מהשכר הממוצע)'+
+      '<br>'+ok(d.c3)+' עובד '+num('defH2')+' שעות שבועיות לפחות <u>וגם</u> הכנסה של '+money(num('defInc2'))+' לפחות (15%)';
+    const altR = niAtDef(niSt==='nq' ? 'yes' : 'no');
+    $('niDefOut').innerHTML =
+      'מעמד בפועל: <b>'+(niSt==='nq' ? 'אינו עונה להגדרה' : 'עונה להגדרת עובד עצמאי')+'</b>'+
+      ' ('+(sel==='auto' ? 'אוטומטי לפי הנתונים' : 'סומן ידנית')+').'+
+      (sel==='auto' && !d.known && !d.c2
+        ? '<br><span class="warn">לא הוזנו שעות עבודה — המחשבון מניח שהוא עונה להגדרה. יש להזין שעות או לסמן ידנית.</span>' : '')+
+      (sel==='no' && d.c2
+        ? '<br><span class="warn">לפי ההכנסה שהוזנה הוא כן עונה להגדרה — הסימון הידני גובר.</span>' : '')+
+      (sel==='yes' && d.suggest && d.known
+        ? '<br><span class="warn">לפי הנתונים שהוזנו הוא אינו עונה להגדרה — הסימון הידני גובר.</span>' : '')+
+      (altR ? '<br>השוואת עלות שנתית: <b>'+(niSt==='nq'
+          ? 'כהכנסה שלא מעבודה '+money(niTotal)+' · כעובד עצמאי '+money(altR.niTotal)
+          : 'כעובד עצמאי '+money(niTotal)+' · כהכנסה שלא מעבודה '+money(altR.niTotal))+'</b>'+
+        '<br>סה״כ מס הכנסה וביטוח לאומי: '+money(niTotal+totalTax)+' מול '+money(altR.niTotal+altR.totalTax)+
+        ' — ההבדל במס נובע מניכוי '+num('niDedRate')+'% מדמי הביטוח הלאומי.' : '');
+    txt('oNiDefVal', niSt==='nq' ? 'אינו עונה' : 'עונה');
+    $('oNiDefVal').style.color = niSt==='nq' ? 'var(--rust)' : '';
+    const st=$('sNiDefVal');
+    st.className = 'st' + (niSt==='nq' ? ' warn' : '');
+    st.textContent = sel!=='auto' ? 'סומן ידנית'
+      : d.c2 ? 'לפי ההכנסה'
+      : d.known ? (d.meets ? 'לפי השעות' : 'לא עומד בתנאים')
+      : 'חסרות שעות';
+  }
+
   $('niPaidInfo').innerHTML = niPaidTot>0
     ? 'שולמו '+money(niPaidTot)+'. לפי יחס החיוב השנה הסכום מתפצל ל־<b>'+money(paidNiOnly)+
       '</b> ביטוח לאומי ו־<b>'+money(paidHealth)+'</b> ביטוח בריאות.'+
@@ -1244,6 +1416,10 @@ function update(){
   $('niHint').innerHTML = '<b>מעמד: '+NI_STATUS_TXT[niSt]+'</b>'+
     (niSt==='reg' ? ' (גיל פרישה '+retAge()+')'
      : niSt==='retired' ? ' — פטור מענפי נכות ותאונות אישיות, ולכן '+niLowR+'%/'+niHighR+'% במקום '+num('sNiLow')+'%/'+num('sNiHigh')+'%. מגיל '+num('retAgeAbs')+' הקצבה ניתנת ללא מבחן הכנסה והשיעור יורד שוב.'
+     : niSt==='nq' ? ' — ההכנסה מהעסק נחשבת לעניין דמי הביטוח הכנסה שלא מעבודה: '+niLowR+'%/'+niHighR+
+         '% ביטוח לאומי ו־'+heLowR+'%/'+heHighR+'% בריאות, '+
+         (nqThr ? 'וסף חיוב של '+money(nqFloorM)+' לחודש' : 'והמדרגה הראשונה — עד '+money(nqFloorM)+' לחודש — פטורה')+
+         '. במעמד זה אין זכאות לדמי לידה ולגמלה לשמירת הריון, ואין ביטוח בענף נפגעי עבודה.'
      : ' — תשלום לענף נפגעי עבודה בלבד ('+niLowR+'%/'+niHighR+'%), ודמי הבריאות מנוכים מהקצבה בסכום קבוע.')+
     '<br>לפי ס׳ 345 לחוק הביטוח הלאומי, ההכנסה נקבעת לפי השומה לפני כל פטור, ניכוי וזיכוי, ולאחר הפחתת '+
     num('niDedRate')+'% מדמי הביטוח הלאומי (ללא רכיב הבריאות) ושל החלק המוכר מההפרשה לקופת גמל. '+
@@ -1317,6 +1493,8 @@ $('zeroApply').addEventListener('click', ()=>{
   update();
   try{ $('dProfit').close(); }catch(e){}
 });
+$('niDefMark').addEventListener('click', ()=>{ $('niDefSel').value='no';  update(); });
+$('niDefYes').addEventListener('click',  ()=>{ $('niDefSel').value='yes'; update(); });
 $('revMin').addEventListener('click', ()=>{
   if(window.__NIMIN>0){ $('revMonthly').value = Math.round(window.__NIMIN); update(); }
 });
@@ -1476,7 +1654,7 @@ function okToOverwrite(name, where){
   return confirm('כבר קיים תכנון בשם "'+name+'". לדרוס אותו?');
 }
 
-const BUILD = 'v28';
+const BUILD = 'v30';
 $('buildTag').textContent = ' · ' + BUILD + ' · ' + (API_BASE ? 'פנימי' : 'ציבורי');
 
 /* שמירה מקומית — קיימת בשתי הגרסאות */
@@ -1505,7 +1683,7 @@ if(API_BASE){
       localStorage.setItem('token', j.token);
       $('loginPass').value = '';
       setCurPlan(null);
-refreshAuth();
+      refreshAuth();
     }catch(e){ planMsg(e.message, true); }
     finally{ $('loginBtn').disabled = false; }
   });
@@ -1576,7 +1754,49 @@ document.addEventListener('click', e=>{
   }
 });
 
+setCurPlan(null);
 refreshAuth();
+
+
+/* ---- איתור גרסה חדשה בשרת ---- */
+(function watchVersion(){
+  if(location.protocol === 'file:') return;          /* לא רלוונטי בקובץ מקומי */
+  const url = location.pathname;
+  let baseTag = null, dismissed = false;
+
+  const tagOf = r => r.headers.get('etag') || r.headers.get('last-modified');
+  const probe = async () => {
+    try{
+      const r = await fetch(url + '?_v=' + Date.now(), {method:'HEAD', cache:'no-store'});
+      if(!r.ok) return null;
+      return tagOf(r);
+    }catch(e){ return null; }
+  };
+
+  const check = async () => {
+    if(dismissed || !$('updNotice').hidden || !$('updAvail').hidden === false) return;
+    if(!$('updDone').hidden) return;
+    const t = await probe();
+    if(!t) return;                                    /* אין כותרת גרסה — יוצאים בשקט */
+    if(baseTag === null){ baseTag = t; return; }
+    if(t !== baseTag){ $('updNotice').hidden = false; }
+  };
+
+  $('updReload').addEventListener('click', e=>{
+    e.preventDefault();
+    try{ sessionStorage.setItem('yaar_tax_carry', JSON.stringify(collectState())); }catch(e){}
+    location.reload();
+  });
+  $('updLater').addEventListener('click', e=>{
+    e.preventDefault(); dismissed = true; $('updNotice').hidden = true;
+  });
+
+  window.__verCheck = check;
+  window.__verState = () => ({base:baseTag, dismissed:dismissed});
+  check();
+  setInterval(()=>{ if(!document.hidden) check(); }, 10*60*1000);
+  document.addEventListener('visibilitychange', ()=>{ if(!document.hidden) check(); });
+})();
 /* חלון ההסבר — פעם אחת בלבד לכל דפדפן */
 if(!localStorage.getItem('yaar_tax_seen')){
   localStorage.setItem('yaar_tax_seen','1');
@@ -1585,6 +1805,24 @@ if(!localStorage.getItem('yaar_tax_seen')){
 
 $('cpManual').value = buildCP();
 update();
+
+/* ---- שחזור הנתונים אחרי רענון לגרסה חדשה ---- */
+(function restoreAfterUpdate(){
+  try{
+    const raw = sessionStorage.getItem('yaar_tax_carry');
+    if(!raw) return;
+    sessionStorage.removeItem('yaar_tax_carry');
+    applyState(JSON.parse(raw));
+    planMsg && planMsg('');
+    const n = $('updNotice');
+    $('updAvail').hidden = true;
+    $('updDone').hidden = false;
+    $('updDone').textContent = '✅ עודכן לגרסה ' + BUILD + ' — הנתונים שהיו על המסך שוחזרו.';
+    n.hidden = false;
+    setTimeout(()=>{ n.hidden = true; $('updAvail').hidden = false; $('updDone').hidden = true; }, 7000);
+  }catch(e){}
+})();
+
 
 /* ---- הטמעה ב-iframe: דיווח גובה לדף המארח ---- */
 (function(){
