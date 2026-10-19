@@ -81,6 +81,12 @@ dialog.welcome .mb{max-height:none}
 .ln .val{text-align:end;font-family:'Heebo';font-variant-numeric:tabular-nums;font-size:14px;padding:3px 4px}
 .ln.calc > span:first-child{color:var(--muted)}
 .ln .sub{grid-column:1/-1;font-size:11.5px;color:var(--muted);padding:0 0 4px}
+.lbln{display:flex;align-items:baseline;gap:6px;min-width:0}
+.lbln > .tap{flex:0 0 auto}
+.noteIn{flex:1 1 auto;min-width:40px;border:0;border-bottom:1px dashed var(--line);background:transparent;
+  font-family:inherit;font-size:13.5px;font-weight:600;color:var(--sage-deep);padding:1px 3px;text-align:start}
+.noteIn::placeholder{color:var(--muted);opacity:.6;font-weight:400;font-size:12px}
+.noteIn:focus{outline:none;border-bottom-color:var(--sage);border-bottom-style:solid;background:#F8FBF9}
 
 /* ---- ledger ---- */
 .led{display:grid;grid-template-columns:1fr auto;align-items:center;min-height:27px;
@@ -232,7 +238,7 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
       <div class="ln"><span class="tap" tabindex="0" data-open="dRent">שכר דירה למגורים</span><input type="number" id="rent" value="0" step="1000"><span class="st" id="sRent"></span></div>
       <div class="ln"><span class="tap" tabindex="0" data-open="dSolar">מתקן סולארי</span><input type="number" id="solar" value="0" step="500"><span class="st" id="sSolar"></span></div>
       <div class="ln"><span class="tap" tabindex="0" data-open="dCap">הכנסה הונית</span><input type="number" id="cap" value="0" step="1000"><span class="st" id="sCap"></span></div>
-      <div class="ln"><span class="tap" tabindex="0" data-open="dOther">מענקים והכנסות אחרות<small id="otherNoteLbl"></small></span><input type="number" id="grantTaxable" value="0" step="500"><span class="st" id="sOther"></span></div>
+      <div class="ln"><span class="lbln"><span class="tap" tabindex="0" data-open="dOther">מענקים והכנסות אחרות</span><input type="text" id="otherNote" class="noteIn" maxlength="80" placeholder="תיאור…" title="מה הסכום משקף — התיאור נשמר ומופיע בדוח"></span><input type="number" id="grantTaxable" value="0" step="500"><span class="st" id="sOther"></span></div>
 
       <div class="sec">ניכויים</div>
       <div class="ln"><span class="tap" tabindex="0" data-open="dPens">קיצבה — כעמית עצמאי</span><input type="number" id="pens" value="0" step="500"><span class="st" id="pensHintS"></span></div>
@@ -419,9 +425,8 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
 </div><div class="mf"><button class="btn" data-close>סגור</button></div></dialog>
 
 <dialog id="dOther"><h3>הכנסות ומענקים<button data-close>×</button></h3><div class="mb">
-  <div class="fld"><label>תיאור לשורה <small>(מה הסכום משקף)</small></label>
-    <input type="text" id="otherNote" maxlength="80" placeholder="לדוגמה: מענק עבודה · פיצויים חייבים · הפרשי שנים קודמות"></div>
-  <p class="note">התיאור מופיע בשורה עצמה, בפירוט המלא ובדוח ה־PDF, ונשמר יחד עם התכנון.</p>
+  <p class="note"><b>תיאור לשורה</b> — נרשם ישירות בשורה עצמה, בשדה הקטן שליד השם ("תיאור…"):
+  לדוגמה מענק עבודה, פיצויים חייבים, הפרשי שנים קודמות. התיאור מופיע בפירוט המלא ובדוח ה־PDF ונשמר יחד עם התכנון.</p>
   <p class="note">"מענקים והכנסות אחרות" נחשבות הכנסה מיגיעה אישית לעניין מס הכנסה — מדרגות המס, נקודות הזיכוי והזיכוי ליישוב מזכה.
   <b>אינן נכנסות לבסיס דמי הביטוח הלאומי כעצמאי</b> ואינן מזיזות את המדרגה המופחתת או את תקרת החיוב.
   מענק פטור ממס מוזן במסך המשכורת ואינו נכנס לבסיס המס.</p>
@@ -754,7 +759,36 @@ document.addEventListener('keydown', e=>{
     e.preventDefault(); $(e.target.dataset.open).showModal();
   }
 });
-document.querySelectorAll('dialog').forEach(d=>d.addEventListener('click', e=>{ if(e.target===d) { d.close(); update(); }}));
+/* סגירה בלחיצה על הרקע בלבד: גרירה לבחירת מספר בתוך שדה הייתה מזוהה בטעות כלחיצה על הרקע */
+document.querySelectorAll('dialog').forEach(d=>{
+  const outside = e => {
+    const r = d.getBoundingClientRect();
+    return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+  };
+  let downOnBackdrop = false;
+  d.addEventListener('mousedown', e=>{ downOnBackdrop = (e.target===d && outside(e)); });
+  d.addEventListener('click', e=>{
+    const ok = downOnBackdrop && e.target===d && outside(e);
+    downOnBackdrop = false;
+    if(ok){ d.close(); update(); }
+  });
+});
+
+/* לחיצה אחת על שדה מספרי בוחרת את הערך כולו, כדי להקליד מעליו מיד */
+(function selectOnFocus(){
+  const isNum = t => t && t.tagName==='INPUT' && t.type==='number';
+  const sel = t => { try{ t.select(); }catch(e){} };
+  document.addEventListener('focusin', e=>{
+    if(!isNum(e.target)) return;
+    e.target.dataset.sel = '1';
+    sel(e.target);
+  });
+  document.addEventListener('mouseup', e=>{
+    const t = e.target;
+    if(isNum(t) && t.dataset.sel === '1'){ t.dataset.sel = ''; e.preventDefault(); sel(t); }
+  });
+  document.addEventListener('focusout', e=>{ if(isNum(e.target)) e.target.dataset.sel = ''; });
+})();
 
 /* ---- settlements ---- */
 const TOWNS = new Map(SETTLEMENTS.map(s=>[s[0],s]));
@@ -1131,14 +1165,7 @@ function update(){
   html('sRent', rent>0 ? 'מסלול <b>'+TR[rentTrack]+'</b>' : '');
   html('sSolar', solar>0 ? 'מסלול <b>'+TR[solarTrack]+'</b>' : '');
   html('sCap', cap>0 ? num('capRate')+'% · מס '+money(capTax) : '');
-  {
-    const on = ($('otherNote').value||'').trim();
-    const lb = $('otherNoteLbl');
-    txt('otherNoteLbl', on ? ' · '+on : '');
-    lb.title = on;
-    lb.style.color = on ? 'var(--sage-deep)' : '';
-    html('sOther', otherPersonal>0 ? 'מיגיעה אישית' : '');
-  }
+  html('sOther', otherPersonal>0 ? 'מיגיעה אישית' : '');
   html('sCp', cpValue>0 ? (CP_EDITED?'ידני · ':'')+'זיכוי <b>'+money(cpValue)+'</b>' : '');
   html('sLife', num('life')>0 ? 'זיכוי <b>'+money(lifeCredit)+'</b>' : '');
   html('sDon', donGross>0 ? (donCredit>0 ? 'זיכוי <b>'+money(donCredit)+'</b>' : '<span class="warn">מתחת לסף</span>') : '');
@@ -1685,7 +1712,7 @@ function okToOverwrite(name, where){
   return confirm('כבר קיים תכנון בשם "'+name+'". לדרוס אותו?');
 }
 
-const BUILD = 'v33';
+const BUILD = 'v35';
 $('buildTag').textContent = ' · ' + BUILD + ' · ' + (API_BASE ? 'פנימי' : 'ציבורי');
 
 /* שמירה מקומית — קיימת בשתי הגרסאות */
