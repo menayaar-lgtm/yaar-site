@@ -232,7 +232,7 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
       <div class="ln"><span class="tap" tabindex="0" data-open="dRent">שכר דירה למגורים</span><input type="number" id="rent" value="0" step="1000"><span class="st" id="sRent"></span></div>
       <div class="ln"><span class="tap" tabindex="0" data-open="dSolar">מתקן סולארי</span><input type="number" id="solar" value="0" step="500"><span class="st" id="sSolar"></span></div>
       <div class="ln"><span class="tap" tabindex="0" data-open="dCap">הכנסה הונית</span><input type="number" id="cap" value="0" step="1000"><span class="st" id="sCap"></span></div>
-      <div class="ln"><span class="tap" tabindex="0" data-open="dOther">מענקים והכנסות אחרות</span><input type="number" id="grantTaxable" value="0" step="500"><span class="st" id="sOther"></span></div>
+      <div class="ln"><span class="tap" tabindex="0" data-open="dOther">מענקים והכנסות אחרות<small id="otherNoteLbl"></small></span><input type="number" id="grantTaxable" value="0" step="500"><span class="st" id="sOther"></span></div>
 
       <div class="sec">ניכויים</div>
       <div class="ln"><span class="tap" tabindex="0" data-open="dPens">קיצבה — כעמית עצמאי</span><input type="number" id="pens" value="0" step="500"><span class="st" id="pensHintS"></span></div>
@@ -419,7 +419,12 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
 </div><div class="mf"><button class="btn" data-close>סגור</button></div></dialog>
 
 <dialog id="dOther"><h3>הכנסות ומענקים<button data-close>×</button></h3><div class="mb">
-  <p class="note">"מענקים והכנסות אחרות" נחשבות הכנסה מיגיעה אישית לכל דבר. מענק פטור ממס מוזן במסך המשכורת ואינו נכנס לבסיס המס.</p>
+  <div class="fld"><label>תיאור לשורה <small>(מה הסכום משקף)</small></label>
+    <input type="text" id="otherNote" maxlength="80" placeholder="לדוגמה: מענק עבודה · פיצויים חייבים · הפרשי שנים קודמות"></div>
+  <p class="note">התיאור מופיע בשורה עצמה, בפירוט המלא ובדוח ה־PDF, ונשמר יחד עם התכנון.</p>
+  <p class="note">"מענקים והכנסות אחרות" נחשבות הכנסה מיגיעה אישית לעניין מס הכנסה — מדרגות המס, נקודות הזיכוי והזיכוי ליישוב מזכה.
+  <b>אינן נכנסות לבסיס דמי הביטוח הלאומי כעצמאי</b> ואינן מזיזות את המדרגה המופחתת או את תקרת החיוב.
+  מענק פטור ממס מוזן במסך המשכורת ואינו נכנס לבסיס המס.</p>
 </div><div class="mf"><button class="btn" data-close>סגור</button></div></dialog>
 
 <dialog id="dPens"><h3>קיצבה — עמית עצמאי<button data-close>×</button></h3><div class="mb">
@@ -733,6 +738,7 @@ function minDeposit(id, cap){
   return {amount:hi, cap:cap, saving:t0-tc};
 }
 const txt = (id,v) => { const e=$(id); if(e) e.textContent=v; };
+const esc = s => String(s||'').replace(/[<>&"]/g, m=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[m]));
 
 /* ---- brand links ---- */
 const WA = 'https://wa.me/'+BRAND.whatsapp+'?text='+encodeURIComponent(BRAND.waText);
@@ -1029,9 +1035,13 @@ function update(){
   const net = grossAll-totalTax-niTotal-empNi.total;
   const eff = grossAll>0 ? (totalTax+niTotal+empNi.total)/grossAll*100 : 0;
   const margTax = marginalRate(personalTaxable,0) + (surBase>num('surThr')?num('surRate'):0);
-  const niMargR = (personalTaxable/12 >= num('niCeil')) ? 0
-    : (niSt==='nq' && !nqThr && personalTaxable/12 <= nqFloorM) ? 0
-    : (personalTaxable/12 <= num('niStep') ? niLowR+heLowR : niHighR+heHighR);
+  /* דמי הביטוח נגבים על ההכנסה מהעסק (ועל המשכורת כשכיר) בלבד — מענקים, הכנסות אחרות
+     והכנסות פסיביות אינם נכנסים לבסיס ואינם מזיזים את המדרגה או את התקרה */
+  const niMargBase = (niBase + salary)/12;
+  const niMargR = profit<=0 ? 0
+    : (niMargBase >= num('niCeil')) ? 0
+    : (niSt==='nq' && !nqThr && niMargBase <= nqFloorM) ? 0
+    : (niMargBase <= num('niStep') ? niLowR+heLowR : niHighR+heHighR);
   const margTotal = margTax + niMargR*(1-margTax/100*niDedR);
 
   if(SILENT) return {totalTax:totalTax, niTotal:niTotal, balAll:balTax+balNi};
@@ -1121,7 +1131,14 @@ function update(){
   html('sRent', rent>0 ? 'מסלול <b>'+TR[rentTrack]+'</b>' : '');
   html('sSolar', solar>0 ? 'מסלול <b>'+TR[solarTrack]+'</b>' : '');
   html('sCap', cap>0 ? num('capRate')+'% · מס '+money(capTax) : '');
-  html('sOther', otherPersonal>0 ? 'מיגיעה אישית' : '');
+  {
+    const on = ($('otherNote').value||'').trim();
+    const lb = $('otherNoteLbl');
+    txt('otherNoteLbl', on ? ' · '+on : '');
+    lb.title = on;
+    lb.style.color = on ? 'var(--sage-deep)' : '';
+    html('sOther', otherPersonal>0 ? 'מיגיעה אישית' : '');
+  }
   html('sCp', cpValue>0 ? (CP_EDITED?'ידני · ':'')+'זיכוי <b>'+money(cpValue)+'</b>' : '');
   html('sLife', num('life')>0 ? 'זיכוי <b>'+money(lifeCredit)+'</b>' : '');
   html('sDon', donGross>0 ? (donCredit>0 ? 'זיכוי <b>'+money(donCredit)+'</b>' : '<span class="warn">מתחת לסף</span>') : '');
@@ -1259,7 +1276,8 @@ function update(){
   R('עסק או משלח יד', profit);
   if(salary) R('משכורת כשכיר', salary);
   if(milPay) R('תגמולי מילואים', milPay);
-  if(otherPersonal) R('מענקים והכנסות אחרות', otherPersonal);
+  if(otherPersonal) R('מענקים והכנסות אחרות'+
+    (($('otherNote').value||'').trim() ? ' — '+esc($('otherNote').value.trim()) : ''), otherPersonal);
   if(passiveTaxable) R('הכנסה חייבת שאינה מיגיעה אישית', passiveTaxable);
   if(rentExemptAmt) R('שכר דירה פטור', '−'+money(rentExemptAmt), 'sub');
   R('ניכוי ביטוח לאומי ('+num('niDedRate')+'%)', '−'+money(niDeductible), 'sub');
@@ -1434,7 +1452,9 @@ function update(){
     num('niDedRate')+'% מדמי הביטוח הלאומי (ללא רכיב הבריאות) ושל החלק המוכר מההפרשה לקופת גמל. '+
     'כאן: '+num('niDedRate')+'% מ־'+money(selfNi.total)+' = '+money(niDeductible)+
     ((khDeduction||pensDeduction) ? ', בתוספת הפחתת ההפקדות מבסיס החיוב' : '')+'.'+
-    (salary?' המשכורת ממצה תחילה את המדרגה המופחתת.':'');
+    (salary?' המשכורת ממצה תחילה את המדרגה המופחתת.':'')+
+    (otherPersonal>0 ? '<br>מענקים והכנסות אחרות ('+money(otherPersonal)+') אינם נכללים בבסיס דמי הביטוח כעצמאי '+
+      'ואינם מזיזים את המדרגה המופחתת או את תקרת החיוב — הם משפיעים על מס ההכנסה בלבד.' : '');
 
   LAST={profit,taxableTotal,totalTax,niTotal,balTax,balNi,balAll,net,eff,margTotal,cpTotal,parts,rows,nr};
   buildReport();
@@ -1665,7 +1685,7 @@ function okToOverwrite(name, where){
   return confirm('כבר קיים תכנון בשם "'+name+'". לדרוס אותו?');
 }
 
-const BUILD = 'v31';
+const BUILD = 'v33';
 $('buildTag').textContent = ' · ' + BUILD + ' · ' + (API_BASE ? 'פנימי' : 'ציבורי');
 
 /* שמירה מקומית — קיימת בשתי הגרסאות */
