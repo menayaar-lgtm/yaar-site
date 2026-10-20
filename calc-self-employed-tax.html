@@ -81,6 +81,16 @@ dialog.welcome .mb{max-height:none}
 .ln .val{text-align:end;font-family:'Heebo';font-variant-numeric:tabular-nums;font-size:14px;padding:3px 4px}
 .ln.calc > span:first-child{color:var(--muted)}
 .ln .sub{grid-column:1/-1;font-size:11.5px;color:var(--muted);padding:0 0 4px}
+#townAC{position:fixed;z-index:60;background:var(--card);border:1px solid var(--line);border-radius:8px;
+  box-shadow:0 10px 28px rgba(20,40,30,.17);max-height:300px;overflow-y:auto;display:none;padding:3px}
+#townAC.on{display:block}
+#townAC .it{display:flex;align-items:baseline;gap:8px;padding:6px 9px;border-radius:6px;cursor:pointer;font-size:13px}
+#townAC .it b{font-weight:600;flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#townAC .it span{font-size:11.5px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+#townAC .it.sel,#townAC .it:hover{background:var(--wash)}
+#townAC .it.sel span,#townAC .it:hover span{color:var(--sage-deep)}
+#townAC .ft{padding:5px 9px;font-size:11px;color:var(--muted);border-top:1px solid var(--line);margin-top:2px}
+#townAC .no{padding:9px;font-size:12.5px;color:var(--muted)}
 .lbln{display:flex;align-items:baseline;gap:6px;min-width:0}
 .lbln > .tap{flex:0 0 auto}
 .noteIn{flex:1 1 auto;min-width:40px;border:0;border-bottom:1px dashed var(--line);background:transparent;
@@ -247,8 +257,7 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
 
       <div class="sec">זיכויים</div>
       <div class="ln"><span class="tap" tabindex="0" data-open="dCp">נקודות זיכוי</span><input type="number" id="cpManual" step="0.25" min="0"><span class="st" id="sCp"></span></div>
-      <div class="ln"><span class="tap" tabindex="0" data-open="dTown">יישוב מזכה</span><input type="text" id="town" list="townList" placeholder="חיפוש…" autocomplete="off"><span class="st" id="townLbl">לא נבחר</span>
-        <datalist id="townList"></datalist></div>
+      <div class="ln"><span class="tap" tabindex="0" data-open="dTown">יישוב מזכה</span><input type="text" id="town" placeholder="חיפוש יישוב…" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false"><span class="st" id="townLbl">לא נבחר</span></div>
       <div class="ln"><span>ביטוח חיים / אכ״ע</span><input type="number" id="life" value="0" step="200"><span class="st" id="sLife"></span></div>
       <div class="ln"><span>תרומות לפי סעיף 46</span><input type="number" id="don" value="0" step="200"><span class="st" id="sDon"></span></div>
 
@@ -489,10 +498,16 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
   <label class="chk"><input type="checkbox" id="cpDeg1"> סיום תואר ראשון / לימודי מקצוע</label>
   <label class="chk"><input type="checkbox" id="cpDeg2"> סיום תואר שני</label>
   <div class="g3">
-    <div class="fld"><label>מילואים (39, 39ב)</label><input type="number" id="cpMil" value="0" step="0.5"></div>
+    <div class="fld"><label>ימי מילואים <small>(לוחם / תומך לחימה, בשנה הקודמת)</small></label>
+      <input type="number" id="milDays" value="0" min="0" step="1"></div>
+    <div class="fld"><label>נק׳ זיכוי מילואים <small>(ס׳ 39ב)</small></label>
+      <input type="number" id="cpMil" value="0" step="0.25"></div>
+    <div class="fld"><label>&nbsp;</label>
+      <button class="btn o" id="milAuto" type="button" style="width:100%">חשב מהימים</button></div>
     <div class="fld"><label>עולה חדש</label><input type="number" id="cpOle" value="0" step="0.25"></div>
     <div class="fld"><label>אחר</label><input type="number" id="cpOther" value="0" step="0.25"></div>
   </div>
+  <p class="note" id="milInfo"></p>
 </div><div class="mf"><button class="btn" id="cpApply" type="button">חשב והחל</button><button class="btn o" data-close>סגור</button></div></dialog>
 
 <dialog id="dTown"><h3>יישוב מזכה — סעיף 11<button data-close>×</button></h3><div class="mb">
@@ -526,6 +541,8 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
     <div class="fld"><label>שיעור מס יסף (%)</label><input type="number" id="surRate" value="3" step="0.5"></div>
     <div class="fld"><label>תוספת הונית (%)</label><input type="number" id="surCap" value="2" step="0.5"></div>
     <div class="fld"><label>שווי נק׳ זיכוי לחודש</label><input type="number" id="cpVal" value="242"></div>
+    <div class="fld"><label>מילואים — מינימום ימים</label><input type="number" id="milMin" value="30"></div>
+    <div class="fld"><label>מילואים — תקרת נק׳ זיכוי</label><input type="number" id="milCap" value="4" step="0.25"></div>
   </div>
   <div class="leg">ביטוח לאומי ובריאות</div>
   <div class="g3">
@@ -792,19 +809,109 @@ document.querySelectorAll('dialog').forEach(d=>{
 
 /* ---- settlements ---- */
 const TOWNS = new Map(SETTLEMENTS.map(s=>[s[0],s]));
-$('townList').innerHTML = SETTLEMENTS.map(s=>'<option value="'+s[0]+'"></option>').join('');
 txt('townCount', SETTLEMENTS.length);
-$('town').addEventListener('input', e=>{
-  const s = TOWNS.get(e.target.value.trim());
-  if(s){ $('townRate').value=s[1]; $('townCeil').value=s[2]; }
-  else if(!e.target.value.trim()){ $('townRate').value=0; $('townCeil').value=0; }
-  update();
-});
+
+/* ---- חיפוש יישוב מזכה: רשימה מסוננת משלנו (datalist של הדפדפן סינן חלקית בלבד) ---- */
+(function townSearch(){
+  const FIN = {'ך':'כ','ם':'מ','ן':'נ','ף':'פ','ץ':'צ'};
+  const norm = s => String(s||'')
+    .replace(/[״"׳'’”`]/g,'')          /* גרשיים בשמות כמו דוב״ב, נעמ״ה */
+    .replace(/[-–—()]/g,' ')
+    .replace(/[ךםןףץ]/g, c=>FIN[c])
+    .replace(/\s+/g,' ')
+    .trim();
+  const IDX = SETTLEMENTS.map(s=>({s:s, n:norm(s[0])}));
+  const inp = $('town');
+  const box = document.createElement('div');
+  box.id = 'townAC';
+  document.body.appendChild(box);
+  let items = [], cur = -1;
+
+  const place = () => {
+    const r = inp.getBoundingClientRect();
+    const w = Math.min(window.innerWidth - 16, Math.max(280, r.width + 170));
+    box.style.top = (r.bottom + 4) + 'px';
+    box.style.width = w + 'px';
+    /* RTL: מיישרים לקצה הימני של השדה, והרשימה נפתחת שמאלה */
+    box.style.left = Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8)) + 'px';
+  };
+  const close = () => { box.classList.remove('on'); inp.setAttribute('aria-expanded','false'); cur = -1; };
+  const pick = s => {
+    inp.value = s[0];
+    $('townRate').value = s[1];
+    $('townCeil').value = s[2];
+    close(); update();
+  };
+  const render = q => {
+    const nq = norm(q);
+    if(!nq){ close(); return; }
+    const hit = [];
+    for(const o of IDX){
+      const i = o.n.indexOf(nq);
+      if(i < 0) continue;
+      hit.push({s:o.s, r: i===0 ? 0 : (o.n[i-1]===' ' ? 1 : 2)});
+      if(hit.length > 400) break;
+    }
+    hit.sort((a,b)=> a.r-b.r || a.s[0].localeCompare(b.s[0],'he'));
+    items = hit.slice(0,60).map(x=>x.s);
+    if(!items.length){
+      box.innerHTML = '<div class="no">לא נמצא יישוב מזכה בשם הזה.</div>';
+    } else {
+      box.innerHTML = items.map((s,i)=>
+        '<div class="it" data-i="'+i+'"><b>'+s[0]+'</b><span>'+s[1]+'% · תקרה '+money(s[2])+'</span></div>').join('')
+        + (hit.length>items.length ? '<div class="ft">מוצגים '+items.length+' מתוך '+hit.length+' — אפשר להמשיך להקליד לצמצום</div>' : '');
+    }
+    cur = -1; place(); box.classList.add('on'); inp.setAttribute('aria-expanded','true');
+  };
+  const mark = () => {
+    [...box.querySelectorAll('.it')].forEach((e,i)=>e.classList.toggle('sel', i===cur));
+    const e = box.querySelector('.it.sel'); if(e) e.scrollIntoView({block:'nearest'});
+  };
+
+  inp.addEventListener('input', ()=>{
+    const v = inp.value.trim();
+    const exact = TOWNS.get(v);
+    if(exact){ $('townRate').value=exact[1]; $('townCeil').value=exact[2]; }
+    else if(!v){ $('townRate').value=0; $('townCeil').value=0; }
+    render(v); update();
+  });
+  inp.addEventListener('focus', ()=>{ if(inp.value.trim()) render(inp.value.trim()); });
+  inp.addEventListener('keydown', e=>{
+    if(!box.classList.contains('on')){
+      if(e.key==='ArrowDown' && inp.value.trim()){ render(inp.value.trim()); e.preventDefault(); }
+      return;
+    }
+    if(e.key==='ArrowDown'){ cur = Math.min(items.length-1, cur+1); mark(); e.preventDefault(); }
+    else if(e.key==='ArrowUp'){ cur = Math.max(0, cur-1); mark(); e.preventDefault(); }
+    else if(e.key==='Enter'){ if(cur>=0 && items[cur]){ pick(items[cur]); e.preventDefault(); } }
+    else if(e.key==='Escape'){ close(); e.preventDefault(); }
+    else if(e.key==='Tab'){ if(cur>=0 && items[cur]) pick(items[cur]); else close(); }
+  });
+  box.addEventListener('mousedown', e=>{
+    const it = e.target.closest('.it'); if(!it) return;
+    e.preventDefault(); pick(items[+it.dataset.i]);
+  });
+  document.addEventListener('mousedown', e=>{ if(e.target!==inp && !box.contains(e.target)) close(); });
+  window.addEventListener('scroll', ()=>{ if(box.classList.contains('on')) place(); }, true);
+  window.addEventListener('resize', ()=>{ if(box.classList.contains('on')) place(); });
+})();
 
 /* ---- credit points ---- */
 const CP_KIDS = {kids0:1.5, kids15:2.5, kids612:1, kids1317:1, kids18:0.5, kidsDis:2};
 let CP_EDITED = false;
 const SAL_EDIT = {pens:false, kh:false, dep:false};
+/* ס׳ 39ב — נקודות זיכוי ללוחם מילואים לפי ימי השירות בשנה הקודמת (2026–2027, תקרה 4 נק׳) */
+function milPoints(days){
+  const d = Math.floor(Math.max(0, days));
+  const min = num('milMin') || 30, cap = num('milCap') || 4;
+  if(d < min) return 0;
+  let p;
+  if(d < 40)      p = 0.5;
+  else if(d < 50) p = 0.75;
+  else            p = 1 + Math.floor((d-50)/5)*0.25;   /* כל 5 ימים — רבע נקודה */
+  return Math.min(cap, Math.max(0, p));
+}
+let MIL_EDITED = false;
 function buildCP(){
   let p = ($('gender').value==='f') ? 2.75 : 2.25;
   $('cpBase').value = p;
@@ -899,6 +1006,11 @@ function update(){
   if(!SAL_EDIT.pens && document.activeElement !== $('pensSalaryUsed')) $('pensSalaryUsed').value = Math.round(salPensAmt);
   if(!SAL_EDIT.kh   && document.activeElement !== $('khSalaryUsed'))   $('khSalaryUsed').value   = Math.round(salKhAmt);
 
+  /* מילואים: הימים גוזרים את נקודות הזיכוי, אלא אם הוזנו ידנית */
+  if(!MIL_EDITED && document.activeElement !== $('cpMil')){
+    const a = milPoints(num('milDays'));
+    if(parseFloat($('cpMil').value) !== a) $('cpMil').value = a;
+  }
   const cpTotal = (CP_EDITED && num('cpManual')>0) ? num('cpManual') : buildCP();
   const cpValue = cpTotal*num('cpVal')*12;
 
@@ -1167,6 +1279,25 @@ function update(){
   html('sCap', cap>0 ? num('capRate')+'% · מס '+money(capTax) : '');
   html('sOther', otherPersonal>0 ? 'מיגיעה אישית' : '');
   html('sCp', cpValue>0 ? (CP_EDITED?'ידני · ':'')+'זיכוי <b>'+money(cpValue)+'</b>' : '');
+  {
+    const d = Math.floor(Math.max(0, num('milDays')));
+    const minD = num('milMin')||30, capP = num('milCap')||4;
+    const auto = milPoints(d), given = num('cpMil');
+    const nextAt = d < 40 ? 40 : d < 50 ? 50 : 50 + (Math.floor((d-50)/5)+1)*5;
+    $('milInfo').innerHTML = d > 0
+      ? (d < minD
+          ? '<span class="warn">'+d+' ימי מילואים — מתחת לסף של '+minD+' ימים, ואין זכאות לנקודות זיכוי לפי ס׳ 39ב.</span>'
+          : 'עבור <b>'+d+' ימי מילואים</b> כלוחם או תומך לחימה: <b>'+auto+' נקודות זיכוי</b> — '+
+            money(auto*num('cpVal')*12)+' לשנה.'+
+            (auto >= capP
+              ? ' <b>זוהי התקרה</b> — '+capP+' נקודות מ־110 ימים ומעלה; ימים נוספים אינם מוסיפים זיכוי.'
+              : ' המדרגה הבאה מתחילה ב־'+nextAt+' ימים.'))
+        + (MIL_EDITED && Math.abs(given-auto) > 0.001
+            ? '<br><span class="warn">הוזן ידנית '+given+' במקום '+auto+' לפי הסולם.</span>' : '')
+      : 'סולם 2026 לפי ימי השירות בשנה הקודמת: 30–39 ימים — 0.5 נק׳ · 40–49 — 0.75 · מ־50 ימים — נקודה שלמה, '+
+        'ועוד רבע נקודה לכל 5 ימים נוספים, עד תקרה של '+capP+' נקודות ב־110 ימים ומעלה. '+
+        'הזכאות היא ללוחם או תומך לחימה ונדרש אישור מצה״ל. מ־2028 הסף יורד ל־20 ימים.';
+  }
   html('sLife', num('life')>0 ? 'זיכוי <b>'+money(lifeCredit)+'</b>' : '');
   html('sDon', donGross>0 ? (donCredit>0 ? 'זיכוי <b>'+money(donCredit)+'</b>' : '<span class="warn">מתחת לסף</span>') : '');
   txt('noteCount', ($('notes').value||'').trim() ? ($('notes').value.trim().length+' תווים') : '');
@@ -1519,6 +1650,12 @@ function buildReport(){
 /* ---- wiring ---- */
 document.addEventListener('input', e=>{ if(e.target.matches('input,select,textarea')) update(); });
 document.addEventListener('change', e=>{ if(e.target.matches('input,select,textarea')) update(); });
+$('milDays').addEventListener('input', ()=>{ MIL_EDITED=false; });
+$('cpMil').addEventListener('input', ()=>{ MIL_EDITED=true; });
+$('milAuto').addEventListener('click', ()=>{
+  MIL_EDITED=false; $('cpMil').value = milPoints(num('milDays'));
+  CP_EDITED=false; $('cpManual').value = buildCP(); $('cpManualM').value = $('cpManual').value; update();
+});
 $('cpApply').addEventListener('click', ()=>{ CP_EDITED=false; $('cpManual').value = buildCP(); $('cpManualM').value = $('cpManual').value; update(); });
 $('cpManual').addEventListener('input', ()=>{ CP_EDITED=true; });
 $('cpManualM').addEventListener('input', ()=>{ CP_EDITED=true; $('cpManual').value = $('cpManualM').value; update(); });
@@ -1712,7 +1849,7 @@ function okToOverwrite(name, where){
   return confirm('כבר קיים תכנון בשם "'+name+'". לדרוס אותו?');
 }
 
-const BUILD = 'v35';
+const BUILD = 'v37';
 $('buildTag').textContent = ' · ' + BUILD + ' · ' + (API_BASE ? 'פנימי' : 'ציבורי');
 
 /* שמירה מקומית — קיימת בשתי הגרסאות */
