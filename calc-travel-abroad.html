@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מחשבון הוצאות נסיעה לחו"ל לעצמאים 2026 | יער צפון</title>
+<meta name="description" content="כמה מהוצאות הנסיעה העסקית שלכם לחו&quot;ל מוכרות למס? מחשבון חינמי לעצמאים לפי תקרות 2026 — טיסה, לינה, שהייה ושכירת רכב. מבית יער צפון.">
+<link rel="canonical" href="https://www.yaar.biz/calc-travel-abroad">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="he_IL">
+<meta property="og:title" content="מחשבון הוצאות נסיעה לחו&quot;ל לעצמאים 2026 | יער צפון">
+<meta property="og:description" content="בדקו תוך דקה כמה מהוצאות הנסיעה העסקית לחו&quot;ל מוכרות למס — לפי תקרות 2026.">
+<meta property="og:url" content="https://www.yaar.biz/calc-travel-abroad">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;700;800;900&family=Assistant:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+/* ===== מיתוג — החליפו כאן לצבעי האתר ===== */
+:root{
+  --brand:#2C5742;        /* ירוק יער — צבע ראשי */
+  --brand-dark:#1F3F30;
+  --brand-soft:#E8F0EA;
+  --accent:#B0823C;       /* זהב/ענבר — הדגשה */
+  --bg:#F3F6F1;
+  --card:#ffffff;
+  --ink:#1B241F;
+  --muted:#5E6B62;
+  --line:#E2E6DE;
+  --warn:#9a5b12;
+  --warn-bg:#fdf3e2;
+  --fb:#1877f2;
+  --wa:#25d366;
+  --radius:14px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Assistant',system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.6;font-size:16px}
+a{color:inherit}
+h1,h2,h3{font-family:'Frank Ruhl Libre',serif;letter-spacing:-.01em}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+
+/* top bar + header */
+.topbar{background:var(--brand-dark);color:#dfe9e3;font-size:13px}
+.topbar .wrap{display:flex;gap:18px;flex-wrap:wrap;justify-content:space-between;padding-block:6px}
+.topbar a{text-decoration:none}
+header.site{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+header.site .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:12px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;font-weight:800;font-size:22px;color:var(--brand)}
+.logo img{height:54px;width:auto;display:block}
+nav.main{display:flex;gap:18px;flex-wrap:wrap;font-size:15px}
+nav.main a{text-decoration:none;color:var(--muted)}
+nav.main a:hover,nav.main a.on{color:var(--brand)}
+
+/* hero */
+.hero{background:linear-gradient(135deg,var(--brand) 0%,var(--brand-dark) 100%);color:#fff;padding:40px 0 70px}
+.eyebrow{display:inline-block;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);padding:3px 12px;border-radius:99px;font-size:13px}
+.hero h1{font-size:clamp(26px,4.5vw,40px);line-height:1.2;margin:14px 0 10px}
+.hero p{max-width:680px;margin:0;color:#d7e5dd}
+
+/* layout */
+.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:20px;margin-top:-44px;align-items:start}
+@media (max-width:880px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:0 6px 24px rgba(20,51,38,.08);border:1px solid var(--line);padding:22px}
+.card h2{margin:0 0 4px;font-size:20px;color:var(--brand)}
+.sec{border-top:1px dashed var(--line);padding-top:16px;margin-top:16px}
+.sec:first-of-type{border-top:0;margin-top:8px;padding-top:0}
+.sec h3{margin:0 0 10px;font-size:16px;display:flex;align-items:center;gap:8px}
+.sec h3 .n{background:var(--brand-soft);color:var(--brand);width:24px;height:24px;border-radius:50%;display:inline-grid;place-items:center;font-size:13px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:520px){.row{grid-template-columns:1fr}}
+label{display:block;font-size:14px;font-weight:500;margin-bottom:4px}
+.hint{font-size:12.5px;color:var(--muted);margin-top:3px}
+input,select{width:100%;font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fbfcfb;color:var(--ink)}
+input:focus,select:focus{outline:2px solid var(--brand);outline-offset:1px;background:#fff}
+.field{margin-bottom:12px}
+.hidden{display:none!important}
+/* מטבע */
+.money{display:flex;gap:6px}
+.money input{flex:1;min-width:0}
+.money select.cur{width:84px;flex:none;padding-inline:8px}
+.fx-status{font-size:13px;padding:8px 10px;border-radius:8px;background:var(--bg);color:var(--muted);margin-bottom:4px}
+.fx-status.ok{background:var(--brand-soft);color:var(--brand-dark)}
+.fx-status.err{background:var(--warn-bg);color:var(--warn)}
+.fx-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+/* שדה תאריך */
+.datef{display:flex;align-items:center;direction:ltr;border:1px solid var(--line);border-radius:10px;background:#fbfcfb;padding:0 4px 0 8px;width:100%}
+.datef:focus-within{outline:2px solid var(--brand);outline-offset:1px;background:#fff}
+.datef.bad{border-color:#c0392b;outline-color:#c0392b}
+.datef input.seg{border:0;background:transparent;padding:10px 0;text-align:center;outline:none;font-variant-numeric:tabular-nums;border-radius:4px}
+.datef input.seg:focus{background:var(--brand-soft)}
+.datef input.d2{width:2.4em}
+.datef input.y4{width:3.6em}
+.datef .sl{color:var(--muted)}
+.datef .calbtn{margin-inline-start:auto;border:0;background:none;cursor:pointer;padding:6px;color:var(--brand);display:grid;place-items:center}
+.datef .calbtn svg{width:18px;height:18px;fill:currentColor}
+.datef .picker{position:absolute;opacity:0;pointer-events:none;width:1px;height:1px}
+.datef{position:relative}
+.note{background:var(--brand-soft);border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--brand-dark)}
+.warn{background:var(--warn-bg);color:var(--warn);border-radius:10px;padding:10px 12px;font-size:13.5px;margin-top:10px}
+
+/* results */
+.results{position:sticky;top:84px}
+.big{background:var(--brand);color:#fff;border-radius:12px;padding:18px;text-align:center;margin:12px 0}
+.big .lbl{font-size:14px;color:#cfe0d6}
+.big .val{font-size:clamp(30px,5vw,40px);font-weight:800;line-height:1.2}
+.big .sub{font-size:14px;color:#cfe0d6}
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.kpi{background:var(--bg);border-radius:10px;padding:10px;text-align:center}
+.kpi b{display:block;font-size:19px}
+.kpi span{font-size:12.5px;color:var(--muted)}
+.kpi.save b{color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:7px 4px;text-align:right;border-bottom:1px solid var(--line)}
+th{font-size:12.5px;color:var(--muted);font-weight:500}
+td.num,th.num{text-align:left;font-variant-numeric:tabular-nums;direction:ltr}
+tr.tot td{font-weight:700;border-bottom:0}
+td small{display:block;color:var(--muted);font-size:11.5px}
+
+/* buttons */
+.btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:700;font-size:14.5px;cursor:pointer;text-decoration:none;flex:1 1 auto}
+.btn svg{width:18px;height:18px;fill:currentColor}
+.btn-fb{background:var(--fb);color:#fff}
+.btn-wa{background:var(--wa);color:#073b1d}
+.btn-ghost{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
+.btn-main{background:var(--accent);color:#fff}
+.btn:hover{filter:brightness(.95)}
+.share-lbl{font-size:13px;color:var(--muted);margin-top:14px}
+
+/* rules + cta + footer */
+.rules{margin:24px 0}
+.rules h2{color:var(--brand);font-size:20px;margin:0 0 10px}
+.rules table td,.rules table th{font-size:14px}
+.rules ul{margin:10px 0 0;padding-inline-start:20px;font-size:14px;color:var(--muted)}
+.cta{background:var(--brand-soft);border-radius:var(--radius);padding:24px;text-align:center;margin:24px 0}
+.cta h2{margin:0 0 6px;color:var(--brand)}
+.cta p{margin:0 0 14px;color:var(--muted)}
+.cta .btns{justify-content:center;max-width:460px;margin-inline:auto}
+footer.site{background:var(--brand-dark);color:#cfe0d6;font-size:13.5px;padding:22px 0;margin-top:30px}
+footer.site .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+.disc{font-size:12px;color:var(--muted);margin-top:10px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 16px;border-radius:99px;font-size:14px;opacity:0;transition:.2s;pointer-events:none}
+.toast.on{opacity:1}
+
+@media print{
+  .topbar,header.site,nav,.btns,.share-lbl,.cta,footer.site,.toast{display:none!important}
+  .hero{background:none;color:#000;padding:0}
+  .hero p{color:#333}
+  .grid{display:block;margin:0}
+  .card{box-shadow:none;break-inside:avoid;margin-bottom:12px}
+  .results{position:static}
+  .big{background:#eee;color:#000}
+  .big .lbl,.big .sub{color:#333}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar"><div class="wrap">
+  <span><a href="tel:046762466">04-6762466</a> · <a href="mailto:office@yaar.biz">office@yaar.biz</a></span>
+  <span>א'–ה' 8:00–17:00 · א.ת. בני יהודה, דרום הגולן</span>
+</div></div>
+
+<header class="site"><div class="wrap">
+  <a class="logo" href="https://www.yaar.biz/" aria-label="יער צפון — דף הבית">
+    <img src="data:image/jpeg;base64,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" alt="יער צפון">
+  </a>
+  <nav class="main" aria-label="ניווט ראשי">
+    <a href="https://www.yaar.biz/">ראשי</a>
+    <a href="https://www.yaar.biz/#services">שירותים</a>
+    <a class="on" href="./calculators.html">מחשבונים</a>
+    <a href="https://www.yaar.biz/#contact">צרו קשר</a>
+  </nav>
+</div></header>
+
+<section class="hero"><div class="wrap">
+  <span class="eyebrow">מחשבון חינמי · מעודכן לתקרות 2026</span>
+  <h1>מחשבון הוצאות נסיעה לחו"ל לעצמאים</h1>
+  <p>טסתם לכנס, לתערוכה או לפגישה עם ספק? הזינו את ההוצאות וקבלו מיד כמה מהן מוכרות לצורכי מס — לפי תקנות מס הכנסה (ניכוי הוצאות מסוימות), התשל"ב-1972.</p>
+</div></section>
+
+<main class="wrap">
+<div class="grid">
+
+  <!-- ===== טופס ===== -->
+  <section class="card" aria-labelledby="form-h">
+    <h2 id="form-h">פרטי הנסיעה</h2>
+    <p class="hint" style="margin:0 0 6px">טיסה — בשקלים; לינה, שהייה ורכב — במטבע ששילמתם; כנס — בדולר ארה"ב. ימים ולילות — <b>עסקיים בלבד</b>; ימי חופשה שצירפתם לנסיעה אינם מוכרים.</p>
+
+    <div class="sec">
+      <h3><span class="n">1</span>יעד ושערי מטבע</h3>
+      <div class="field">
+        <label for="country">מדינת היעד</label>
+        <select id="country"></select>
+        <div class="hint" id="countryHint">תקרה רגילה</div>
+      </div>
+      <div class="fx-grid">
+        <div class="field">
+          <label for="rate">שער הדולר (₪)</label>
+          <input id="rate" type="number" inputmode="decimal" step="0.001" min="0" value="3.106">
+        </div>
+        <div class="field hidden" data-fx="EUR">
+          <label for="rateEUR">שער האירו (₪)</label>
+          <input id="rateEUR" type="number" inputmode="decimal" step="0.001" min="0" value="3.4822">
+        </div>
+        <div class="field hidden" data-fx="GBP">
+          <label for="rateGBP">שער הליש"ט (₪)</label>
+          <input id="rateGBP" type="number" inputmode="decimal" step="0.001" min="0" value="4.1444">
+        </div>
+        <div class="field hidden" data-fx="CHF">
+          <label for="rateCHF">שער הפרנק השווייצרי (₪)</label>
+          <input id="rateCHF" type="number" inputmode="decimal" step="0.001" min="0" value="3.7675">
+        </div>
+      </div>
+      <div class="fx-status" id="fxStatus" aria-live="polite">השערים מתעדכנים אוטומטית לפי השער היציג של בנק ישראל ביום הטיסה — הזינו תאריך יציאה בסעיף 2.</div>
+      <div class="hint">אפשר לתקן שער ידנית. שער של מטבע נוסף מופיע כאן כשבוחרים אותו בלינה או ברכב.</div>
+    </div>
+
+    <div class="sec">
+      <h3><span class="n">2</span>תאריכי הנסיעה</h3>
+      <div class="row">
+        <div class="field">
+          <label id="depLbl">תאריך יציאה מהארץ</label>
+          <div class="datef" id="dep" data-label="depLbl"></div>
+        </div>
+        <div class="field">
+          <label id="retLbl">תאריך חזרה לארץ</label>
+          <div class="datef" id="ret" data-label="retLbl"></div>
+        </div>
+      </div>
+      <div class="hint" style="margin:-4px 0 6px">יום / חודש / שנה — אפשר לכתוב שנה בשתי ספרות (26 ← 2026). חצים ימינה/שמאלה עוברים בין השדות, חצים למעלה/למטה משנים את הערך.</div>
+      <div class="note hidden" id="tripSummary"></div>
+      <div class="row" style="margin-top:12px">
+        <div class="field">
+          <label for="bizDays">מתוכם ימים עסקיים</label>
+          <input id="bizDays" type="number" inputmode="numeric" min="0" step="1" placeholder="0">
+          <div class="hint">ימים שבהם עסקתם בייצור הכנסה (פגישות, כנס, תערוכה). ימי טיסה בין פעילות עסקית נחשבים עסקיים</div>
+        </div>
+        <div class="field">
+          <label>ימים פרטיים</label>
+          <input id="privDays" type="text" readonly value="0" tabindex="-1" aria-readonly="true">
+          <div class="hint">מחושב אוטומטית — אינם מוכרים לאש"ל ולינה</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h3><span class="n">3</span>טיסה</h3>
+      <div class="row">
+        <div class="field">
+          <label for="flight">עלות כרטיסי הטיסה (₪)</label>
+          <input id="flight" type="number" inputmode="decimal" min="0" placeholder="0">
+          <div class="hint" id="flightHint">בשקלים, כפי ששולם — כולל מיסי נמל ומזוודות</div>
+        </div>
+        <div class="field">
+          <label for="cls">מחלקה</label>
+          <select id="cls">
+            <option value="eco">תיירים</option>
+            <option value="bus">עסקים</option>
+            <option value="first">ראשונה</option>
+          </select>
+        </div>
+      </div>
+      <div class="field hidden" id="busWrap">
+        <label for="busPrice">מחיר כרטיס במחלקת עסקים באותה טיסה (₪)</label>
+        <input id="busPrice" type="number" inputmode="decimal" min="0" placeholder="0">
+        <div class="hint">במחלקה ראשונה מוכר עד מחיר כרטיס במחלקת עסקים</div>
+      </div>
+      <div class="field">
+        <label for="flightAlloc">נסיעה משולבת עם ימים פרטיים</label>
+        <select id="flightAlloc">
+          <option value="prop" selected>ייחוס הטיסה לפי היחס בין הימים העסקיים לכלל ימי הנסיעה (שמרני)</option>
+          <option value="full">הכרה מלאה בטיסה (הנסיעה בעיקרה עסקית)</option>
+        </select>
+        <div class="hint" id="allocHint">חל רק כשיש ימים פרטיים בסעיף 2</div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h3><span class="n">4</span>לינה</h3>
+      <div class="row">
+        <div class="field">
+          <label for="nights">מספר לילות עסקיים במלון</label>
+          <input id="nights" type="number" inputmode="numeric" min="0" step="1" placeholder="0">
+        </div>
+        <div class="field">
+          <label for="lodging">סה"כ עלות הלינה</label>
+          <div class="money">
+            <input id="lodging" type="number" inputmode="decimal" min="0" placeholder="0">
+            <select id="lodgingCur" class="cur" aria-label="מטבע הלינה"></select>
+          </div>
+          <div class="hint" id="lodgingHint">לפי קבלות; ארוחת בוקר הכלולה במחיר — חלק מהלינה</div>
+        </div>
+      </div>
+      <div class="hint" id="perNight"></div>
+    </div>
+
+    <div class="sec">
+      <h3><span class="n">5</span>הוצאות שהייה (אש"ל)</h3>
+      <div class="hint" id="stayDaysHint" style="margin:-4px 0 10px">מחושב לפי הימים העסקיים שהוזנו בסעיף 2</div>
+      <div class="row">
+        <div class="field">
+          <label for="daysNoLodge">ימים עסקיים ללא הוצאות לינה</label>
+          <input id="daysNoLodge" type="number" inputmode="numeric" min="0" step="1" value="0">
+          <div class="hint">למשל לינה אצל מכרים — תקרה גבוהה יותר ליום</div>
+        </div>
+        <div class="field">
+          <label for="stayActual">הוצאות שהייה בפועל — רשות</label>
+          <div class="money">
+            <input id="stayActual" type="number" inputmode="decimal" min="0" placeholder="ריק = לפי התקרה">
+            <select id="stayCur" class="cur" aria-label="מטבע הוצאות השהייה"></select>
+          </div>
+          <div class="hint" id="stayHint">כלכלה, תחבורה מקומית וכד'. מוכר הנמוך מבין בפועל לתקרה</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec">
+      <h3><span class="n">6</span>רכב ושונות</h3>
+      <div class="row">
+        <div class="field">
+          <label for="carDays">ימי שכירת רכב</label>
+          <input id="carDays" type="number" inputmode="numeric" min="0" step="1" placeholder="0">
+        </div>
+        <div class="field">
+          <label for="carCost">עלות שכירת הרכב</label>
+          <div class="money">
+            <input id="carCost" type="number" inputmode="decimal" min="0" placeholder="0">
+            <select id="carCur" class="cur" aria-label="מטבע שכירת הרכב"></select>
+          </div>
+          <div class="hint" id="carHint"></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label for="conf">דמי כנס / תערוכה ($)</label>
+          <input id="conf" type="number" inputmode="decimal" min="0" placeholder="0">
+          <div class="hint">הוצאה עסקית ישירה — מוכרת במלואה</div>
+        </div>
+        <div class="field">
+          <label for="taxRate">שיעור המס השולי שלכם</label>
+          <select id="taxRate">
+            <option value="0.10">10%</option>
+            <option value="0.14">14%</option>
+            <option value="0.20">20%</option>
+            <option value="0.31" selected>31%</option>
+            <option value="0.35">35%</option>
+            <option value="0.47">47%</option>
+            <option value="0.50">50% (כולל מס יסף)</option>
+          </select>
+          <div class="hint">לאומדן החיסכון במס הכנסה</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="warnings"></div>
+  </section>
+
+  <!-- ===== תוצאות ===== -->
+  <aside class="card results" aria-live="polite" aria-labelledby="res-h">
+    <h2 id="res-h">התוצאה</h2>
+    <div class="big">
+      <div class="lbl">סה"כ הוצאה מוכרת למס</div>
+      <div class="val" id="totIls">₪0</div>
+      <div class="sub" id="totUsd">$0</div>
+    </div>
+    <div class="kpis">
+      <div class="kpi save"><b id="saving">₪0</b><span>חיסכון משוער במס הכנסה</span></div>
+      <div class="kpi"><b id="notRec">₪0</b><span>לא מוכר (מעל התקרות)</span></div>
+    </div>
+
+    <table>
+      <thead><tr><th>סעיף</th><th class="num">בפועל $</th><th class="num">מוכר $</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+
+    <div class="btns">
+      <button class="btn btn-main" id="btnConsult" type="button">
+        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.4-.7-2.8-1.1-4.6-4-4.8-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2.1 1-2.4c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .5l-.4.6-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.4 1.8 2.2 1.2 1.1 2.2 1.4 2.5 1.6.3.1.5.1.7-.1l.9-1.1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.6.3.1.2.1.7-.1 1.3z"/></svg>
+        שלחו את החישוב לבדיקת רו"ח
+      </button>
+      <button class="btn btn-ghost" id="btnPrint" type="button">
+        <svg viewBox="0 0 24 24"><path d="M6 9V2h12v7h2a2 2 0 0 1 2 2v6h-4v5H6v-5H2v-6a2 2 0 0 1 2-2h2zm2-5v5h8V4H8zm0 11v5h8v-5H8z"/></svg>
+        הדפסה / PDF
+      </button>
+    </div>
+
+    <div class="share-lbl">שתפו את המחשבון:</div>
+    <div class="btns" style="margin-top:6px">
+      <a class="btn btn-fb" id="shareFb" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M14 8V6c0-1 .3-1.6 1.7-1.6H18V1h-3.2C11.3 1 10 3 10 6v2H7v3.5h3V23h4V11.5h3.3L18 8h-4z"/></svg>
+        פייסבוק
+      </a>
+      <a class="btn btn-wa" id="shareWa" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2zm5.3 14.1c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.4-.7-2.8-1.1-4.6-4-4.8-4.2-.1-.2-1.1-1.5-1.1-2.9s.7-2.1 1-2.4c.3-.3.6-.3.8-.3h.6c.2 0 .4 0 .6.5l.9 2.1c.1.2.1.4 0 .5l-.4.6-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.4 1.8 2.2 1.2 1.1 2.2 1.4 2.5 1.6.3.1.5.1.7-.1l.9-1.1c.2-.3.4-.2.7-.1l2 1c.3.1.5.2.6.3.1.2.1.7-.1 1.3z"/></svg>
+        וואטסאפ
+      </a>
+      <button class="btn btn-ghost" id="btnCopy" type="button">
+        <svg viewBox="0 0 24 24"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg>
+        העתקת קישור
+      </button>
+    </div>
+    <p class="disc">החישוב הוא הערכה כללית בלבד ואינו מהווה ייעוץ מס. ההכרה בהוצאות מותנית בכך שהנסיעה נועדה לייצור הכנסה ובתיעוד מלא.</p>
+  </aside>
+</div>
+
+<!-- ===== התקרות ===== -->
+<section class="card rules" aria-labelledby="rules-h">
+  <h2 id="rules-h">התקרות לשנת המס 2026</h2>
+  <table>
+    <thead><tr><th>סעיף</th><th>מה מוכר</th></tr></thead>
+    <tbody>
+      <tr><td>טיסה</td><td>מלוא העלות במחלקת תיירים או עסקים; במחלקה ראשונה — עד מחיר כרטיס במחלקת עסקים</td></tr>
+      <tr><td>לינה — 7 הלילות הראשונים</td><td>בפועל, עד $365 ללילה</td></tr>
+      <tr><td>לינה — מהלילה ה-8 עד ה-90</td><td>עד $160 ללילה — במלואה; מעל $160 — ‎75% מההוצאה, לא פחות מ-$160 ולא יותר מ-$274</td></tr>
+      <tr><td>לינה — נסיעה של יותר מ-90 לילות</td><td>עד $160 ללילה, מהלילה הראשון</td></tr>
+      <tr><td>שהייה (אש"ל)</td><td>עד $102 ליום כשנדרשה לינה · עד $171 ליום כשלא נדרשה לינה</td></tr>
+      <tr><td>שכירת רכב</td><td>עד $80 ליום</td></tr>
+    </tbody>
+  </table>
+  <ul>
+    <li>בנסיעה לאוסטרליה, אוסטריה, איטליה, איסלנד, אירלנד, אנגולה, בלגיה, בריטניה, גרמניה, דובאי, דנמרק, הולנד, הונג קונג, טיוואן, יוון, יפן, לוקסמבורג, נורווגיה, ספרד, עומאן, פינלנד, צרפת, קטאר, קוריאה, קמרון, קנדה, שבדיה ושווייץ — תקרות הלינה והשהייה גבוהות ב-25% (לא חל על רכב).</li>
+    <li>שתי נסיעות או יותר שלא הייתה ביניהן שהייה רצופה בישראל של 14 יום לפחות — נחשבות לנסיעה אחת לעניין ספירת הלילות.</li>
+    <li>הוצאות בן/בת זוג או בני משפחה נלווים אינן מוכרות, אלא אם הוכח שנסיעתם נדרשה לייצור ההכנסה.</li>
+    <li>הסכומים מתואמים ב-1 בינואר בכל שנה לפי מדד המחירים לצרכן בארה"ב. ההמרה לשקלים — לפי השער היציג ביום ההוצאה.</li>
+  </ul>
+</section>
+
+<section class="cta">
+  <h2>רוצים לוודא שאתם מנצלים כל הוצאה מוכרת?</h2>
+  <p>המחשבון נותן תמונה ראשונית. נשמח לעבור איתכם על דוח הנסיעה ועל התיעוד הנדרש — ייעוץ ראשוני ללא עלות.</p>
+  <div class="btns">
+    <a class="btn btn-wa" id="ctaWa" href="#" target="_blank" rel="noopener">ייעוץ בוואטסאפ</a>
+    <a class="btn btn-ghost" href="https://www.yaar.biz/#contact">השאירו פרטים</a>
+  </div>
+</section>
+</main>
+
+<footer class="site"><div class="wrap">
+  <span><b>יער צפון</b> · כל השירותים הפיננסיים תחת קורת גג אחת</span>
+  <span>04-6762466 · office@yaar.biz · א.ת. בני יהודה, מתחם האבזלת</span>
+</div></footer>
+
+<div class="toast" id="toast">הקישור הועתק</div>
+
+<script>
+/* ===== הגדרות — לעדכן לפני העלאה ===== */
+const CONFIG = {
+  WA_PHONE: "972585851500",   // מספר הוואטסאפ של המשרד בפורמט בינלאומי, למשל "972501234567". ריק = הכפתור יוביל לטופס יצירת קשר
+  CONTACT_URL: "https://www.yaar.biz/#contact"
+};
+
+/* ===== פרמטרים 2026 (דולר) ===== */
+const P = { first7:365, floor:160, longStay:160, pct:0.75, stayWith:102, stayWithout:171, car:80, boost:1.25 };
+const BOOST = ["אוסטרליה","אוסטריה","איטליה","איסלנד","אירלנד","אנגולה","בלגיה","בריטניה","גרמניה","דובאי","דנמרק","הולנד","הונג קונג","טיוואן","יוון","יפן","לוקסמבורג","נורווגיה","ספרד","עומאן","פינלנד","צרפת","קטאר","קוריאה","קמרון","קנדה","שבדיה","שווייץ"];
+
+const $ = id => document.getElementById(id);
+const sel = $("country");
+sel.innerHTML = '<option value="">ארה"ב / כל מדינה אחרת</option>' + BOOST.map(c => `<option value="${c}">${c} (+25%)</option>`).join("");
+
+const num = id => { const v = parseFloat($(id).value); return isFinite(v) && v > 0 ? v : 0; };
+
+/* ===== מטבעות ===== */
+const CUR = [
+  { c: "USD", s: "$",  label: "$ דולר" },
+  { c: "EUR", s: "€",  label: "€ אירו" },
+  { c: "GBP", s: "£",  label: "£ ליש\"ט" },
+  { c: "CHF", s: "CHF", label: "CHF פרנק" },
+  { c: "ILS", s: "₪",  label: "₪ שקל" }
+];
+["lodgingCur", "carCur", "stayCur"].forEach(id => {
+  $(id).innerHTML = CUR.map(x => `<option value="${x.c}">${x.label}</option>`).join("");
+});
+const rateOf = c => c === "ILS" ? 1 : c === "USD" ? num("rate") : num("rate" + c);
+const symOf = c => CUR.find(x => x.c === c).s;
+const fCur = (v, c) => c === "ILS" ? fIls(v) : c === "USD" ? fUsd(v) : `${Math.round(v).toLocaleString("en-US")} ${symOf(c)}`;
+/* סכום במטבע → { ils, usd } */
+function toMoney(amountId, curId){
+  const a = num(amountId), c = $(curId).value, r = rateOf(c), usdR = num("rate");
+  const ils = a * r;
+  return { a, c, ils, usd: usdR ? ils / usdR : 0, missingRate: a > 0 && !r };
+}
+function syncFxFields(){
+  const used = new Set([$("lodgingCur").value, $("carCur").value, $("stayCur").value]);
+  document.querySelectorAll("[data-fx]").forEach(el => el.classList.toggle("hidden", !used.has(el.dataset.fx)));
+}
+const fUsd = v => "$" + Math.round(v).toLocaleString("en-US");
+const fIls = v => "₪" + Math.round(v).toLocaleString("en-US");
+
+let last = null;
+
+/* ===== תאריכים ===== */
+let bizTouched = false;
+$("bizDays").addEventListener("input", () => { bizTouched = $("bizDays").value.trim() !== ""; });
+const fDate = t => { const d = new Date(t); return `${d.getUTCDate()}/${d.getUTCMonth()+1}/${d.getUTCFullYear()}`; };
+const pad = (n, l) => String(n).padStart(l, "0");
+
+/* שדה תאריך: יום / חודש / שנה, השלמת שנה דו-ספרתית וניווט במקלדת */
+function makeDateField(root){
+  const lbl = root.dataset.label;
+  root.innerHTML =
+    `<input class="seg d2" data-k="d" inputmode="numeric" maxlength="2" placeholder="DD" aria-label="יום" ${lbl ? `aria-describedby="${lbl}"` : ""}>` +
+    `<span class="sl">/</span><input class="seg d2" data-k="m" inputmode="numeric" maxlength="2" placeholder="MM" aria-label="חודש">` +
+    `<span class="sl">/</span><input class="seg y4" data-k="y" inputmode="numeric" maxlength="4" placeholder="YYYY" aria-label="שנה">` +
+    `<button type="button" class="calbtn" aria-label="בחירה מלוח שנה"><svg viewBox="0 0 24 24"><path d="M7 2h2v2h6V2h2v2h3a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h3V2zm12 8H5v9h14v-9zM7 12h3v3H7v-3z"/></svg></button>` +
+    `<input type="date" class="picker" tabindex="-1" aria-hidden="true">`;
+  const [d, m, y] = root.querySelectorAll("input.seg");
+  const segs = [d, m, y], picker = root.querySelector(".picker");
+  const fire = () => calc();
+  const expandYear = () => { if (/^\d{1,2}$/.test(y.value)) y.value = String(2000 + +y.value); };
+
+  segs.forEach((el, i) => {
+    el.addEventListener("input", () => {
+      el.value = el.value.replace(/\D/g, "");
+      const v = el.value;
+      // מעבר אוטומטי לשדה הבא כשהערך שלם
+      if ((el === d && (v.length === 2 || +v > 3)) || (el === m && (v.length === 2 || +v > 1))) {
+        if (v.length === 1) el.value = "0" + v;
+        segs[i + 1].focus(); segs[i + 1].select();
+      }
+      fire();
+    });
+    el.addEventListener("keydown", e => {
+      const atStart = el.selectionStart === 0;            // סמן בתחילת השדה (או כל הערך מסומן)
+      const atEnd = el.selectionEnd === el.value.length;  // סמן בסוף השדה (או כל הערך מסומן)
+      // השדות מסודרים משמאל לימין: חץ ימינה = השדה הבא
+      if (e.key === "ArrowRight" && atEnd && segs[i + 1]) { e.preventDefault(); segs[i + 1].focus(); segs[i + 1].select(); }
+      else if (e.key === "ArrowLeft" && atStart && segs[i - 1]) { e.preventDefault(); segs[i - 1].focus(); segs[i - 1].select(); }
+      else if (e.key === "Backspace" && el.value === "" && segs[i - 1]) { e.preventDefault(); segs[i - 1].focus(); }
+      else if (["/", ".", "-", " "].includes(e.key)) {
+        e.preventDefault();
+        if (el.value.length === 1 && el !== y) el.value = "0" + el.value;
+        if (segs[i + 1]) { segs[i + 1].focus(); segs[i + 1].select(); }
+      }
+      else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+        e.preventDefault();
+        const step = e.key === "ArrowUp" ? 1 : -1;
+        if (el === y) { expandYear(); const cur = +y.value || new Date().getFullYear(); y.value = String(cur + (y.value ? step : 0)); }
+        else {
+          const max = el === d ? 31 : 12, cur = +el.value || 0;
+          let nv = cur + step; if (nv > max) nv = 1; if (nv < 1) nv = max;
+          el.value = pad(nv, 2);
+        }
+        el.select(); fire();
+      }
+      else if (e.key === "Enter") { if (el === y) { expandYear(); fire(); } }
+    });
+    el.addEventListener("focus", () => el.select());
+    el.addEventListener("blur", () => {
+      if (el === y) expandYear();
+      else if (el.value.length === 1 && el.value !== "0") el.value = "0" + el.value;
+      fire();
+    });
+  });
+
+  // לוח שנה (דפדפנים תומכים)
+  root.querySelector(".calbtn").addEventListener("click", () => {
+    const t = get(); picker.value = t === null ? "" : new Date(t).toISOString().slice(0, 10);
+    try { picker.showPicker(); } catch (e) { d.focus(); }
+  });
+  picker.addEventListener("change", () => {
+    if (!picker.value) return;
+    const [yy, mm, dd] = picker.value.split("-");
+    y.value = yy; m.value = mm; d.value = dd; fire();
+  });
+
+  // ערך: Date.UTC או null; שנה דו-ספרתית נחשבת 20xx גם לפני יציאה מהשדה
+  function get(){
+    if (!d.value || !m.value || !y.value) { root.classList.remove("bad"); return null; }
+    let yy = +y.value; if (y.value.length <= 2) yy += 2000;
+    if (y.value.length === 3) { root.classList.add("bad"); return null; }
+    const dd = +d.value, mm = +m.value, t = Date.UTC(yy, mm - 1, dd), dt = new Date(t);
+    const ok = dt.getUTCFullYear() === yy && dt.getUTCMonth() === mm - 1 && dt.getUTCDate() === dd;
+    root.classList.toggle("bad", !ok);
+    return ok ? t : NaN;
+  }
+  return { get, focus: () => d.focus() };
+}
+const dateDep = makeDateField($("dep")), dateRet = makeDateField($("ret"));
+
+/* ===== שערים יציגים ליום הטיסה =====
+   מקור ראשי: בנק ישראל (SDMX). גיבוי: שערי הבנק המרכזי האירופי (Frankfurter).
+   אם אין שער ליום עצמו (שבת/חג) — נלקח השער האחרון שפורסם לפניו. */
+const FX_CODES = ["USD", "EUR", "GBP", "CHF"];
+const FX_INPUT = { USD: "rate", EUR: "rateEUR", GBP: "rateGBP", CHF: "rateCHF" };
+let fxReq = 0, fxDateKey = null;
+const iso = t => new Date(t).toISOString().slice(0, 10);
+
+function setFxStatus(html, cls){ const el = $("fxStatus"); el.innerHTML = html; el.className = "fx-status " + (cls || ""); }
+
+async function fetchBOI(start, end){
+  const url = "https://edge.boi.org.il/FusionEdgeServer/sdmx/v2/data/dataflow/BOI.STATISTICS/EXR/1.0/" +
+    FX_CODES.map(c => `RER_${c}_ILS`).join(",") + `?startperiod=${start}&endperiod=${end}&format=csv`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error("BOI " + res.status);
+  const lines = (await res.text()).trim().split(/\r?\n/);
+  const h = lines.shift().split(",");
+  const iC = h.indexOf("BASE_CURRENCY"), iT = h.indexOf("TIME_PERIOD"), iV = h.indexOf("OBS_VALUE");
+  const out = {};
+  for (const ln of lines){
+    const c = ln.split(","), cur = c[iC], t = c[iT], v = parseFloat(c[iV]);
+    if (!FX_CODES.includes(cur) || !isFinite(v) || t > end) continue;
+    if (!out[cur] || t > out[cur].date) out[cur] = { v, date: t };   // האחרון עד תאריך היעד
+  }
+  if (!out.USD) throw new Error("BOI: no data");
+  return { rates: out, src: "בנק ישראל" };
+}
+async function fetchECB(date){
+  const res = await fetch(`https://api.frankfurter.dev/v1/${date}?base=USD&symbols=ILS,EUR,GBP,CHF`);
+  if (!res.ok) throw new Error("ECB " + res.status);
+  const j = await res.json(), ils = j.rates && j.rates.ILS;
+  if (!ils) throw new Error("ECB: no ILS");
+  const out = { USD: { v: ils, date: j.date } };
+  ["EUR", "GBP", "CHF"].forEach(c => { if (j.rates[c]) out[c] = { v: ils / j.rates[c], date: j.date }; });
+  return { rates: out, src: "הבנק המרכזי האירופי (גיבוי)" };
+}
+
+async function updateRatesForDate(t){
+  const key = iso(t);
+  if (key === fxDateKey) return;
+  fxDateKey = key;
+  const my = ++fxReq;
+  const today = Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate());
+  const future = t > today;
+  const target = future ? today : t;
+  const start = iso(target - 14 * 86400000), end = iso(target);
+  setFxStatus(`מאתר שער יציג ליום ${fDate(t)}…`);
+  let data = null;
+  try { data = await fetchBOI(start, end); }
+  catch (e) { try { data = await fetchECB(end); } catch (e2) { data = null; } }
+  if (my !== fxReq) return;                       // תאריך השתנה בינתיים
+  if (!data){
+    setFxStatus("לא הצלחנו למשוך את השער אוטומטית. הזינו את השער היציג ידנית.", "err");
+    return;
+  }
+  FX_CODES.forEach(c => { if (data.rates[c]) $(FX_INPUT[c]).value = +data.rates[c].v.toFixed(4); });
+  const pubDate = data.rates.USD.date, pubT = Date.UTC(...pubDate.split("-").map((x, i) => i === 1 ? x - 1 : +x));
+  let msg = `✓ שער יציג — ${data.src}: דולר <b>${(+data.rates.USD.v).toFixed(3)} ₪</b>`;
+  if (future) msg += ` · יום הטיסה עוד לא הגיע — הוצג השער האחרון שפורסם (${fDate(pubT)})`;
+  else if (pubDate !== key) msg += ` · ליום ${fDate(t)} לא פורסם שער, הוצג השער מ-${fDate(pubT)}`;
+  else msg += ` · ליום ${fDate(t)}`;
+  setFxStatus(msg, "ok");
+  calc();
+}
+
+function readTrip(warns){
+  let dep = dateDep.get(), ret = dateRet.get();
+  if (Number.isNaN(dep)) { warns.push("תאריך היציאה אינו תקין."); dep = null; }
+  if (Number.isNaN(ret)) { warns.push("תאריך החזרה אינו תקין."); ret = null; }
+  // שנה מלאה בלבד (לא באמצע הקלדה) — ואז מושכים שער ליום הטיסה
+  if (dep !== null && $("dep").querySelector("[data-k=y]").value.length === 4) updateRatesForDate(dep);
+  const box = $("tripSummary");
+  let total = 0, nights = 0;
+  if (dep !== null && ret !== null){
+    if (ret < dep){
+      warns.push("תאריך החזרה מוקדם מתאריך היציאה.");
+    } else {
+      nights = Math.round((ret - dep) / 86400000);
+      total = nights + 1;                       // כולל יום היציאה ויום החזרה
+    }
+  }
+  if (total){
+    if (!bizTouched) $("bizDays").value = total; // ברירת מחדל: כל הנסיעה עסקית
+    $("bizDays").max = total;
+  }
+  let biz = Math.floor(num("bizDays"));
+  if (total && biz > total){ warns.push(`הימים העסקיים (${biz}) עולים על משך הנסיעה (${total}) — חושב לפי ${total}.`); biz = total; }
+  const priv = total ? total - biz : 0;
+  $("privDays").value = priv;
+
+  if (total){
+    box.classList.remove("hidden");
+    box.innerHTML = `<b>${total} ימים בחו"ל</b> · ${nights} לילות · ${biz} ימים עסקיים${priv ? ` · ${priv} ימים פרטיים` : ""}`;
+    if (nights > 90) warns.push("נסיעה של יותר מ-90 לילות — תקרת הלינה יורדת ל-$160 ללילה מהלילה הראשון.");
+    if (priv && biz < priv) warns.push("רוב ימי הנסיעה פרטיים. במצב כזה פקיד השומה עשוי שלא להכיר בכרטיס הטיסה, או להכיר בו באופן חלקי בלבד.");
+  } else box.classList.add("hidden");
+
+  $("stayDaysHint").textContent = biz ? `חושב לפי ${biz} ימים עסקיים (סעיף 2)` : "הזינו תאריכים וימים עסקיים בסעיף 2";
+  return { dep, ret, total, nights, biz, priv };
+}
+
+function calc(){
+  const m = sel.value ? P.boost : 1;
+  $("countryHint").textContent = sel.value ? "תקרות לינה ושהייה מוגדלות ב-25%" : "תקרה רגילה";
+  const rate = num("rate");
+  const warns = [];
+  const trip = readTrip(warns);
+
+  // טיסה
+  // הטיסה מוזנת בשקלים — מומרת לדולר לצורך הטבלה (הסה"כ בשקלים חוזר לסכום המקורי)
+  const flightIls = num("flight"), flight = rate ? flightIls / rate : 0, cls = $("cls").value;
+  $("flightHint").textContent = flightIls && rate ? `≈ ${fUsd(flight)} לפי שער ${rate.toFixed(2)} ₪ · כולל מיסי נמל ומזוודות` : "בשקלים, כפי ששולם — כולל מיסי נמל ומזוודות";
+  $("busWrap").classList.toggle("hidden", cls !== "first");
+  let flightRec = flight, flightNote = "מלוא העלות";
+  if (cls === "first"){
+    const bus = rate ? num("busPrice") / rate : 0;
+    flightRec = Math.min(flight, bus);
+    flightNote = "עד מחיר מחלקת עסקים";
+    if (flight && !bus) warns.push("במחלקה ראשונה יש להזין את מחיר הכרטיס במחלקת עסקים — בלעדיו לא מוכר דבר.");
+  }
+  // נסיעה משולבת: ייחוס יחסי של הטיסה לפי ימים עסקיים מתוך כלל ימי הנסיעה
+  const prop = $("flightAlloc").value === "prop" && trip.total && trip.priv > 0;
+  if (prop){
+    flightRec = flightRec * trip.biz / trip.total;
+    flightNote += ` · ייחוס ${trip.biz}/${trip.total} ימים`;
+  }
+  $("allocHint").textContent = trip.priv > 0
+    ? (prop ? `מוכרים ${trip.biz}/${trip.total} מעלות הטיסה (${Math.round(trip.biz / trip.total * 100)}%)` : `${trip.priv} ימים פרטיים — הטיסה מוכרת במלואה`)
+    : "חל רק כשיש ימים פרטיים בסעיף 2";
+
+  // לינה
+  syncFxFields();
+  const lodgeM = toMoney("lodging", "lodgingCur");
+  if (lodgeM.missingRate) warns.push("חסר שער המרה למטבע הלינה (סעיף 1).");
+  $("lodgingHint").textContent = lodgeM.a
+    ? (lodgeM.c === "USD" ? `≈ ${fIls(lodgeM.ils)}` : `≈ ${fIls(lodgeM.ils)} · ${fUsd(lodgeM.usd)}`) + " · לפי קבלות"
+    : "לפי קבלות; ארוחת בוקר הכלולה במחיר — חלק מהלינה";
+  const N = Math.floor(num("nights")), L = lodgeM.usd;   // התקרות בדולר — החישוב בדולר
+  const p = N ? L / N : 0;
+  let lodgeRec = 0, lodgeNote = "";
+  if (N > 0 && Math.max(N, trip.nights) > 90){
+    lodgeRec = Math.min(p, P.longStay * m) * N;
+    lodgeNote = `מעל 90 לילות: עד $${Math.round(P.longStay*m)} ללילה`;
+  } else if (N > 0){
+    const n1 = Math.min(N, 7), n2 = N - n1;
+    const a1 = Math.min(p, P.first7 * m) * n1;
+    const per2 = p <= P.floor * m ? p : Math.max(P.pct * Math.min(p, P.first7 * m), P.floor * m);
+    lodgeRec = a1 + per2 * n2;
+    lodgeNote = n2 ? `7 לילות עד $${Math.round(P.first7*m)}; ${n2} לילות נוספים לפי כלל ה-75%` : `עד $${Math.round(P.first7*m)} ללילה`;
+  }
+  $("perNight").textContent = N ? `ממוצע ללילה: ${fUsd(p)}` : "";
+
+  // שהייה
+  const D = trip.biz;
+  let Dno = Math.floor(num("daysNoLodge"));
+  if (Dno > D){ Dno = D; warns.push("מספר הימים ללא לינה גדול מסך ימי השהייה — חושב לפי סך הימים."); }
+  const stayCap = (D - Dno) * P.stayWith * m + Dno * P.stayWithout * m;
+  const stayRaw = $("stayActual").value.trim();
+  const stayM = toMoney("stayActual", "stayCur");
+  if (stayM.missingRate) warns.push("חסר שער המרה למטבע הוצאות השהייה (סעיף 1).");
+  $("stayHint").textContent = stayRaw === ""
+    ? "כלכלה, תחבורה מקומית וכד'. מוכר הנמוך מבין בפועל לתקרה"
+    : (stayM.c === "USD" ? `≈ ${fIls(stayM.ils)}` : `≈ ${fIls(stayM.ils)} · ${fUsd(stayM.usd)}`) + " · מוכר עד התקרה";
+  const stayActual = stayRaw === "" ? null : stayM.usd;
+  const stayRec = stayActual === null ? stayCap : Math.min(stayActual, stayCap);
+  const stayShown = stayActual === null ? stayCap : stayActual;
+  const stayNote = `תקרה ${fUsd(stayCap)} (${D - Dno}×$${+(P.stayWith*m).toFixed(1)}${Dno ? ` + ${Dno}×$${+(P.stayWithout*m).toFixed(2)}` : ""})`;
+  if (N > 0 && D === 0) warns.push("הזנתם לילות לינה אך לא ימים עסקיים — הזינו תאריכי נסיעה וימים עסקיים בסעיף 2.");
+  if (N > D && D > 0) warns.push("מספר הלילות העסקיים גדול ממספר הימים העסקיים — בדקו את הנתונים.");
+  if (trip.nights && N > trip.nights) warns.push(`לפי התאריכים הנסיעה כוללת ${trip.nights} לילות בלבד, והוזנו ${N}.`);
+  if (D - Dno > 0 && N === 0) warns.push("סימנתם ימים עם לינה, אבל לא הזנתם הוצאות לינה. אם לא שילמתם על לינה — עדכנו את \"ימים ללא הוצאות לינה\".");
+
+  // רכב
+  const carM = toMoney("carCost", "carCur");
+  if (carM.missingRate) warns.push("חסר שער המרה למטבע שכירת הרכב (סעיף 1).");
+  $("carHint").textContent = carM.a && carM.c !== "USD" ? `≈ ${fIls(carM.ils)} · ${fUsd(carM.usd)}` : (carM.a ? `≈ ${fIls(carM.ils)}` : "");
+  const cD = Math.floor(num("carDays")), cC = carM.usd;
+  const carRec = Math.min(cC, P.car * cD);
+  if (cC && !cD) warns.push("הזינו את מספר ימי שכירת הרכב — התקרה היא לפי יום.");
+
+  // כנס
+  const conf = num("conf");
+
+  const rows = [
+    ["טיסה", flight, flightRec, flightNote],
+    ["לינה", L, lodgeRec, lodgeNote],
+    ["שהייה (אש\"ל)", stayShown, stayRec, D ? stayNote : ""],
+    ["שכירת רכב", cC, carRec, cD ? `עד $${P.car} ליום` : ""],
+    ["כנס / תערוכה", conf, conf, "מלוא העלות"]
+  ];
+  const totAct = rows.reduce((s,r)=>s+r[1],0), totRec = rows.reduce((s,r)=>s+r[2],0);
+  const taxRate = parseFloat($("taxRate").value);
+
+  $("tbody").innerHTML = rows.map(r =>
+    `<tr><td>${r[0]}${r[1] && r[3] ? `<small>${r[3]}</small>` : ""}</td><td class="num">${fUsd(r[1])}</td><td class="num">${fUsd(r[2])}</td></tr>`
+  ).join("") + `<tr class="tot"><td>סה"כ</td><td class="num">${fUsd(totAct)}</td><td class="num">${fUsd(totRec)}</td></tr>`;
+
+  $("totIls").textContent = fIls(totRec * rate);
+  $("totUsd").textContent = `${fUsd(totRec)} · לפי שער ${rate.toFixed(2)} ₪`;
+  $("saving").textContent = fIls(totRec * rate * taxRate);
+  $("notRec").textContent = fIls(Math.max(totAct - totRec, 0) * rate);
+
+  $("warnings").innerHTML = warns.map(w => `<div class="warn">${w}</div>`).join("");
+  last = { rows, totAct, totRec, rate, country: sel.value || "ארה\"ב / אחרת", N, D, trip };
+  updateShare();
+}
+
+/* ===== שיתוף ===== */
+function pageUrl(){
+  const c = document.querySelector('link[rel="canonical"]');
+  return /yaar\.biz/.test(location.hostname) ? location.href.split("#")[0] : (c ? c.href : location.href);
+}
+const SHARE_TEXT = 'מחשבון חינמי לעצמאים: כמה מהוצאות הנסיעה לחו"ל מוכרות למס לפי תקרות 2026 — מבית יער צפון';
+function waLink(text){
+  return CONFIG.WA_PHONE ? `https://wa.me/${CONFIG.WA_PHONE}?text=${encodeURIComponent(text)}` : null;
+}
+function updateShare(){
+  const url = pageUrl();
+  $("shareFb").href = "https://www.facebook.com/sharer/sharer.php?u=" + encodeURIComponent(url);
+  $("shareWa").href = "https://wa.me/?text=" + encodeURIComponent(SHARE_TEXT + "\n" + url);
+  $("ctaWa").href = waLink("שלום, הגעתי ממחשבון הוצאות נסיעה לחו\"ל באתר ואשמח לייעוץ.") || CONFIG.CONTACT_URL;
+}
+function summaryText(){
+  if (!last) return "";
+  const lines = last.rows.filter(r => r[1] || r[2]).map(r => `• ${r[0]}: בפועל ${fUsd(r[1])} | מוכר ${fUsd(r[2])}`);
+  return `שלום, אשמח לבדיקת דוח נסיעה לחו"ל:\nיעד: ${last.country}\n${last.trip.total ? `תאריכים: ${fDate(last.trip.dep)}–${fDate(last.trip.ret)} (${last.trip.total} ימים, מתוכם ${last.trip.biz} עסקיים)\n` : ""}לילות במלון: ${last.N}\n${lines.join("\n")}\nסה"כ מוכר: ${fUsd(last.totRec)} (≈${fIls(last.totRec*last.rate)})\nשער דולר בחישוב: ${last.rate} ₪`;
+}
+$("btnConsult").addEventListener("click", () => {
+  const link = waLink(summaryText());
+  if (link) window.open(link, "_blank", "noopener");
+  else location.href = CONFIG.CONTACT_URL;
+});
+$("btnPrint").addEventListener("click", () => window.print());
+$("btnCopy").addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(pageUrl()); toast("הקישור הועתק"); }
+  catch(e){ toast("לא ניתן להעתיק — העתיקו מסרגל הכתובת"); }
+});
+function toast(t){ const el=$("toast"); el.textContent=t; el.classList.add("on"); setTimeout(()=>el.classList.remove("on"),1800); }
+
+document.querySelectorAll("input,select").forEach(el => el.addEventListener("input", calc));
+calc();
+</script>
+</body>
+</html>
