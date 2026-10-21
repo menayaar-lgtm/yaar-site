@@ -244,7 +244,7 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
       <div class="sec">הכנסות</div>
       <div class="ln"><span class="tap" tabindex="0" data-open="dProfit">עסק או משלח יד <small>רווח לפני מס</small></span><input type="number" id="profit" value="300000" step="1000"><span class="st" id="sProfit"></span></div>
       <div class="ln"><span class="tap" tabindex="0" data-open="dSalary">משכורת כשכיר <small>ברוטו</small></span><input type="number" id="salary" value="0" step="1000"><span class="st" id="sSalary"></span></div>
-      <div class="ln"><span>תגמולי מילואים</span><input type="number" id="milPay" value="0" step="500"><span class="st"></span></div>
+      <div class="ln"><span class="tap" tabindex="0" data-open="dMil">תגמולי מילואים</span><input type="number" id="milPay" value="0" step="500"><span class="st" id="sMil"></span></div>
       <div class="ln"><span class="tap" tabindex="0" data-open="dRent">שכר דירה למגורים</span><input type="number" id="rent" value="0" step="1000"><span class="st" id="sRent"></span></div>
       <div class="ln"><span class="tap" tabindex="0" data-open="dSolar">מתקן סולארי</span><input type="number" id="solar" value="0" step="500"><span class="st" id="sSolar"></span></div>
       <div class="ln"><span class="tap" tabindex="0" data-open="dCap">הכנסה הונית</span><input type="number" id="cap" value="0" step="1000"><span class="st" id="sCap"></span></div>
@@ -431,6 +431,19 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
     <div class="fld"><label>מס שנוכה במקור</label><input type="number" id="capWh" value="0" step="500"></div>
   </div>
   <p class="note">25% ליחיד, 30% לבעל מניות מהותי בדיבידנד. הכנסות אלה נכללות בבסיס מס יסף וחשופות לתוספת של 2% מעל התקרה.</p>
+</div><div class="mf"><button class="btn" data-close>סגור</button></div></dialog>
+
+<dialog id="dMil" style="max-width:580px"><h3>תגמולי מילואים<button data-close>×</button></h3><div class="mb">
+  <div class="fld"><label>אופן קבלת התגמול</label><select id="milMode">
+    <option value="self">תביעה אישית כעצמאי — לא נוכו דמי ביטוח</option>
+    <option value="emp">דרך המעסיק — נוכו ביטוח לאומי ובריאות</option>
+    <option value="selfEmp">תביעה אישית כשכיר — נוכתה בריאות בלבד</option>
+  </select></div>
+  <p class="note" id="milPayInfo"></p>
+  <p class="note">המוסד לביטוח לאומי מנכה מס הכנסה מהתגמול לפי לוח הניכויים לעובדים יומיים,
+  אך דמי ביטוח לאומי ובריאות אינם מנוכים במקור מעצמאי שהגיש תביעה אישית — הם נגבים בחישוב הסופי לאחר קבלת השומה.
+  לכן התגמול נכלל כאן בבסיס דמי הביטוח. לשכיר שהתגמול שולם לו דרך המעסיק נוכו דמי הביטוח כמו ממשכורת,
+  ובתביעה אישית של שכיר נוכתה בריאות בלבד.</p>
 </div><div class="mf"><button class="btn" data-close>סגור</button></div></dialog>
 
 <dialog id="dOther"><h3>הכנסות ומענקים<button data-close>×</button></h3><div class="mb">
@@ -737,12 +750,13 @@ const num = id => {
   const e=$(id); const v=parseFloat(e&&e.value); return isNaN(v)?0:v;
 };
 /* מריץ את המנוע עם מעמד הגדרה חלופי (עונה / אינו עונה), בלי לגעת במסך */
-function niAtDef(v){
-  const el=$('niDefSel'); if(!el) return null;
+function engineWith(id, v){
+  const el=$(id); if(!el) return null;
   const old=el.value; el.value=v; SILENT=true;
   let r=null; try{ r=update(); } finally { SILENT=false; el.value=old; }
   return r;
 }
+const niAtDef = v => engineWith('niDefSel', v);
 /* מריץ את מנוע החישוב עם ערך הפקדה חלופי, בלי לגעת במסך */
 function taxAt(ov){
   OV=ov; SILENT=true;
@@ -1074,9 +1088,14 @@ function update(){
   const nqMinA = (niSt==='nq' && salary<=0 && $('nqMinApply').value==='1') ? num('nqMin')*12 : 0;
   const niDedR = num('niDedRate')/100;
   const empNi = niOn(salM,0,num('eLow'),num('eHigh'));
-  const niPre = Math.max(0, profit
-    - ($('niKhReduces').value==='1' ? khDeduction : 0)
-    - ($('niPensReduces').value==='1' ? pensDeduction : 0));
+  /* תגמולי מילואים: אין ניכוי במקור בתביעה אישית של עצמאי — הם נגבים בשומה,
+     ולכן התגמול נכלל בבסיס דמי הביטוח (ובבסיס הבריאות, אלא אם זו כבר נוכתה) */
+  const milMode = $('milMode').value;
+  const milInNi = milMode==='emp' ? 0 : milPay;
+  const milInHe = milMode==='self' ? milPay : 0;
+  const niDeds = ($('niKhReduces').value==='1' ? khDeduction : 0)
+               + ($('niPensReduces').value==='1' ? pensDeduction : 0);
+  const niPre = Math.max(0, profit + milInNi - niDeds);
   let niBase = Math.max(niPre, num('niMin')), selfNi={total:0,low:0,high:0}, selfHe={total:0};
   for(let i=0;i<60;i++){
     selfNi = niSelf(niBase/12);
@@ -1087,7 +1106,8 @@ function update(){
     niBase=nb;
   }
   selfNi = niSelf(niBase/12);
-  selfHe = heSelf(niBase/12);
+  const heBase = Math.max(0, niBase - (milInNi - milInHe));
+  selfHe = heSelf(heBase/12);
   let niFloored = false;
   if(nqMinA>0 && selfNi.total + selfHe.total < nqMinA - 0.5){
     niFloored = true;
@@ -1278,6 +1298,23 @@ function update(){
   html('sSolar', solar>0 ? 'מסלול <b>'+TR[solarTrack]+'</b>' : '');
   html('sCap', cap>0 ? num('capRate')+'% · מס '+money(capTax) : '');
   html('sOther', otherPersonal>0 ? 'מיגיעה אישית' : '');
+  {
+    const alt = milPay>0 ? engineWith('milMode','emp') : null;
+    const milNiCost = alt ? Math.max(0, niTotal - alt.niTotal) : 0;
+    html('sMil', milPay>0
+      ? (milMode==='emp' ? 'נוכה במקור'
+         : 'ב״ל <b>'+money(milNiCost)+'</b>') : '');
+    $('milPayInfo').innerHTML = milPay>0
+      ? (milMode==='emp'
+          ? 'התגמול ('+money(milPay)+') שולם דרך המעסיק ודמי הביטוח נוכו ממנו כמו ממשכורת — '+
+            'ולכן הוא אינו נכלל כאן בבסיס דמי הביטוח כעצמאי. במס הכנסה הוא חייב ככל הכנסה מיגיעה אישית.'
+          : 'התגמול ('+money(milPay)+') נכלל בבסיס דמי הביטוח'+
+            (milMode==='selfEmp' ? ' לעניין ביטוח לאומי בלבד, מאחר שדמי הבריאות כבר נוכו מהתגמול' : ' ובבסיס דמי הבריאות')+
+            '.<br>התוספת לחבות: <b>'+money(milNiCost)+'</b> לשנה'+
+            (milNiCost>0 ? ' — ומתוכה '+num('niDedRate')+'% מרכיב הביטוח הלאומי מוכרים כניכוי לפי ס׳ 47א.' : '.'))
+      : 'מזינים את סך תגמולי המילואים שהתקבלו בשנת המס. המוסד לביטוח לאומי מנכה מהם מס הכנסה, '+
+        'אך לא דמי ביטוח לאומי ובריאות כשהתגמול שולם לעצמאי בתביעה אישית.';
+  }
   html('sCp', cpValue>0 ? (CP_EDITED?'ידני · ':'')+'זיכוי <b>'+money(cpValue)+'</b>' : '');
   {
     const d = Math.floor(Math.max(0, num('milDays')));
@@ -1479,9 +1516,7 @@ function update(){
   /* --- חישוב הפוך: מהמקדמה החודשית אל הרווח שיש להצהיר עליו --- */
   /* מחזיר את דמי הביטוח השנתיים עבור רווח מוצהר, כולל החישוב המעגלי של ניכוי ה-52% */
   const niTotalForProfit = p => {
-    const pre = Math.max(0, p
-      - ($('niKhReduces').value==='1' ? khDeduction : 0)
-      - ($('niPensReduces').value==='1' ? pensDeduction : 0));
+    const pre = Math.max(0, p + milInNi - niDeds);
     let base = Math.max(pre, num('niMin')), r = {total:0};
     for(let i=0;i<60;i++){
       r = niSelf(base/12);
@@ -1492,7 +1527,7 @@ function update(){
       base=nb;
     }
     r = niSelf(base/12);
-    let h = heSelf(base/12).total, nn = r.total;
+    let h = heSelf(Math.max(0, base - (milInNi - milInHe))/12).total, nn = r.total;
     if(nqMinA>0 && nn + h < nqMinA - 0.5){ nn = nqMinA*143/266; h = nqMinA*123/266; }
     return {total: nn + h, ni: nn, he: h, base: base};
   };
@@ -1612,7 +1647,11 @@ function update(){
     ((khDeduction||pensDeduction) ? ', בתוספת הפחתת ההפקדות מבסיס החיוב' : '')+'.'+
     (salary?' המשכורת ממצה תחילה את המדרגה המופחתת.':'')+
     (otherPersonal>0 ? '<br>מענקים והכנסות אחרות ('+money(otherPersonal)+') אינם נכללים בבסיס דמי הביטוח כעצמאי '+
-      'ואינם מזיזים את המדרגה המופחתת או את תקרת החיוב — הם משפיעים על מס ההכנסה בלבד.' : '');
+      'ואינם מזיזים את המדרגה המופחתת או את תקרת החיוב — הם משפיעים על מס ההכנסה בלבד.' : '')+
+    (milPay>0 ? '<br>תגמולי מילואים ('+money(milPay)+'): '+
+      (milMode==='emp' ? 'שולמו דרך המעסיק ודמי הביטוח נוכו במקור — אינם נכללים בבסיס.'
+       : milMode==='selfEmp' ? 'תביעה אישית כשכיר — נוכתה בריאות בלבד, ולכן התגמול נכלל בבסיס הביטוח הלאומי ולא בבסיס הבריאות.'
+       : 'בתביעה אישית של עצמאי לא מנוכים דמי ביטוח במקור, ולכן התגמול נכלל בבסיס וייגבה בחישוב הסופי לפי השומה.') : '');
 
   LAST={profit,taxableTotal,totalTax,niTotal,balTax,balNi,balAll,net,eff,margTotal,cpTotal,parts,rows,nr};
   buildReport();
@@ -1849,7 +1888,7 @@ function okToOverwrite(name, where){
   return confirm('כבר קיים תכנון בשם "'+name+'". לדרוס אותו?');
 }
 
-const BUILD = 'v37';
+const BUILD = 'v38';
 $('buildTag').textContent = ' · ' + BUILD + ' · ' + (API_BASE ? 'פנימי' : 'ציבורי');
 
 /* שמירה מקומית — קיימת בשתי הגרסאות */
