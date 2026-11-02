@@ -684,7 +684,7 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
     <div class="acts" style="margin-top:8px"><button class="btn" id="loginBtn" type="button">התחברות</button></div>
   </div>
   <div class="leg" style="display:flex;align-items:center;gap:8px">
-    <span>התכנונים שלי</span>
+    <span id="planListTitle">התכנונים שלי</span>
     <input type="search" id="planSearch" placeholder="חיפוש לפי שם או הערה…" autocomplete="off"
       style="margin-inline-start:auto;font-weight:400;font-size:12.5px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;width:190px;font-family:inherit">
   </div>
@@ -1808,7 +1808,8 @@ function refreshAuth(){
     $('authBox').innerHTML = me
       ? (me.name||'מחובר') + ' · <a href="#" data-logout>יציאה</a>'
       : '<a href="#" data-login>כניסה</a>';
-    if(ok && me) planMsg('מחובר כ־' + (me.name||'') + '. תכנונים שיישמרו במערכת יהיו זמינים מכל מחשב.');
+    if(ok && me) planMsg('מחובר כ־' + (me.name||'') + '. תכנונים שנשמרים במערכת משותפים לכל צוות המשרד וזמינים מכל מחשב.');
+    txt('planListTitle', (ok && me) ? 'תכנוני המשרד' : 'התכנונים שלי');
   } else {
     $('authBox').innerHTML = '<a href="'+INTERNAL_URL+'">כניסת צוות ←</a>';
   }
@@ -1821,7 +1822,7 @@ let PLAN_ROWS = [];
 function renderPlans(){
   const q = ($('planSearch').value||'').trim().toLowerCase();
   const rows = q
-    ? PLAN_ROWS.filter(p => (p.name+' '+(p.note||'')).toLowerCase().includes(q))
+    ? PLAN_ROWS.filter(p => (p.name+' '+(p.note||'')+' '+(p.by||'')).toLowerCase().includes(q))
     : PLAN_ROWS;
   if(!PLAN_ROWS.length){
     $('planList').innerHTML = '<tr><td style="color:var(--muted)">אין עדיין תכנונים שמורים.</td></tr>';
@@ -1836,7 +1837,8 @@ function renderPlans(){
       ? '<span style="color:var(--sage-deep);font-weight:600">מערכת</span>'
       : '<span style="color:var(--muted)">מחשב זה</span>';
     const ref = p.where==='server' ? 'data-srv="'+p.id+'"' : 'data-loc="'+encodeURIComponent(p.name)+'"';
-    return '<tr><td>'+p.name+(p.note?' <span style="color:var(--muted)">· '+p.note+'</span>':'')+
+    const by = p.by ? ' <span style="color:var(--muted)">· '+p.by+'</span>' : '';
+    return '<tr><td>'+p.name+(p.note?' <span style="color:var(--muted)">· '+p.note+'</span>':'')+by+
       '</td><td class="n" style="font-size:11.5px">'+tag+'</td>'+
       '<td class="n" style="color:var(--muted);font-size:11.5px">'+new Date(p.updated).toLocaleDateString('he-IL')+'</td>'+
       '<td class="n"><button class="btn o" style="padding:3px 9px;font-size:12px" data-open-plan '+ref+'>פתח</button> '+
@@ -1852,7 +1854,8 @@ async function loadPlans(){
   Object.keys(all).forEach(n => rows.push({ where:'local', name:n, note:all[n].note, updated:all[n].updated }));
   if(API_BASE && isAdmin()){
     try{
-      (await api('GET','')).forEach(p => rows.push({ where:'server', id:p.id, name:p.client_name, note:p.note, updated:p.updated_at }));
+      (await api('GET','')).forEach(p => rows.push({ where:'server', id:p.id, name:p.client_name,
+        note:p.note, updated:p.updated_at, by:p.saved_by || '' }));
     }catch(e){ planMsg(e.message, true); }
   }
   rows.sort((a,b)=> new Date(b.updated) - new Date(a.updated));
@@ -1888,7 +1891,7 @@ function okToOverwrite(name, where){
   return confirm('כבר קיים תכנון בשם "'+name+'". לדרוס אותו?');
 }
 
-const BUILD = 'v38';
+const BUILD = 'v39';
 $('buildTag').textContent = ' · ' + BUILD + ' · ' + (API_BASE ? 'פנימי' : 'ציבורי');
 
 /* שמירה מקומית — קיימת בשתי הגרסאות */
