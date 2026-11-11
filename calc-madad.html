@@ -1,0 +1,946 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>מחשבון הצמדה למדד המחירים לצרכן | יער צפון</title>
+<meta name="description" content="מחשבון הצמדה למדד המחירים לצרכן לפי נתוני הלמ״ס בזמן אמת — מדד ידוע או מדד בגין, אחוז הצמדה, וכמה סכומים בחישוב אחד. כלי חינמי של יער צפון.">
+<link rel="canonical" href="https://www.yaar.biz/calc-madad.html">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"מחשבון הצמדה למדד","url":"https://www.yaar.biz/calc-madad.html","applicationCategory":"FinanceApplication","operatingSystem":"Any","inLanguage":"he","offers":{"@type":"Offer","price":"0","priceCurrency":"ILS"},"provider":{"@type":"AccountingService","name":"יער צפון","url":"https://www.yaar.biz","telephone":"+972-4-6762466"}}
+</script>
+<style>
+  :root {
+    /* יער צפון brand palette — light, professional, clean */
+    --bg:        #f5f7f2;
+    --surface:   #ffffff;
+    --surface2:  #f0f3ec;
+    --border:    #dde3d8;
+    --border2:   #c8d1c0;
+
+    /* Primary: forest green */
+    --primary:       #2d5a27;
+    --primary-light: #3d7a35;
+    --primary-dim:   rgba(45,90,39,0.08);
+    --primary-mid:   rgba(45,90,39,0.15);
+
+    /* Accent: warm gold/ochre */
+    --accent:     #8a6e2f;
+    --accent-dim: rgba(138,110,47,0.10);
+
+    --text:      #1a2e17;
+    --text-mid:  #3d5239;
+    --text-dim:  #7a8f74;
+
+    --green-ok:  #2a7a3b;
+    --green-dim: rgba(42,122,59,0.10);
+    --red:       #c0392b;
+    --red-dim:   rgba(192,57,43,0.10);
+
+    /* Period colors */
+    --p0: #2d5a27; --p0-dim: rgba(45,90,39,0.10);
+    --p1: #8a6e2f; --p1-dim: rgba(138,110,47,0.10);
+    --p2: #2a6e8a; --p2-dim: rgba(42,110,138,0.10);
+    --p3: #6e2a8a; --p3-dim: rgba(110,42,138,0.10);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Heebo', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 0 60px;
+  }
+
+  /* ─── Header bar ─── */
+  .site-header {
+    width: 100%;
+    background: var(--primary);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 58px;
+    margin-bottom: 0;
+  }
+
+  .site-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+  }
+
+  .logo-icon {
+    width: 34px;
+    height: 34px;
+  }
+
+  .logo-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+
+  .logo-name {
+    font-size: 17px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: 0.3px;
+  }
+
+  .logo-tagline {
+    font-size: 10px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.65);
+    letter-spacing: 0.2px;
+  }
+
+  .header-right {
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .header-right a { color: rgba(255,255,255,0.75); text-decoration: none; }
+  .header-right a:hover { color: #fff; }
+
+  /* ─── Hero strip ─── */
+  .hero {
+    width: 100%;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    padding: 36px 24px 32px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 80%, rgba(255,255,255,0.06) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255,255,255,0.06) 0%, transparent 50%);
+    pointer-events: none;
+  }
+
+  .hero-badge {
+    display: inline-block;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    color: rgba(255,255,255,0.9);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    padding: 4px 14px;
+    border-radius: 20px;
+    margin-bottom: 14px;
+  }
+
+  .hero h1 {
+    font-size: clamp(24px, 4.5vw, 38px);
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.15;
+    margin-bottom: 8px;
+  }
+
+  .hero p {
+    font-size: 14px;
+    font-weight: 400;
+    color: rgba(255,255,255,0.72);
+  }
+
+  /* ─── Main content ─── */
+  .container {
+    width: 100%;
+    max-width: 700px;
+    padding: 32px 16px 0;
+  }
+
+  /* ─── Cards ─── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(45,90,39,0.06);
+  }
+
+  .card-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--primary);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title::before {
+    content: '';
+    display: block;
+    width: 3px;
+    height: 14px;
+    background: var(--primary);
+    border-radius: 2px;
+  }
+
+  /* ─── Form ─── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+  }
+
+  @media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.full { grid-column: 1 / -1; }
+
+  label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-mid);
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
+
+  input, select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-family: 'Heebo', sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%;
+    direction: rtl;
+  }
+
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px var(--primary-dim);
+  }
+
+  select option { background: #fff; }
+
+  .chip-display {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-size: 14px;
+    color: var(--text-dim);
+    min-height: 38px;
+    display: flex;
+    align-items: center;
+  }
+
+  /* ─── Toggle ─── */
+  .toggle-group {
+    display: flex;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .toggle-group button {
+    flex: 1;
+    padding: 9px;
+    background: var(--surface2);
+    border: none;
+    color: var(--text-dim);
+    font-family: 'Heebo', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .toggle-group button.active {
+    background: var(--primary-dim);
+    color: var(--primary);
+    font-weight: 700;
+  }
+
+  .toggle-group button:not(:last-child) { border-left: 1px solid var(--border); }
+
+  /* ─── Calc button ─── */
+  .calc-btn {
+    width: 100%;
+    padding: 13px;
+    background: var(--primary);
+    border: none;
+    border-radius: 10px;
+    color: #fff;
+    font-family: 'Heebo', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+
+  .calc-btn:hover { background: var(--primary-light); box-shadow: 0 4px 16px rgba(45,90,39,0.25); transform: translateY(-1px); }
+  .calc-btn:active { transform: translateY(0); }
+
+  .error-msg {
+    background: var(--red-dim);
+    border: 1px solid rgba(192,57,43,0.25);
+    border-radius: 8px;
+    padding: 11px 14px;
+    font-size: 13px;
+    color: var(--red);
+    display: none;
+    margin-top: 10px;
+  }
+
+  /* ─── Results ─── */
+  .results { display: none; animation: fadeUp 0.35s ease; margin-top: 16px; }
+  .results.show { display: block; }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Main result */
+  .result-main {
+    background: var(--primary);
+    border-radius: 12px;
+    padding: 28px 24px;
+    text-align: center;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .result-main::before {
+    content: '';
+    position: absolute;
+    top: -30px; left: -30px;
+    width: 160px; height: 160px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+  }
+
+  .result-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.65); margin-bottom: 8px; }
+  .result-number { font-size: clamp(52px, 10vw, 76px); font-weight: 900; color: #fff; line-height: 1; margin-bottom: 4px; }
+  .result-unit { font-size: 17px; color: rgba(255,255,255,0.65); font-weight: 400; }
+  .result-value { margin-top: 16px; font-size: 20px; font-weight: 700; color: #b8f0a8; }
+  .result-value span { font-size: 12px; font-weight: 400; color: rgba(255,255,255,0.55); display: block; margin-top: 3px; }
+
+  /* Tables */
+  .table-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 4px rgba(45,90,39,0.05);
+  }
+
+  .table-header {
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--surface2);
+  }
+
+  /* Note */
+  .note {
+    background: var(--accent-dim);
+    border: 1px solid rgba(138,110,47,0.2);
+    border-right: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 12px;
+    color: var(--text-mid);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+
+  .note strong { color: var(--accent); }
+
+  /* Footer bar */
+  .site-footer {
+    width: 100%;
+    background: var(--primary);
+    padding: 16px 24px;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(255,255,255,0.55);
+    margin-top: 40px;
+  }
+
+  .site-footer a { color: rgba(255,255,255,0.7); text-decoration: none; }
+  .site-footer a:hover { color: #fff; }
+  /* ─── Indexation calculator additions ─── */
+  .skip-link { position:absolute; right:-9999px; top:8px; background:#fff; color:var(--primary); padding:8px 14px; border-radius:6px; font-weight:700; z-index:10; }
+  .skip-link:focus { right:12px; }
+
+  label { text-transform:none; font-size:12px; }
+  .field-hint { font-size:11px; color:var(--text-dim); line-height:1.5; }
+  input.num { direction:ltr; text-align:right; font-variant-numeric:tabular-nums; }
+  .toggle-group button:focus-visible, .calc-btn:focus-visible, .add-rate-btn:focus-visible,
+  .row-remove:focus-visible, .ghost-btn:focus-visible, summary:focus-visible { outline:2px solid var(--primary); outline-offset:2px; }
+
+  /* Amount rows */
+  .amt-row {
+    display:grid;
+    grid-template-columns: 1.3fr 1.2fr 1.1fr 34px;
+    gap:10px;
+    align-items:end;
+    padding:12px 0;
+    border-top:1px dashed var(--border);
+  }
+  .amt-row:first-child { border-top:none; padding-top:0; }
+  @media (max-width: 560px) {
+    .amt-row { grid-template-columns: 1fr 1fr; }
+    .amt-row .f-label { grid-column: 1 / -1; }
+    .amt-row .row-remove { grid-column: 1 / -1; justify-self:start; width:auto; height:30px; padding:0 12px; font-size:12px; }
+    .amt-row .row-remove::after { content:' הסרה'; font-family:'Heebo',sans-serif; }
+  }
+  .row-remove {
+    height:38px; width:34px;
+    background:var(--red-dim); border:1px solid rgba(192,57,43,0.2); border-radius:7px;
+    color:var(--red); font-size:15px; cursor:pointer;
+  }
+  .row-remove:hover { background:rgba(192,57,43,0.18); }
+  .row-remove[hidden] { display:none; }
+
+  .add-rate-btn {
+    background:none; border:1.5px dashed var(--border2); border-radius:8px; color:var(--text-dim);
+    font-family:'Heebo',sans-serif; font-size:13px; padding:8px 14px; cursor:pointer; width:100%;
+    margin-top:12px; transition:all 0.2s; text-align:right;
+  }
+  .add-rate-btn:hover { border-color:var(--primary); color:var(--primary); }
+
+  .calc-btn[disabled] { opacity:.65; cursor:wait; transform:none; box-shadow:none; }
+
+  .result-number.money { font-size: clamp(30px, 7vw, 50px); direction:ltr; unicode-bidi:isolate; }
+  .result-sub { margin-top:14px; font-size:15px; color:#b8f0a8; font-weight:700; }
+  .result-sub span { display:block; font-size:12px; font-weight:400; color:rgba(255,255,255,0.6); margin-top:3px; }
+
+  .breakdown { display:grid; grid-template-columns: repeat(4, 1fr); gap:10px; margin-bottom:16px; }
+  @media (max-width: 560px) { .breakdown { grid-template-columns: 1fr 1fr; } }
+  .breakdown-item { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 10px; text-align:center; box-shadow:0 1px 3px rgba(45,90,39,0.05); }
+  .bi-val { font-size:17px; font-weight:700; color:var(--primary); margin-bottom:3px; direction:ltr; unicode-bidi:isolate; }
+  .bi-label { font-size:11px; color:var(--text-dim); }
+
+  .table-scroll { overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; }
+  th, td { padding:10px 12px; text-align:right; font-size:13px; white-space:nowrap; }
+  th { color:var(--text-dim); font-weight:600; background:var(--surface2); font-size:11px; border-bottom:1px solid var(--border); }
+  td { border-top:1px solid var(--border); font-variant-numeric:tabular-nums; }
+  td.n { direction:ltr; text-align:right; }
+  tr.total td { background:var(--primary-dim); color:var(--primary); font-weight:700; }
+  .table-actions { display:flex; gap:8px; margin-right:auto; }
+  .ghost-btn {
+    background:var(--surface); border:1px solid var(--border2); border-radius:6px;
+    padding:4px 10px; font-family:'Heebo',sans-serif; font-size:12px; color:var(--primary); cursor:pointer;
+    letter-spacing:0; text-transform:none; font-weight:600;
+  }
+  .ghost-btn:hover { border-color:var(--primary); }
+
+  /* Per-row detail, modelled on the CBS calculator output */
+  details.detail { background:var(--surface); border:1px solid var(--border); border-radius:12px; margin-bottom:10px; overflow:hidden; }
+  details.detail summary { cursor:pointer; padding:12px 16px; font-weight:700; font-size:14px; color:var(--primary); background:var(--surface2); list-style:none; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  details.detail summary::-webkit-details-marker { display:none; }
+  details.detail summary::after { content:'▾'; color:var(--text-dim); }
+  details.detail[open] summary::after { content:'▴'; }
+  .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:0; }
+  @media (max-width: 560px) { .detail-grid { grid-template-columns:1fr; } }
+  .detail-col { padding:14px 16px; }
+  .detail-col + .detail-col { border-right:1px solid var(--border); }
+  @media (max-width: 560px) { .detail-col + .detail-col { border-right:none; border-top:1px solid var(--border); } }
+  .detail-col h4 { font-size:12px; color:var(--accent); margin-bottom:8px; font-weight:700; }
+  .kv { display:flex; justify-content:space-between; gap:12px; font-size:13px; padding:3px 0; }
+  .kv span:first-child { color:var(--text-mid); }
+  .kv span:last-child { font-weight:600; direction:ltr; unicode-bidi:isolate; font-variant-numeric:tabular-nums; }
+  .detail-foot { border-top:1px solid var(--border); padding:12px 16px; font-size:12.5px; color:var(--text-mid); line-height:1.7; }
+  .detail-foot b { color:var(--text); }
+
+  .warn { background:var(--accent-dim); border:1px solid rgba(138,110,47,0.25); border-radius:8px; padding:10px 14px; font-size:12.5px; color:var(--text-mid); margin-bottom:12px; line-height:1.6; }
+
+  .note p + p { margin-top:6px; }
+  .cta { text-align:center; margin-top:8px; font-size:13px; color:var(--text-mid); }
+  .cta a { color:var(--primary); font-weight:700; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .results, .calc-btn { animation:none !important; transition:none !important; }
+  }
+
+  @media print {
+    .site-header, .hero, .card, .calc-btn, .table-actions, .cta, .skip-link { display:none !important; }
+    body { background:#fff; }
+    .results { display:block !important; }
+    .result-main { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+</head>
+<body>
+<a class="skip-link" href="#main">דלג לתוכן</a>
+
+<!-- Header -->
+<header class="site-header">
+  <a class="site-logo" href="https://www.yaar.biz" target="_blank">
+    <!-- Tree SVG logo -->
+    <svg class="logo-icon" viewBox="0 0 34 34" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="17" cy="17" r="17" fill="rgba(255,255,255,0.12)"/>
+      <!-- trunk -->
+      <rect x="15.5" y="22" width="3" height="6" rx="1" fill="rgba(255,255,255,0.8)"/>
+      <!-- canopy layers -->
+      <polygon points="17,5 25,18 9,18" fill="rgba(255,255,255,0.9)"/>
+      <polygon points="17,10 24,21 10,21" fill="rgba(255,255,255,0.65)"/>
+    </svg>
+    <div class="logo-text">
+      <span class="logo-name">יער צפון</span>
+      <span class="logo-tagline">כל השירותים הפיננסיים תחת קורת גג אחת</span>
+    </div>
+  </a>
+  <div class="header-right">
+    <a href="tel:046762466">04-6762466</a>
+    <span>·</span>
+    <a href="https://www.yaar.biz" target="_blank">yaar.biz</a>
+  </div>
+</header>
+
+
+<!-- Hero -->
+<div class="hero">
+  <div class="hero-badge">כלי דיגיטלי</div>
+  <h1>מחשבון הצמדה למדד</h1>
+  <p>הצמדת סכומים למדד המחירים לצרכן לפי נתוני הלמ״ס — מדד ידוע או מדד בגין, סכום אחד או כמה סכומים יחד</p>
+</div>
+
+<main class="container" id="main">
+
+  <section class="card" aria-labelledby="t-settings">
+    <h2 class="card-title" id="t-settings">הגדרות החישוב</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label for="index-code">סוג המדד</label>
+        <select id="index-code">
+          <option value="120010" selected>מדד המחירים לצרכן – כללי (חודשי)</option>
+        </select>
+      </div>
+      <div class="field">
+        <span class="lbl" id="mode-lbl" style="font-size:12px;font-weight:600;color:var(--text-mid)">לפי</span>
+        <div class="toggle-group" role="group" aria-labelledby="mode-lbl">
+          <button type="button" class="active" data-mode="known" aria-pressed="true">מדד ידוע</button>
+          <button type="button" data-mode="begin" aria-pressed="false">מדד בגין</button>
+        </div>
+      </div>
+      <div class="field">
+        <label for="to-date">מועד לחישוב</label>
+        <input type="date" id="to-date">
+      </div>
+      <div class="field">
+        <label for="pct">אחוז הצמדה</label>
+        <input type="text" inputmode="decimal" id="pct" class="num" value="100">
+      </div>
+      <div class="field full">
+        <div class="field-hint" id="mode-hint"><b>מדד ידוע</b> — המדד האחרון שפורסם בתאריך (מתפרסם ב-15 לחודש שאחרי). לדוגמה: ב-31/12 הידוע הוא מדד נובמבר.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="t-rows">
+    <h2 class="card-title" id="t-rows">סכומים להצמדה</h2>
+    <div id="rows"></div>
+    <button type="button" class="add-rate-btn" id="add-row">+ הוספת סכום נוסף (למשל פדיון של שנה אחרת)</button>
+  </section>
+
+  <button type="button" class="calc-btn" id="calc">ביצוע חישוב ◀</button>
+  <div class="error-msg" id="error" role="alert"></div>
+
+  <div class="results" id="results" aria-live="polite">
+
+    <div class="result-main">
+      <div class="result-label" id="res-label">סה״כ כולל הפרשי הצמדה</div>
+      <div class="result-number money" id="res-total">—</div>
+      <div class="result-sub" id="res-sub">—</div>
+    </div>
+
+    <div class="breakdown">
+      <div class="breakdown-item"><div class="bi-val" id="bi-orig">—</div><div class="bi-label">סכום מקורי</div></div>
+      <div class="breakdown-item"><div class="bi-val" id="bi-diff">—</div><div class="bi-label">הפרשי הצמדה</div></div>
+      <div class="breakdown-item"><div class="bi-val" id="bi-pct">—</div><div class="bi-label" id="bi-pct-lbl">אחוז השינוי</div></div>
+      <div class="breakdown-item"><div class="bi-val" id="bi-to">—</div><div class="bi-label">מדד קובע</div></div>
+    </div>
+
+    <div id="warns"></div>
+
+    <div class="table-card">
+      <div class="table-header">
+        <span>ריכוז החישוב</span>
+        <div class="table-actions">
+          <button type="button" class="ghost-btn" id="csv">הורדה ל-Excel (CSV)</button>
+          <button type="button" class="ghost-btn" id="print">הדפסה</button>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">תיאור</th>
+              <th scope="col">תאריך בסיס</th>
+              <th scope="col">סכום</th>
+              <th scope="col">מדד בסיס</th>
+              <th scope="col">אחוז השינוי</th>
+              <th scope="col">הפרשי הצמדה</th>
+              <th scope="col">סה״כ צמוד</th>
+            </tr>
+          </thead>
+          <tbody id="sum-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="details"></div>
+
+    <div class="note">
+      <p><strong>איך מחושב:</strong> נתוני המדד נשלפים בזמן אמת מהלמ״ס. אחוז השינוי = מדד קובע ÷ מדד בסיס − 1, כששני המדדים מומרים לבסיס משותף (1951) כדי שאפשר יהיה להשוות בין בסיסים שונים. הפרשי ההצמדה = סכום × אחוז השינוי × אחוז ההצמדה.</p>
+      <p><strong>הבהרה:</strong> כלי עזר אינדיקטיבי בלבד, ואינו מהווה ייעוץ. בהסכם או בפסק דין יש לבדוק איזה מדד נקבע (ידוע או בגין) ומאיזה תאריך.</p>
+    </div>
+    <p class="cta">צריכים חישוב מורכב יותר או ליווי מקצועי? <a href="tel:046762466">04-6762466</a> · <a href="https://www.yaar.biz/#contact">השאירו פרטים</a></p>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <strong style="color:rgba(255,255,255,0.8)">יער צפון</strong> &nbsp;·&nbsp; הנהלת חשבונות וראיית חשבון &nbsp;·&nbsp;
+  א.ת. בני יהודה, דרום הגולן &nbsp;·&nbsp;
+  <a href="tel:046762466">04-6762466</a> &nbsp;·&nbsp;
+  <a href="https://www.yaar.biz" target="_blank">yaar.biz</a>
+</footer>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ── CBS (הלמ"ס) API ──────────────────────────────────────────────
+     The page first calls the same-origin proxy defined in _redirects
+     (/api/cbs/* → https://api.cbs.gov.il/*), which avoids CORS issues.
+     If that is unavailable (e.g. opening the file locally) it falls back
+     to calling the CBS API directly. */
+  var ENDPOINTS = ['/api/cbs/', 'https://api.cbs.gov.il/'];
+  var goodEndpoint = null;
+
+  var mode = 'known';
+  var rowSeq = 0;
+  var lastResults = null;
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ── Formatting helpers ── */
+  function money(n) { return '₪' + n.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function moneyPlain(n) { return n.toLocaleString('he-IL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+  function pct3(x) { return (x * 100).toFixed(3) + '%'; }
+  function parseNum(s) {
+    if (s == null) return NaN;
+    s = String(s).replace(/[,\s₪%]/g, '');
+    if (s === '') return NaN;
+    return Number(s);
+  }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function heDate(isoStr) { var p = isoStr.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }
+  function idxMonth(s) { // CBS returns "2025-4" → "04/2025"
+    if (!s) return '—';
+    var p = String(s).split('-');
+    return pad(Number(p[1])) + '/' + p[0];
+  }
+  function baseLabel(s) {
+    var m = String(s || '').match(/\d{4}/);
+    return m ? 'ממוצע ' + m[0] : (s || '—');
+  }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  /* Which date to send to CBS.
+     The CBS calculator always uses the index KNOWN on the date it receives.
+     For "מדד בגין" (index FOR the month of the date) we send the last day of
+     the following month — by then that month's index has always been
+     published (15th of the following month) and the next one has not. */
+  function apiDate(isoStr) {
+    if (mode === 'known') return isoStr;
+    var p = isoStr.split('-').map(Number);
+    var lastOfNext = new Date(p[0], p[1] + 1, 0); // month p[1] is 0-based "next month"
+    return iso(lastOfNext);
+  }
+  function expectedBeginMonth(isoStr) { var p = isoStr.split('-'); return p[0] + '-' + Number(p[1]); }
+
+  function fetchJSON(url, ms) {
+    var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var t = ctrl ? setTimeout(function () { ctrl.abort(); }, ms) : null;
+    return fetch(url, ctrl ? { signal: ctrl.signal } : {}).then(function (r) {
+      if (t) clearTimeout(t);
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }, function (e) { if (t) clearTimeout(t); throw e; });
+  }
+
+  function cbsCalc(code, fromIso, toIso, value) {
+    var path = 'index/data/calculator/' + code +
+      '?value=' + encodeURIComponent(value) +
+      '&date=' + fromIso + '&toDate=' + toIso +
+      '&format=json&download=false&lang=en';
+    var list = goodEndpoint ? [goodEndpoint] : ENDPOINTS.slice();
+    var i = 0, lastErr;
+    function next() {
+      if (i >= list.length) return Promise.reject(lastErr || new Error('no endpoint'));
+      var base = list[i++];
+      return fetchJSON(base + path, 20000).then(function (j) {
+        if (!j || !j.answer) throw new Error('bad response');
+        goodEndpoint = base;
+        return j.answer;
+      }).catch(function (e) { lastErr = e; return next(); });
+    }
+    return next();
+  }
+
+  /* ── Rows ── */
+  function addRow(label, amount, date) {
+    var id = ++rowSeq;
+    var div = document.createElement('div');
+    div.className = 'amt-row';
+    div.dataset.id = id;
+    div.innerHTML =
+      '<div class="field f-label"><label for="lbl-' + id + '">תיאור (לא חובה)</label>' +
+      '<input type="text" id="lbl-' + id + '" placeholder="למשל: פדיון 2018" value="' + esc(label || '') + '"></div>' +
+      '<div class="field"><label for="amt-' + id + '">סכום להצמדה (₪)</label>' +
+      '<input type="text" inputmode="decimal" class="num amt" id="amt-' + id + '" placeholder="100,000" value="' + esc(amount || '') + '"></div>' +
+      '<div class="field"><label for="dt-' + id + '">תאריך בסיס</label>' +
+      '<input type="date" class="dt" id="dt-' + id + '" value="' + esc(date || '') + '"></div>' +
+      '<button type="button" class="row-remove" aria-label="הסרת שורה">✕</button>';
+    div.querySelector('.row-remove').addEventListener('click', function () { div.remove(); syncRemove(); });
+    var amt = div.querySelector('.amt');
+    amt.addEventListener('blur', function () {
+      var v = parseNum(amt.value);
+      if (!isNaN(v)) amt.value = v.toLocaleString('he-IL', { maximumFractionDigits: 2 });
+    });
+    $('rows').appendChild(div);
+    syncRemove();
+    return div;
+  }
+  function syncRemove() {
+    var rows = $('rows').querySelectorAll('.amt-row');
+    rows.forEach(function (r) { r.querySelector('.row-remove').hidden = rows.length === 1; });
+  }
+
+  function setMode(m) {
+    mode = m;
+    document.querySelectorAll('.toggle-group button').forEach(function (b) {
+      var on = b.dataset.mode === m;
+      b.classList.toggle('active', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    $('mode-hint').innerHTML = m === 'known'
+      ? '<b>מדד ידוע</b> — המדד האחרון שפורסם בתאריך (מתפרסם ב-15 לחודש שאחרי). לדוגמה: ב-31/12 הידוע הוא מדד נובמבר.'
+      : '<b>מדד בגין</b> — המדד של החודש שבו חל התאריך עצמו. לדוגמה: ל-31/12 נלקח מדד דצמבר, שמתפרסם רק ב-15 בינואר.';
+  }
+
+  function showError(msg) { var e = $('error'); e.textContent = msg; e.style.display = 'block'; }
+
+  /* ── Main calculation ── */
+  function calculate() {
+    $('error').style.display = 'none';
+    var code = $('index-code').value;
+    var toIso = $('to-date').value;
+    var pct = parseNum($('pct').value);
+    if (!toIso) return showError('יש לבחור מועד לחישוב.');
+    if (isNaN(pct) || pct <= 0 || pct > 1000) return showError('אחוז ההצמדה אינו תקין.');
+
+    var rows = [];
+    var bad = null;
+    $('rows').querySelectorAll('.amt-row').forEach(function (r, i) {
+      if (bad) return;
+      var amount = parseNum(r.querySelector('.amt').value);
+      var date = r.querySelector('.dt').value;
+      var label = r.querySelector('input[type=text]').value.trim();
+      if (isNaN(amount) && !date && $('rows').children.length > 1) return; // skip fully empty extra rows
+      if (isNaN(amount) || amount <= 0) { bad = 'בשורה ' + (i + 1) + ' חסר סכום תקין.'; return; }
+      if (!date) { bad = 'בשורה ' + (i + 1) + ' חסר תאריך בסיס.'; return; }
+      if (date >= toIso) { bad = 'בשורה ' + (i + 1) + ' תאריך הבסיס צריך להיות לפני מועד החישוב.'; return; }
+      if (date < '1951-01-01') { bad = 'בשורה ' + (i + 1) + ' תאריך הבסיס מוקדם מדי.'; return; }
+      rows.push({ label: label || ('סכום ' + (i + 1)), amount: amount, date: date });
+    });
+    if (bad) return showError(bad);
+    if (!rows.length) return showError('יש להזין לפחות סכום אחד.');
+
+    var btn = $('calc');
+    btn.disabled = true; btn.textContent = 'מושך נתונים מהלמ״ס…';
+    var toApi = apiDate(toIso);
+
+    var calls = rows.map(function (r) { return cbsCalc(code, apiDate(r.date), toApi, r.amount); });
+    // One extra call only to learn the base year of the determining index (for display).
+    var toBaseCall = cbsCalc(code, toApi, toApi, 100).catch(function () { return null; });
+
+    Promise.all(calls).then(function (answers) {
+      return toBaseCall.then(function (tb) { render(rows, answers, tb, toIso, pct); });
+    }).catch(function () {
+      showError('לא הצלחנו לקבל נתונים מהלמ״ס. ייתכן שהמדד למועד שנבחר עדיין לא פורסם, או שאתר הלמ״ס אינו זמין כרגע. נסו שוב בעוד רגע.');
+    }).then(function () {
+      btn.disabled = false; btn.textContent = 'ביצוע חישוב ◀';
+    });
+  }
+
+  function chainValues(a) {
+    // CBS returns the two indices chained to base 1951 as mult_min / mult_max.
+    // Assign them by checking which ratio reproduces CBS's own result.
+    var r = a.from_value ? a.to_value / a.from_value : NaN;
+    if (a.mult_min && a.mult_max) {
+      var r1 = a.mult_max / a.mult_min, r2 = a.mult_min / a.mult_max;
+      if (isNaN(r) || Math.abs(r1 - r) <= Math.abs(r2 - r)) return { from: a.mult_min, to: a.mult_max, ratio: r1 };
+      return { from: a.mult_max, to: a.mult_min, ratio: r2 };
+    }
+    return { from: null, to: null, ratio: r };
+  }
+
+  function render(rows, answers, toBase, toIso, pct) {
+    var results = rows.map(function (r, i) {
+      var a = answers[i];
+      var c = chainValues(a);
+      var change = c.ratio - 1;
+      var diff = Math.round(r.amount * change * (pct / 100) * 100) / 100;
+      return {
+        label: r.label, date: r.date, amount: r.amount,
+        fromMonth: a.from_index_date, fromVal: a.from_index_value, fromBase: a.base_year, from51: c.from,
+        toMonth: a.to_index_date, toVal: a.to_index_value, to51: c.to,
+        change: change, diff: diff, total: Math.round((r.amount + diff) * 100) / 100
+      };
+    });
+    var toBaseLbl = toBase ? baseLabel(toBase.base_year) : '';
+    var totAmt = 0, totDiff = 0, totAll = 0;
+    results.forEach(function (x) { totAmt += x.amount; totDiff += x.diff; totAll += x.total; });
+    totAmt = Math.round(totAmt * 100) / 100; totDiff = Math.round(totDiff * 100) / 100; totAll = Math.round(totAll * 100) / 100;
+    var first = results[0];
+    var single = results.length === 1;
+
+    $('res-total').textContent = money(totAll);
+    $('res-sub').innerHTML = (totDiff >= 0 ? '+' : '') + esc(money(totDiff)) +
+      ' <span>הפרשי הצמדה עד ' + heDate(toIso) + ' · לפי ' + (mode === 'known' ? 'מדד ידוע' : 'מדד בגין') + (pct !== 100 ? ' · ' + pct + '% הצמדה' : '') + '</span>';
+    $('bi-orig').textContent = money(totAmt);
+    $('bi-diff').textContent = money(totDiff);
+    $('bi-pct').textContent = single ? pct3(first.change) : results.length + ' סכומים';
+    $('bi-pct-lbl').textContent = single ? 'אחוז השינוי' : 'מספר שורות';
+    $('bi-to').textContent = idxMonth(first.toMonth);
+
+    // Warnings
+    var w = [];
+    if (mode === 'begin' && String(first.toMonth) !== expectedBeginMonth(toIso)) {
+      w.push('המדד בגין ' + idxMonth(expectedBeginMonth(toIso)) + ' טרם פורסם. החישוב נעשה לפי המדד האחרון שפורסם (' + idxMonth(first.toMonth) + ').');
+    }
+    if (mode === 'known' && toIso > iso(new Date())) {
+      w.push('מועד החישוב עתידי, לכן החישוב נעשה לפי המדד האחרון שפורסם עד היום (' + idxMonth(first.toMonth) + ').');
+    }
+    results.forEach(function (x) {
+      if (x.change < 0) w.push('ב"' + esc(x.label) + '" המדד ירד בתקופה (אחוז שינוי שלילי). רוב ההסכמים קובעים שהסכום לא ירד מתחת לקרן — בדקו את ההסכם.');
+    });
+    $('warns').innerHTML = w.map(function (t) { return '<div class="warn">' + t + '</div>'; }).join('');
+
+    // Summary table
+    var html = results.map(function (x) {
+      return '<tr><td>' + esc(x.label) + '</td><td>' + heDate(x.date) + '</td>' +
+        '<td class="n">' + moneyPlain(x.amount) + '</td>' +
+        '<td>' + idxMonth(x.fromMonth) + '</td>' +
+        '<td class="n">' + pct3(x.change) + '</td>' +
+        '<td class="n">' + moneyPlain(x.diff) + '</td>' +
+        '<td class="n"><b>' + moneyPlain(x.total) + '</b></td></tr>';
+    }).join('');
+    if (!single) {
+      html += '<tr class="total"><td>סה״כ</td><td></td><td class="n">' + moneyPlain(totAmt) + '</td><td></td><td></td>' +
+        '<td class="n">' + moneyPlain(totDiff) + '</td><td class="n">' + moneyPlain(totAll) + '</td></tr>';
+    }
+    $('sum-body').innerHTML = html;
+
+    // Per-row details (same fields the CBS calculator shows)
+    $('details').innerHTML = results.map(function (x, i) {
+      var f51 = x.from51 ? x.from51.toLocaleString('he-IL', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) : '—';
+      var t51 = x.to51 ? x.to51.toLocaleString('he-IL', { minimumFractionDigits: 3, maximumFractionDigits: 3 }) : '—';
+      return '<details class="detail"' + (single ? ' open' : '') + '>' +
+        '<summary><span>פירוט: ' + esc(x.label) + '</span><span style="font-weight:600;color:var(--text-mid)">' + money(x.total) + '</span></summary>' +
+        '<div class="detail-grid">' +
+          '<div class="detail-col"><h4>מדד בסיס · ' + heDate(x.date) + '</h4>' +
+            kv('לחודש', idxMonth(x.fromMonth)) + kv('ערך', Number(x.fromVal).toFixed(4)) +
+            kv('לפי בסיס', baseLabel(x.fromBase)) + kv('ערך בבסיס 1951', f51) + '</div>' +
+          '<div class="detail-col"><h4>מדד קובע · ' + heDate(toIso) + '</h4>' +
+            kv('לחודש', idxMonth(x.toMonth)) + kv('ערך', Number(x.toVal).toFixed(4)) +
+            kv('לפי בסיס', toBaseLbl || '—') + kv('ערך בבסיס 1951', t51) + '</div>' +
+        '</div>' +
+        '<div class="detail-foot">אחוז השינוי: <b>' + pct3(x.change) + '</b> · ' +
+          'הפרשים: <b>' + money(x.diff) + '</b> · ' +
+          'סה״כ כולל הפרשי הצמדה: <b>' + money(x.total) + '</b></div>' +
+        '</details>';
+    }).join('');
+
+    lastResults = { results: results, toIso: toIso, pct: pct, totals: [totAmt, totDiff, totAll] };
+    var res = $('results');
+    res.classList.add('show');
+    res.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+  }
+  function kv(k, v) { return '<div class="kv"><span>' + k + '</span><span>' + v + '</span></div>'; }
+
+  function downloadCSV() {
+    if (!lastResults) return;
+    var L = lastResults;
+    var q = function (s) { return '"' + String(s).replace(/"/g, '""') + '"'; };
+    var lines = [['תיאור', 'תאריך בסיס', 'סכום', 'חודש מדד בסיס', 'ערך מדד בסיס', 'מדד בסיס בבסיס 1951',
+      'מועד חישוב', 'חודש מדד קובע', 'ערך מדד קובע', 'מדד קובע בבסיס 1951', 'אחוז שינוי', 'אחוז הצמדה', 'הפרשי הצמדה', 'סה"כ צמוד'].map(q).join(',')];
+    L.results.forEach(function (x) {
+      lines.push([q(x.label), heDate(x.date), x.amount.toFixed(2), idxMonth(x.fromMonth), x.fromVal, x.from51 || '',
+        heDate(L.toIso), idxMonth(x.toMonth), x.toVal, x.to51 || '', (x.change * 100).toFixed(3) + '%', L.pct + '%',
+        x.diff.toFixed(2), x.total.toFixed(2)].join(','));
+    });
+    if (L.results.length > 1) lines.push([q('סה"כ'), '', L.totals[0].toFixed(2), '', '', '', '', '', '', '', '', '', L.totals[1].toFixed(2), L.totals[2].toFixed(2)].join(','));
+    var blob = new Blob(['﻿' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'הצמדה-למדד-' + L.toIso + '.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+  }
+
+  /* ── Init ── */
+  $('to-date').value = iso(new Date());
+  addRow();
+  $('add-row').addEventListener('click', function () { var r = addRow(); r.querySelector('.amt').focus(); });
+  document.querySelectorAll('.toggle-group button').forEach(function (b) {
+    b.addEventListener('click', function () { setMode(b.dataset.mode); });
+  });
+  $('calc').addEventListener('click', calculate);
+  $('csv').addEventListener('click', downloadCSV);
+  $('print').addEventListener('click', function () {
+    document.querySelectorAll('details.detail').forEach(function (d) { d.open = true; });
+    window.print();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && e.target && e.target.tagName === 'INPUT') calculate();
+  });
+})();
+</script>
+</body>
+</html>
