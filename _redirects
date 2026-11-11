@@ -1,0 +1,2 @@
+# פרוקסי ל-API של הלמ"ס עבור מחשבון ההצמדה (calc-madad.html) — עוקף חסימת CORS בדפדפן
+/api/cbs/*  https://api.cbs.gov.il/:splat  200
