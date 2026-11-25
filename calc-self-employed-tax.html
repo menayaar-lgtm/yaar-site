@@ -228,7 +228,7 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
 <div class="wrap">
 
   <div class="clientbar">
-    <span><label>שנת המס</label> <input type="text" value="2026" class="w48" disabled></span>
+    <span><label>שנת המס</label> <input type="text" id="taxYear" value="2026" class="w48" disabled></span>
     <span><label>שם</label> <input type="text" id="cName" class="w150" placeholder="שם הלקוח"></span>
     <span><label>ת.ז.</label> <input type="text" id="cId" class="w70" placeholder="—"></span>
     <span><label>מין</label> <select id="gender"><option value="m">גבר</option><option value="f">אישה</option></select></span>
@@ -323,6 +323,7 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
         <button class="btn o" id="bPlans" data-open="dPlans" type="button" hidden>שמור / פתח תכנון</button>
         <button class="btn o" data-open="dDetail" type="button">פירוט מלא</button>
         <button class="btn o" id="bCopy" type="button">העתק סיכום</button>
+        <button class="btn o" id="bMonday" data-open="dMonday" type="button" hidden>משימה במנדיי</button>
         <a class="btn o" id="ctaWa" href="#" target="_blank" rel="noopener" style="text-decoration:none">וואטסאפ</a>
       </div>
 
@@ -445,6 +446,31 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
   לכן התגמול נכלל כאן בבסיס דמי הביטוח. לשכיר שהתגמול שולם לו דרך המעסיק נוכו דמי הביטוח כמו ממשכורת,
   ובתביעה אישית של שכיר נוכתה בריאות בלבד.</p>
 </div><div class="mf"><button class="btn" data-close>סגור</button></div></dialog>
+
+<dialog id="dMonday" style="max-width:640px"><h3>פתיחת משימה במנדיי<button data-close>×</button></h3><div class="mb">
+  <div class="g2">
+    <div class="fld"><label>סוג המשימה</label><select id="mTask">
+      <option value="הגדלת מקדמות מס הכנסה">הגדלת מקדמות מס הכנסה</option>
+      <option value="הקטנת מקדמות מס הכנסה">הקטנת מקדמות מס הכנסה</option>
+      <option value="הגדלת מקדמות ביטוח לאומי">הגדלת מקדמות ביטוח לאומי</option>
+      <option value="הקטנת מקדמות ביטוח לאומי">הקטנת מקדמות ביטוח לאומי</option>
+      <option value="סיכום פגישה מול הלקוח והמלצות לסוף שנה">סיכום פגישה מול הלקוח והמלצות לסוף שנה</option>
+      <option value="אחר">אחר</option>
+    </select></div>
+    <div class="fld"><label>תאריך יעד <small>(לא חובה)</small></label><input type="date" id="mDue"></div>
+  </div>
+  <div class="fld"><label>הערה למשימה <small>(נוספת לגוף המשימה)</small></label>
+    <input type="text" id="mNote" maxlength="200" placeholder="למשל: לשלוח ללקוח טופס 2542 לחתימה"></div>
+  <label class="chk"><input type="checkbox" id="mTips" checked> לצרף את ההמלצות לסוף שנה</label>
+  <label class="chk"><input type="checkbox" id="mState" checked> לצרף את התכנון כקובץ נתונים, כדי שאפשר יהיה לטעון אותו חזרה למחשבון</label>
+  <div class="leg">תצוגה מקדימה</div>
+  <pre id="mPrev" style="white-space:pre-wrap;font-size:12px;line-height:1.55;background:var(--wash);
+    border:1px solid var(--line);border-radius:8px;padding:10px;max-height:230px;overflow:auto;margin:0"></pre>
+  <p class="note" id="mMsg"></p>
+</div><div class="mf">
+  <button class="btn" id="mSend" type="button">פתיחת משימה</button>
+  <button class="btn o" data-close>סגור</button>
+</div></dialog>
 
 <dialog id="dOther"><h3>הכנסות ומענקים<button data-close>×</button></h3><div class="mb">
   <p class="note"><b>תיאור לשורה</b> — נרשם ישירות בשורה עצמה, בשדה הקטן שליד השם ("תיאור…"):
@@ -1481,6 +1507,9 @@ function update(){
   if(!num('townRate')) tips.push('לא נבחר יישוב מזכה — כדאי לבדוק ברשימה.');
   if(creditsRaw>credits) tips.push('זיכויים שלא נוצלו: '+money(creditsRaw-credits)+'.');
   if(donCarry>0) tips.push('עודף תרומות '+money(donCarry)+' — ניתן להעברה ל־3 שנים.');
+  window.__TIPS = tips.map(t => t.replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim())
+                      .filter(Boolean).map(t => '• ' + t).join('\n');
+  window.__TIPS_SAVE = saveTot;
   if(tips.length) f.push('<div class="flag ok"><b>לבדיקה לפני סוף השנה'+
     (saveTot>0 ? ' · חיסכון מצטבר אפשרי: <span style="color:var(--sage-deep)">'+money(saveTot)+'</span>' : '')+
     '</b>'+tips.join(' ')+'</div>');
@@ -1774,6 +1803,87 @@ $('bCopy').addEventListener('click', ()=>{
   navigator.clipboard.writeText(t).then(()=>{ const b=$('bCopy'), o=b.textContent; b.textContent='הועתק'; setTimeout(()=>b.textContent=o,1500); });
 });
 
+/* ---- פתיחת משימה במנדיי דרך Make (גרסה פנימית בלבד) ---- */
+const ilDate = d => d.getDate().toString().padStart(2,'0')+'/'+
+                    (d.getMonth()+1).toString().padStart(2,'0')+'/'+d.getFullYear();
+function mondayTitle(){
+  const c = ($('cName').value||'').trim() || 'לקוח ללא שם';
+  return ($('mTask').value || 'משימה') + ' — ' + c;
+}
+function mondayBody(){
+  if(!LAST) return '';
+  const year = parseInt($('taxYear').value, 10) || new Date().getFullYear();
+  const L = [];
+  L.push('הערכת מס שנת ' + year + ' שנערכה בתאריך ' + ilDate(new Date()));
+  L.push('');
+  const c = ($('cName').value||'').trim(), id = ($('cId').value||'').trim();
+  if(c || id) L.push('לקוח: ' + (c||'—') + (id ? '  ·  ת.ז. ' + id : ''));
+  L.push('נערך על ידי: ' + ((tokenPayload()||{}).name || '—'));
+  L.push('');
+  L.push('רווח מהעסק: ' + money(LAST.profit));
+  L.push('הכנסה חייבת: ' + money(LAST.taxableTotal));
+  L.push('מס הכנסה: ' + money(LAST.totalTax));
+  L.push('ביטוח לאומי ובריאות: ' + money(LAST.niTotal));
+  const advT = num('advTax'), advN = num('advNi');
+  if(advT || advN) L.push('מקדמות ששולמו: מס הכנסה ' + money(advT) + '  ·  ביטוח לאומי ' + money(advN));
+  L.push((LAST.balAll >= 0 ? 'יתרה לתשלום: ' : 'יתרה להחזר: ') + money(Math.abs(LAST.balAll)));
+  L.push('נטו שנתי: ' + money(LAST.net) + '  (חודשי ' + money(LAST.net/12) + ')');
+  L.push('מס אפקטיבי: ' + pct(LAST.eff) + '  ·  מס שולי כולל ב״ל: ' + pct(LAST.margTotal));
+  const nt = ($('notes').value||'').trim();
+  if(nt){ L.push(''); L.push('הערות התכנון:'); L.push(nt); }
+  const mn = ($('mNote').value||'').trim();
+  if(mn){ L.push(''); L.push('הערה למשימה: ' + mn); }
+  if($('mTips').checked && window.__TIPS){
+    L.push('');
+    L.push('— לבדיקה לפני סוף השנה' +
+      (window.__TIPS_SAVE > 0 ? ' · חיסכון מצטבר אפשרי: ' + money(window.__TIPS_SAVE) : '') + ' —');
+    L.push(window.__TIPS);
+  }
+  return L.join('\n');
+}
+function mondayPrev(){
+  if(!$('dMonday') || !$('dMonday').open) return;
+  $('mPrev').textContent = 'כותרת המשימה:\n' + mondayTitle() + '\n\nגוף המשימה:\n' + mondayBody();
+}
+['mTask','mNote','mTips','mState','mDue'].forEach(id =>
+  $(id).addEventListener('input', mondayPrev));
+$('mTask').addEventListener('change', mondayPrev);
+$('bMonday').addEventListener('click', ()=>{ setTimeout(mondayPrev, 0); $('mMsg').textContent=''; });
+
+$('mSend').addEventListener('click', async ()=>{
+  if(!LAST){ $('mMsg').innerHTML = '<span class="warn">אין חישוב פעיל.</span>'; return; }
+  if(!($('cName').value||'').trim()){
+    $('mMsg').innerHTML = '<span class="warn">יש להזין שם לקוח בראש המחשבון — ה-Make מאתר לפיו את העובד האחראי.</span>';
+    return;
+  }
+  const b = $('mSend'), old = b.textContent;
+  b.disabled = true; b.textContent = 'שולח…';
+  $('mMsg').textContent = '';
+  try{
+    const r = await apiCall(API_ROOT + '/monday-task', 'POST', {
+      task_type: $('mTask').value,
+      task_title: mondayTitle(),
+      client_name: ($('cName').value||'').trim(),
+      client_id: ($('cId').value||'').trim(),
+      tax_year: parseInt($('taxYear').value, 10) || new Date().getFullYear(),
+      prepared_on: new Date().toISOString().slice(0,10),
+      due_date: $('mDue').value || null,
+      note: ($('mNote').value||'').trim(),
+      summary_text: mondayBody(),
+      recommendations: $('mTips').checked ? (window.__TIPS || '') : '',
+      totals: { profit: LAST.profit, taxable: LAST.taxableTotal, tax: LAST.totalTax,
+                ni: LAST.niTotal, balance: LAST.balAll, net: LAST.net,
+                adv_tax: num('advTax'), adv_ni: num('advNi'),
+                eff: LAST.eff, marginal: LAST.margTotal },
+      plan_state: $('mState').checked ? collectState() : null
+    });
+    $('mMsg').innerHTML = '✅ המשימה נפתחה' +
+      (r.item_url ? ' — <a href="'+r.item_url+'" target="_blank" rel="noopener">פתיחה במנדיי ←</a>' : '.');
+  }catch(e){
+    $('mMsg').innerHTML = '<span class="warn">' + esc(e.message) + '</span>';
+  }finally{ b.disabled = false; b.textContent = old; }
+});
+
 /* ---- שמירת תכנונים (גרסה פנימית בלבד) ---- */
 function collectState(){
   const s={};
@@ -1793,8 +1903,9 @@ function applyState(s){
   CP_EDITED = !!s.__cp;
   update();
 }
-async function api(method, path, body){
-  const r = await fetch(API_BASE + (path||''), {
+async function api(method, path, body){ return apiCall(API_BASE + (path||''), method, body); }
+async function apiCall(url, method, body){
+  const r = await fetch(url, {
     method,
     headers: {'Content-Type':'application/json', 'Authorization':'Bearer '+getToken()},
     body: body ? JSON.stringify(body) : undefined
@@ -1836,6 +1947,7 @@ function refreshAuth(){
     $('authBox').innerHTML = '<a href="'+INTERNAL_URL+'">כניסת צוות ←</a>';
   }
   $('guestNotice').hidden = !!ok;
+  $('bMonday').hidden = !(API_BASE && ok);
   loadPlans();
 }
 
@@ -1913,7 +2025,7 @@ function okToOverwrite(name, where){
   return confirm('כבר קיים תכנון בשם "'+name+'". לדרוס אותו?');
 }
 
-const BUILD = 'v40';
+const BUILD = 'v41';
 $('buildTag').textContent = ' · ' + BUILD + ' · ' + (API_BASE ? 'פנימי' : 'ציבורי');
 
 /* שמירה מקומית — קיימת בשתי הגרסאות */
