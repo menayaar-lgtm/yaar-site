@@ -142,15 +142,34 @@ footer.site .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:8px 16px;border-radius:99px;font-size:14px;opacity:0;transition:.2s;pointer-events:none}
 .toast.on{opacity:1}
 
+#printReport{display:none}
 @media print{
-  .topbar,header.site,nav,.btns,.share-lbl,.cta,footer.site,.toast{display:none!important}
-  .hero{background:none;color:#000;padding:0}
-  .hero p{color:#333}
-  .grid{display:block;margin:0}
-  .card{box-shadow:none;break-inside:avoid;margin-bottom:12px}
-  .results{position:static}
-  .big{background:#eee;color:#000}
-  .big .lbl,.big .sub{color:#333}
+  @page{size:A4;margin:12mm 12mm 14mm}
+  html,body{background:#fff!important}
+  body>*:not(#printReport){display:none!important}
+  #printReport{display:block;direction:rtl;color:#1B241F;font-size:11.5pt;line-height:1.45;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .pr-head{display:flex;align-items:center;justify-content:space-between;border-bottom:3px solid #2C5742;padding-bottom:8px;margin-bottom:12px}
+  .pr-head img{height:52px;width:auto}
+  .pr-head .meta{text-align:left;font-size:9.5pt;color:#5E6B62;direction:rtl}
+  .pr-title{font-family:'Frank Ruhl Libre',serif;font-size:19pt;color:#2C5742;margin:0 0 2px}
+  .pr-sub{color:#5E6B62;font-size:10pt;margin:0 0 12px}
+  .pr-info{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 14px;background:#F3F6F1;border-radius:6px;padding:9px 12px;margin-bottom:12px;font-size:10.5pt}
+  .pr-info b{display:block;font-size:9pt;color:#5E6B62;font-weight:500}
+  .pr-tbl{width:100%;border-collapse:collapse;font-size:10.5pt;margin-bottom:10px}
+  .pr-tbl th{background:#2C5742;color:#fff;font-weight:600;padding:6px 8px;text-align:right}
+  .pr-tbl td{padding:6px 8px;border-bottom:1px solid #E2E6DE;vertical-align:top}
+  .pr-tbl .n{text-align:left;direction:ltr;font-variant-numeric:tabular-nums;white-space:nowrap}
+  .pr-tbl td small{display:block;color:#5E6B62;font-size:8.5pt}
+  .pr-tbl tr.tot td{font-weight:700;background:#E8F0EA;border-bottom:0}
+  .pr-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+  .pr-sum div{border:1px solid #E2E6DE;border-radius:6px;padding:8px;text-align:center}
+  .pr-sum div.main{background:#2C5742;color:#fff;border-color:#2C5742}
+  .pr-sum b{display:block;font-size:15pt}
+  .pr-sum span{font-size:9pt}
+  .pr-notes{font-size:9pt;color:#5E6B62;margin:0 0 6px;padding-inline-start:16px}
+  .pr-warn{font-size:9.5pt;color:#9a5b12;background:#fdf3e2;border-radius:6px;padding:6px 10px;margin-bottom:8px}
+  .pr-foot{border-top:1px solid #E2E6DE;margin-top:12px;padding-top:6px;font-size:9pt;color:#5E6B62;display:flex;justify-content:space-between}
+  .pr-tbl,.pr-sum,.pr-info{break-inside:avoid}
 }
 </style>
 </head>
@@ -440,6 +459,8 @@ footer.site .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:
   <span><b>יער צפון</b> · כל השירותים הפיננסיים תחת קורת גג אחת</span>
   <span>04-6762466 · office@yaar.biz · א.ת. בני יהודה, מתחם האבזלת</span>
 </div></footer>
+
+<section id="printReport" aria-hidden="true"></section>
 
 <div class="toast" id="toast">הקישור הועתק</div>
 
@@ -781,7 +802,7 @@ function calc(){
   $("notRec").textContent = fIls(Math.max(totAct - totRec, 0) * rate);
 
   $("warnings").innerHTML = warns.map(w => `<div class="warn">${w}</div>`).join("");
-  last = { rows, totAct, totRec, rate, country: sel.value || "ארה\"ב / אחרת", N, D, trip };
+  last = { rows, totAct, totRec, rate, taxRate, warns, country: sel.value || "ארה\"ב / אחרת", boosted: !!sel.value, N, D, trip };
   updateShare();
 }
 
@@ -810,7 +831,54 @@ $("btnConsult").addEventListener("click", () => {
   if (link) window.open(link, "_blank", "noopener");
   else location.href = CONFIG.CONTACT_URL;
 });
-$("btnPrint").addEventListener("click", () => window.print());
+
+/* ===== דוח להדפסה / PDF ===== */
+function esc(t){ return String(t).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+function buildPrintReport(){
+  calc();
+  const L = last, t = L.trip, logo = document.querySelector("header.site .logo img");
+  const now = new Date();
+  const fx = $("fxStatus").textContent.replace(/^✓\s*/, "");
+  const rows = L.rows.filter(r => r[1] || r[2]);
+  const info = [
+    ["יעד", esc(L.country) + (L.boosted ? " (תקרות +25%)" : "")],
+    ["תאריכי הנסיעה", t.total ? `${fDate(t.dep)} – ${fDate(t.ret)}` : "—"],
+    ["ימים בחו\"ל", t.total ? `${t.total} (${t.biz} עסקיים${t.priv ? `, ${t.priv} פרטיים` : ""})` : (L.D ? `${L.D} עסקיים` : "—")],
+    ["לילות במלון", L.N || 0],
+    ["שער דולר בחישוב", `${L.rate.toFixed(3)} ₪`],
+    ["מס שולי לאומדן", `${Math.round(L.taxRate * 100)}%`]
+  ];
+  $("printReport").innerHTML = `
+    <div class="pr-head">
+      ${logo ? `<img src="${logo.src}" alt="יער צפון">` : "<b>יער צפון</b>"}
+      <div class="meta">הופק: ${now.toLocaleDateString("he-IL")} ${now.toLocaleTimeString("he-IL",{hour:"2-digit",minute:"2-digit"})}<br>www.yaar.biz</div>
+    </div>
+    <h1 class="pr-title">דוח הוצאות נסיעה לחו"ל — חישוב ההוצאה המוכרת</h1>
+    <p class="pr-sub">לפי תקנות מס הכנסה (ניכוי הוצאות מסוימות), התשל"ב-1972 · תקרות שנת המס 2026</p>
+    <div class="pr-info">${info.map(i => `<div><b>${i[0]}</b>${i[1]}</div>`).join("")}</div>
+    ${fx ? `<p class="pr-notes" style="list-style:none;padding:0">מקור השער: ${esc(fx)}</p>` : ""}
+    <table class="pr-tbl">
+      <thead><tr><th>סעיף</th><th class="n">בפועל $</th><th class="n">מוכר $</th><th class="n">מוכר ₪</th><th class="n">לא מוכר ₪</th></tr></thead>
+      <tbody>
+        ${(rows.length ? rows : L.rows.slice(0,1)).map(r => `<tr><td>${r[0]}${r[3] ? `<small>${esc(r[3])}</small>` : ""}</td><td class="n">${fUsd(r[1])}</td><td class="n">${fUsd(r[2])}</td><td class="n">${fIls(r[2]*L.rate)}</td><td class="n">${fIls(Math.max(r[1]-r[2],0)*L.rate)}</td></tr>`).join("")}
+        <tr class="tot"><td>סה"כ</td><td class="n">${fUsd(L.totAct)}</td><td class="n">${fUsd(L.totRec)}</td><td class="n">${fIls(L.totRec*L.rate)}</td><td class="n">${fIls(Math.max(L.totAct-L.totRec,0)*L.rate)}</td></tr>
+      </tbody>
+    </table>
+    <div class="pr-sum">
+      <div class="main"><b>${fIls(L.totRec*L.rate)}</b><span>סה"כ הוצאה מוכרת</span></div>
+      <div><b>${fIls(Math.max(L.totAct-L.totRec,0)*L.rate)}</b><span>לא מוכר (מעל התקרות)</span></div>
+      <div><b>${fIls(L.totRec*L.rate*L.taxRate)}</b><span>חיסכון משוער במס הכנסה</span></div>
+    </div>
+    ${L.warns.length ? L.warns.map(w => `<div class="pr-warn">${esc(w)}</div>`).join("") : ""}
+    <ul class="pr-notes">
+      <li>לינה: 7 לילות ראשונים עד $365; מהלילה ה-8 — 75% מההוצאה (מינימום $160, מקסימום $274); מעל 90 לילות — עד $160. שהייה: $102 ליום עם לינה / $171 בלי. רכב: עד $80 ליום. במדינות המזכות — לינה ושהייה +25%.</li>
+      <li>ההכרה מותנית בכך שהנסיעה נועדה לייצור הכנסה ובתיעוד מלא (כרטיסי טיסה, חשבוניות מלון, קבלות).</li>
+      <li>החישוב הוא הערכה כללית בלבד ואינו מהווה ייעוץ מס.</li>
+    </ul>
+    <div class="pr-foot"><span><b>יער צפון</b> · הנהלת חשבונות וראיית חשבון</span><span>04-6762466 · office@yaar.biz</span></div>`;
+}
+window.addEventListener("beforeprint", buildPrintReport);
+$("btnPrint").addEventListener("click", () => { buildPrintReport(); window.print(); });
 $("btnCopy").addEventListener("click", async () => {
   try { await navigator.clipboard.writeText(pageUrl()); toast("הקישור הועתק"); }
   catch(e){ toast("לא ניתן להעתיק — העתיקו מסרגל הכתובת"); }
