@@ -449,8 +449,14 @@ table.det tr.total td{font-weight:700;border-top:1.5px solid var(--forest)}
 <dialog id="dOther"><h3>הכנסות ומענקים<button data-close>×</button></h3><div class="mb">
   <p class="note"><b>תיאור לשורה</b> — נרשם ישירות בשורה עצמה, בשדה הקטן שליד השם ("תיאור…"):
   לדוגמה מענק עבודה, פיצויים חייבים, הפרשי שנים קודמות. התיאור מופיע בפירוט המלא ובדוח ה־PDF ונשמר יחד עם התכנון.</p>
+  <div class="fld"><label>בביטוח לאומי</label><select id="otherNi">
+    <option value="1">נכלל בבסיס דמי הביטוח — הכנסה מעסק או ממשלח יד</option>
+    <option value="0">לא נכלל — הכנסה שאינה מיגיעה אישית או פטורה</option>
+  </select></div>
+  <p class="note" id="otherNiInfo"></p>
   <p class="note">"מענקים והכנסות אחרות" נחשבות הכנסה מיגיעה אישית לעניין מס הכנסה — מדרגות המס, נקודות הזיכוי והזיכוי ליישוב מזכה.
-  <b>אינן נכנסות לבסיס דמי הביטוח הלאומי כעצמאי</b> ואינן מזיזות את המדרגה המופחתת או את תקרת החיוב.
+  כשמדובר בהכנסה מעסק או ממשלח יד לפי ס׳ 2(1) היא נכללת גם בבסיס דמי הביטוח לפי ס׳ 345 — זו ברירת המחדל.
+  יש לשנות ל"לא נכלל" כשהסכום אינו נושא דמי ביטוח, למשל מענק שהופטר בחקיקה מיוחדת או הכנסה שאינה מיגיעה אישית.
   מענק פטור ממס מוזן במסך המשכורת ואינו נכנס לבסיס המס.</p>
 </div><div class="mf"><button class="btn" data-close>סגור</button></div></dialog>
 
@@ -1095,7 +1101,8 @@ function update(){
   const milInHe = milMode==='self' ? milPay : 0;
   const niDeds = ($('niKhReduces').value==='1' ? khDeduction : 0)
                + ($('niPensReduces').value==='1' ? pensDeduction : 0);
-  const niPre = Math.max(0, profit + milInNi - niDeds);
+  const otherInNi = $('otherNi').value==='1' ? otherPersonal : 0;
+  const niPre = Math.max(0, profit + milInNi + otherInNi - niDeds);
   let niBase = Math.max(niPre, num('niMin')), selfNi={total:0,low:0,high:0}, selfHe={total:0};
   for(let i=0;i<60;i++){
     selfNi = niSelf(niBase/12);
@@ -1106,7 +1113,7 @@ function update(){
     niBase=nb;
   }
   selfNi = niSelf(niBase/12);
-  const heBase = Math.max(0, niBase - (milInNi - milInHe));
+  const heBase = Math.max(0, niBase - (milInNi - milInHe));   /* הבריאות נגבתה כבר רק בתגמול מילואים של שכיר */
   selfHe = heSelf(heBase/12);
   let niFloored = false;
   if(nqMinA>0 && selfNi.total + selfHe.total < nqMinA - 0.5){
@@ -1204,7 +1211,7 @@ function update(){
   /* דמי הביטוח נגבים על ההכנסה מהעסק (ועל המשכורת כשכיר) בלבד — מענקים, הכנסות אחרות
      והכנסות פסיביות אינם נכנסים לבסיס ואינם מזיזים את המדרגה או את התקרה */
   const niMargBase = (niBase + salary)/12;
-  const niMargR = profit<=0 ? 0
+  const niMargR = (profit + milInNi + otherInNi) <= 0 ? 0
     : (niMargBase >= num('niCeil')) ? 0
     : (niSt==='nq' && !nqThr && niMargBase <= nqFloorM) ? 0
     : (niMargBase <= num('niStep') ? niLowR+heLowR : niHighR+heHighR);
@@ -1297,7 +1304,20 @@ function update(){
   html('sRent', rent>0 ? 'מסלול <b>'+TR[rentTrack]+'</b>' : '');
   html('sSolar', solar>0 ? 'מסלול <b>'+TR[solarTrack]+'</b>' : '');
   html('sCap', cap>0 ? num('capRate')+'% · מס '+money(capTax) : '');
-  html('sOther', otherPersonal>0 ? 'מיגיעה אישית' : '');
+  {
+    const inNi = $('otherNi').value==='1';
+    const alt = otherPersonal>0 ? engineWith('otherNi', inNi ? '0' : '1') : null;
+    const cost = alt ? Math.abs(niTotal - alt.niTotal) : 0;
+    html('sOther', otherPersonal>0
+      ? (inNi ? 'ב״ל <b>'+money(cost)+'</b>' : 'ללא ב״ל') : '');
+    $('otherNiInfo').innerHTML = otherPersonal>0
+      ? (inNi
+          ? 'הסכום ('+money(otherPersonal)+') נכלל בבסיס דמי הביטוח. התוספת לחבות: <b>'+money(cost)+'</b> לשנה'+
+            (cost>0 ? ' — ומתוכה '+num('niDedRate')+'% מרכיב הביטוח הלאומי מוכרים כניכוי לפי ס׳ 47א.' : '.')
+          : 'הסכום ('+money(otherPersonal)+') אינו נכלל בבסיס דמי הביטוח ואינו מזיז את המדרגה המופחתת או את התקרה. '+
+            'אילו היה נכלל, החבות הייתה גדלה ב־<b>'+money(cost)+'</b> לשנה.')
+      : 'ברירת המחדל היא הכללה בבסיס דמי הביטוח, כי הכנסה מעסק או ממשלח יד נושאת דמי ביטוח כעצמאי.';
+  }
   {
     const alt = milPay>0 ? engineWith('milMode','emp') : null;
     const milNiCost = alt ? Math.max(0, niTotal - alt.niTotal) : 0;
@@ -1516,7 +1536,7 @@ function update(){
   /* --- חישוב הפוך: מהמקדמה החודשית אל הרווח שיש להצהיר עליו --- */
   /* מחזיר את דמי הביטוח השנתיים עבור רווח מוצהר, כולל החישוב המעגלי של ניכוי ה-52% */
   const niTotalForProfit = p => {
-    const pre = Math.max(0, p + milInNi - niDeds);
+    const pre = Math.max(0, p + milInNi + otherInNi - niDeds);
     let base = Math.max(pre, num('niMin')), r = {total:0};
     for(let i=0;i<60;i++){
       r = niSelf(base/12);
@@ -1646,8 +1666,10 @@ function update(){
     'כאן: '+num('niDedRate')+'% מ־'+money(selfNi.total)+' = '+money(niDeductible)+
     ((khDeduction||pensDeduction) ? ', בתוספת הפחתת ההפקדות מבסיס החיוב' : '')+'.'+
     (salary?' המשכורת ממצה תחילה את המדרגה המופחתת.':'')+
-    (otherPersonal>0 ? '<br>מענקים והכנסות אחרות ('+money(otherPersonal)+') אינם נכללים בבסיס דמי הביטוח כעצמאי '+
-      'ואינם מזיזים את המדרגה המופחתת או את תקרת החיוב — הם משפיעים על מס ההכנסה בלבד.' : '')+
+    (otherPersonal>0 ? '<br>מענקים והכנסות אחרות ('+money(otherPersonal)+'): '+
+      ($('otherNi').value==='1'
+        ? 'נכללים בבסיס דמי הביטוח כהכנסה מעסק או ממשלח יד.'
+        : 'סומנו כלא נכללים בבסיס דמי הביטוח — הם משפיעים על מס ההכנסה בלבד.') : '')+
     (milPay>0 ? '<br>תגמולי מילואים ('+money(milPay)+'): '+
       (milMode==='emp' ? 'שולמו דרך המעסיק ודמי הביטוח נוכו במקור — אינם נכללים בבסיס.'
        : milMode==='selfEmp' ? 'תביעה אישית כשכיר — נוכתה בריאות בלבד, ולכן התגמול נכלל בבסיס הביטוח הלאומי ולא בבסיס הבריאות.'
@@ -1891,7 +1913,7 @@ function okToOverwrite(name, where){
   return confirm('כבר קיים תכנון בשם "'+name+'". לדרוס אותו?');
 }
 
-const BUILD = 'v39';
+const BUILD = 'v40';
 $('buildTag').textContent = ' · ' + BUILD + ' · ' + (API_BASE ? 'פנימי' : 'ציבורי');
 
 /* שמירה מקומית — קיימת בשתי הגרסאות */
